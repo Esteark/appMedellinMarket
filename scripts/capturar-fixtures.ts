@@ -47,9 +47,26 @@ try {
     const sku = ajo[0]?.items?.[0]?.itemId;
     if (!sku) throw new Error("la búsqueda de ajo no trajo skuId");
     await capturar("d1-sku.json", consulta(null, sku));
+  } else if (grupo === "euro") {
+    const euro = "https://www.eurosupermercados.com.co";
+    await capturar("robots.txt", `${euro}/robots.txt`);
+    // ml, kg a granel, g, y uno no convertible ("x6und 300gr" contra "unidad").
+    await capturar(
+      "aceite.html",
+      `${euro}/aceite-girasol-100---euromax--x-900ml-444/p`,
+    );
+    await capturar("aguacate.html", `${euro}/aguacate-hass-c4a/p`);
+    await capturar(
+      "atun.html",
+      `${euro}/atun-lomitos-en-agua--euromax--x-160gr-892/p`,
+    );
+    await capturar(
+      "croissant.html",
+      `${euro}/pan-croissant-x6und--300gr-esponjados-072/p`,
+    );
   } else {
     throw new Error(
-      `Grupo no soportado todavía: ${grupo ?? "(ninguno)"}. Use vtex.`,
+      `Grupo no soportado todavía: ${grupo ?? "(ninguno)"}. Use vtex o euro.`,
     );
   }
 } catch (e) {
