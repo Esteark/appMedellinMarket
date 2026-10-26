@@ -43,6 +43,7 @@ La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín
 | Validación | zod **4.6.7** |
 | Gráficos | recharts **3.10.1** + react-is **19.3.1** |
 | Animación | gsap **3.15.0** (Draggable viene incluido; licencia gratuita) · @gsap/react **2.1.2** |
+| Notificaciones | react-hot-toast **2.6.1** (verificada el 26-oct-2026 en npm; peer `react >=16`). Se instala en el paso 14 |
 | Pruebas | vitest **5.0.5** · @playwright/test **1.64.1** · @axe-core/playwright: **verificar antes de instalar** (no se investigó) |
 | Calidad | @biomejs/biome **2.6.2** · tsx **4.23.15** |
 | Scrapers | cheerio **1.2.0** · exceljs **4.4.0** (sin mantenimiento desde 2023, riesgo aceptado) · unpdf **1.9.1** |
@@ -283,7 +284,8 @@ jobs:
 **Encabezado:**
 - "Actualizado: hoy 6:06 a. m.", un punto de color por tienda y "X/8 fuentes OK".
 - Las tiendas con `ultimo_ok` ausente o de hace ≥3 días.
-- **Banner rojo** si la última corrida tiene más de 26 h.
+- **Banner rojo** si la última corrida tiene más de 26 h, con el botón **"Actualizar precios"** (paso 14).
+- **Notificaciones (toasts):** catálogo, reglas y resumen del día en el paso 14.
 - Campana de alertas: solo con sesión, alimentada por Realtime sobre `alertas`.
 
 **La lista:**
@@ -340,6 +342,8 @@ Las variables están en `workspace/.env.example`. En local, `pnpm env:local` gen
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | `SMTP_PASS` es la contraseña de aplicación de Gmail; requiere la verificación en 2 pasos activa |
 | `ADMIN_EMAIL` | Quien recibe el correo de fallos |
 | `CORRIDA_USER_AGENT` | User-Agent de la corrida |
+| `GITHUB_DISPATCH_TOKEN` | Solo Vercel (servidor). Token *fine-grained* de GitHub limitado a este repo con permiso **Actions: Read and write** y nada más. Lo lee solo `src/lib/github.ts`. **Nunca** en una variable `NEXT_PUBLIC_*`. Opcional: sin él, el botón "Actualizar precios" muestra el aviso `actualizacion_fallo` |
+| `GITHUB_REPO` | Solo Vercel (servidor). `dueño/repo` del workflow, p. ej. `Esteark/appMedellinMarket` |
 
 Cómo carga cada herramienta las variables:
 - Los scripts importan `./cargar-env` como su **primer** import.
@@ -489,20 +493,95 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 - **Hacer:** `/producto/[id]` como hoja, la sección "En fluctuación" y los 3 gráficos, con las animaciones 4 y 5.
 - **Hecho cuando:** `pnpm humo --ruta producto/aceite --contiene "Aceite"` sale con 0.
 
-**14. Auth.**
-- **Hacer:** `/registro`, `/ingresar`, `/recuperar` y salir; guardar la lista en `listas` y fusionarla con la local.
-- **Hecho cuando:** pasa el e2e `tests/e2e/lista.spec.ts`: registrarse → agregar 2 productos → recargar → siguen ahí.
+**14. Auth y notificaciones.**
+- **Hacer (auth):** `/registro`, `/ingresar`, `/recuperar` y salir; guardar la lista en `listas` y fusionarla con la local.
+- **Hacer (sistema de notificaciones):**
+  - Instalar `react-hot-toast@2.6.1` (sección 2). Un único `<Toaster>` en `src/app/layout.tsx`, desde `src/components/avisos/toaster.tsx` (`"use client"`).
+  - Posición `top-center`, porque abajo está la barra del carrito. Máximo 3 visibles; cada aviso lleva `id` = su clave para no repetirse.
+  - Duración: éxito e info 4 s, aviso 6 s, error 8 s. Los que tienen acción ("Deshacer", "Ver") duran 6 s como mínimo.
+  - Estilo solo con tokens: `bg-card`, `text-foreground`, borde `border` y un acento de color por tipo (éxito `save`, aviso `warn`, error `up`, info `anot`). Nunca hex.
+  - Con `prefers-reduced-motion: reduce`, sin animación de entrada ni de salida.
+  - Accesibilidad: `role="status"` con `aria-live="polite"` (lo trae la librería) y `aria-live="assertive"` para los errores. Las acciones son botones reales que se alcanzan con teclado.
+  - **Un toast nunca es el único lugar de la información:** lo que avisa también se ve en la página (encabezado, banner, `/alertas`, estado del botón o error junto al campo del formulario).
+  - `src/lib/avisos.ts` contiene el catálogo único `AVISOS` (clave → tipo y texto) y `avisar(clave, datos?)`. Ningún componente escribe textos de toast sueltos.
+- **Catálogo de avisos.** Los pasos 15, 16 y 17 usan las claves de su fila; si hace falta un aviso nuevo, se agrega aquí primero.
+
+  | Clave | Cuándo | Tipo | Texto |
+  |---|---|---|---|
+  | `sesion_iniciada` | Ingreso correcto | éxito | "Hola de nuevo." |
+  | `registro_ok` | Registro enviado | éxito | "Cuenta creada. Revisa tu correo para confirmarla." |
+  | `credenciales_malas` | Ingreso rechazado (también va junto al formulario) | error | "Correo o contraseña incorrectos." |
+  | `recuperar_enviado` | Recuperar contraseña | info | "Si el correo está registrado, te enviamos un enlace." |
+  | `clave_cambiada` | Nueva contraseña guardada | éxito | "Contraseña actualizada." |
+  | `sesion_cerrada` | Salir | info | "Sesión cerrada. Tu lista queda en este dispositivo." |
+  | `sesion_expirada` | Una server action responde sin sesión | aviso | "Tu sesión expiró. Inicia sesión de nuevo." |
+  | `lista_fusionada` | Al iniciar sesión con lista local no vacía | éxito | "Unimos la lista de este dispositivo con la guardada ({n} productos)." |
+  | `lista_no_guardada` | Falla la server action de `listas` | error | "No se pudo guardar tu lista. Sigue en este dispositivo y se reintenta con el próximo cambio." |
+  | `almacenamiento_no_disponible` | `localStorage` lanza (una vez por sesión del navegador) | aviso | "Este navegador no deja guardar la lista. Inicia sesión para no perderla." |
+  | `lista_vaciada` | Vaciar la lista | info + "Deshacer" | "Lista vaciada." |
+  | `datos_viejos` | Resumen del día, corrida de más de 26 h | aviso | "Los precios son de {cuando}. Pueden estar desactualizados." |
+  | `fuentes_caidas` | Resumen del día, fuentes caídas | aviso | "Sin datos recientes de: {tiendas}." |
+  | `resumen_alertas` | Resumen del día con más de 3 alertas | info + "Ver" | "Tienes {n} alertas más." |
+  | `actualizacion_iniciada` | Se lanzó la corrida | info | "Actualizando precios. Puedes seguir usando la app; te avisamos al terminar." |
+  | `actualizacion_en_curso` | Ya había una corrida en curso | info | "Ya hay una actualización en curso; te avisamos al terminar." |
+  | `actualizacion_no_necesaria` | El servidor ve datos frescos | info | "Los precios ya están al día." |
+  | `actualizacion_ok` | Terminó con todas las fuentes OK | éxito | "Precios actualizados: {ok}/{total} fuentes OK." |
+  | `actualizacion_parcial` | Terminó con fuentes caídas | aviso | "Precios actualizados, pero sin datos de: {tiendas}." |
+  | `actualizacion_fallo` | GitHub no aceptó el disparo o falta el token | error | "No se pudo iniciar la actualización. Intenta más tarde." |
+  | `actualizacion_tarda` | 20 min sin una corrida nueva | error | "La actualización no terminó en 20 minutos. Si falló, el admin recibe un correo." |
+  | `alerta_nueva` | Llega una alerta por Realtime (paso 16; junto con la animación 7) | info + "Ver" | El `mensaje` de la alerta |
+  | `preferencias_guardadas` | Umbral de ahorro guardado (paso 16) | éxito | "Preferencias guardadas." |
+  | `anotado_guardado` | Server action de anotados correcta (paso 15) | éxito | "Precio anotado: {precio} en {tienda}." |
+  | `anotado_invalido` | zod rechaza el precio (también junto al campo) | error | "El precio debe ser un entero entre 100 y 10.000.000." |
+  | `anotar_sin_sesion` | Intentar anotar sin sesión | info + "Ingresar" | "Inicia sesión para anotar precios." |
+  | `plan_usado` | "Usar como mi lista" (paso 17) | info + "Deshacer" | "Tu lista ahora es el plan {plan} ({n} productos)." |
+  | `plan_sumado` | "Sumar a mi lista" (paso 17) | éxito | "Sumamos {n} productos del plan {plan} a tu lista." |
+  | `sin_conexion` | Una server action o un `fetch` falla por red | error | "Sin conexión. Revisa tu internet e intenta de nuevo." |
+
+  Agregar o quitar un producto con el stepper **no** genera toast: ya lo comunican la animación 1 y el contador, y un toast por clic sería ruido.
+- **Resumen del día** (`src/components/avisos/resumen-del-dia.tsx`, montado en el layout):
+  - Sale una vez por día y por dispositivo. La clave `mercado-medellin:resumen` guarda `hoyBogota()`; se lee y se escribe dentro de try/catch, y si falla no se muestra (mejor nada que repetirlo en cada carga).
+  - **Con sesión:** las alertas no leídas de hoy del usuario, ordenadas con `ordenarAlertas`; un toast `alerta_nueva` por cada una hasta 3 y, si hay más, `resumen_alertas` con el resto. Mientras no exista `/alertas` (paso 16), la acción "Ver" no se muestra.
+  - **Sin sesión, o con sesión y sin alertas:** `datos_viejos` si la corrida tiene más de 26 h y `fuentes_caidas` si hay fuentes caídas.
+  - Si todo está bien, no sale nada.
+- **Botón "Actualizar precios"** (`src/components/avisos/actualizar-precios.tsx`, dentro del banner rojo del encabezado):
+  - **Visible solo** con la misma regla del banner: `horasDesdeCorrida > 26` o ninguna corrida. Sin sesión dice "Inicia sesión para actualizar" y lleva a `/ingresar`, porque disparar la corrida exige sesión.
+  - **No bloquea la app:** sin overlay ni modal. Al pulsarlo, el propio botón queda `disabled` con `aria-busy="true"`, un spinner y el texto "Actualizando… puede tardar unos minutos". El resto de la app sigue usable.
+  - **El estado sobrevive** a navegar (vive en el layout) y a recargar: se guarda la hora de inicio y la `ultimaCorrida` de partida en `sessionStorage`, siempre en try/catch.
+  - **Servidor:** la server action `actualizarPrecios()` en `src/app/acciones.ts` hace, en orden:
+    1. Exige sesión con `getClaims()`; sin sesión → `sesion_expirada`.
+    2. Vuelve a calcular `frescura()`; si los datos ya están frescos, responde `actualizacion_no_necesaria` sin llamar a GitHub.
+    3. Llama a `dispararCorrida()` de `src/lib/github.ts`, que primero consulta `GET /repos/{GITHUB_REPO}/actions/workflows/corrida.yml/runs` con `status=queued` y luego con `status=in_progress`. Si alguna tiene corridas, no dispara otra y responde `{ ok: true, enCurso: true }`. Si no hay ninguna, hace `POST .../dispatches` con `{ "ref": "main" }` y espera 204.
+    4. Responde `{ ok: true, enCurso: boolean, desde: ultimaCorrida } | { ok: false, error: string }`.
+
+    `dispararCorrida` recibe `fetch`, el token y el repo por parámetro, para probarla sin red. La concurrencia del workflow (`group: corrida`) es la segunda barrera contra corridas dobles.
+  - **Seguimiento en el cliente:** consulta `/api/salud` cada 20 s y solo con la pestaña visible (con `visibilitychange` se pausa al ocultarla).
+    - Termina cuando `ultimaCorrida` es posterior a `desde`. Entonces muestra `actualizacion_ok` o `actualizacion_parcial` (según `fuentesOk`), llama a `router.refresh()` y el botón desaparece si ya no aplica.
+    - Si pasan 20 min sin una corrida nueva, muestra `actualizacion_tarda` y el botón vuelve a habilitarse.
+    - Si el servidor responde `ok: false`, muestra `actualizacion_fallo` y el botón vuelve a habilitarse.
+- **Hecho cuando:**
+  - Pasa el e2e `tests/e2e/lista.spec.ts`: registrarse → agregar 2 productos → recargar → siguen ahí. Además, al iniciar sesión con una lista local, aparece el toast `lista_fusionada` (se busca por `role="status"`).
+  - Pasa `tests/unit/avisos.test.ts`:
+    - `debeResumir(ultimo, hoy)` es `true` solo la primera vez del día.
+    - `seleccionarResumen(alertas)` devuelve como máximo 3 `alerta_nueva` más 1 `resumen_alertas` con el resto.
+    - `siguienteEstado` del seguimiento termina en `ok` cuando cambia `ultimaCorrida` y en `tarda` a los 20 min.
+    - Toda clave de `AVISOS` tiene tipo y texto no vacíos.
+  - Pasa `tests/unit/github.test.ts`, con un `fetch` falso:
+    - Una corrida `queued` o `in_progress` → 0 `POST`.
+    - Ninguna corrida → exactamente 1 `POST` a `dispatches` con `ref: "main"`.
+    - Una respuesta distinta de 204 → `{ ok: false }`.
+    - Sin token → `{ ok: false }` sin llamar a `fetch`.
 
 **15. Anotados.**
-- **Hacer:** `/anotados` con la tabla editable y la server action.
+- **Hacer:** `/anotados` con la tabla editable y la server action. Avisos `anotado_guardado`, `anotado_invalido` y `anotar_sin_sesion` del catálogo del paso 14.
 - **Hecho cuando:** pasa el e2e `tests/e2e/anotados.spec.ts`: anotar un precio menor y más reciente → aparece en azul y reemplaza al automático en `/`.
 
 **16. Alertas en la web.**
-- **Hacer:** `/alertas`, la campana con Realtime (animación 7) y el umbral de ahorro.
+- **Hacer:** `/alertas`, la campana con Realtime (animación 7) y el umbral de ahorro. Cada alerta que llega por Realtime muestra `alerta_nueva` con "Ver" → `/alertas`; guardar el umbral muestra `preferencias_guardadas`. Desde aquí, la acción "Ver" del resumen del día se activa.
 - **Hecho cuando:** pasa la prueba de integración: insertar una alerta para el usuario la muestra en `/alertas`.
 
 **17. Hogar y Dieta.**
-- **Hacer:** `src/data/planes.ts`, `/hogar` y `/dieta`.
+- **Hacer:** `src/data/planes.ts`, `/hogar` y `/dieta`. Avisos `plan_usado` (con "Deshacer", que restaura la lista anterior) y `plan_sumado`.
 - **Hecho cuando:** CUANDO se pulsa "Usar como mi lista" en `/hogar`, EL SISTEMA DEBE cargar los 28 ítems de `PLANES.hogar` (es el conteo del archivo origen).
 
 **18. Calidad.**
@@ -513,7 +592,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
 2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa.
-3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*`.
+3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*`, más `GITHUB_REPO` y `GITHUB_DISPATCH_TOKEN`. El token se crea en GitHub → Settings → Developer settings → Fine-grained tokens: solo este repositorio, permiso **Actions: Read and write** y vencimiento de 1 año (anotar la fecha para renovarlo).
 4. **GitHub:** usar un repo **privado**, cargar los secrets de la sección 6 y lanzar `workflow_dispatch` una vez. Comprobar que aparece una fila nueva en `corridas` y que llega el correo si alguna tienda falla.
 5. **Seguimiento:** a la semana, revisar en el panel de Supabase que el proyecto no se pausó.
 
@@ -528,4 +607,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 | Pausa del plan gratis de Supabase | La corrida escribe en la base a diario; revisar en el panel |
 | exceljs sin mantenimiento | Solo lee un xlsx público; se puede cambiar de librería sin tocar el resto |
 | La redacción de SIPSA cambia | El clima solo se marca con coincidencia explícita; si no, "causa no reportada" |
+| Abuso del botón "Actualizar precios" | Exige sesión, el servidor vuelve a comprobar que los datos estén viejos (> 26 h), no dispara si hay una corrida en cola o en curso, y el workflow tiene `concurrency`. A lo sumo, una corrida extra por día |
+| Fuga o vencimiento del token de GitHub | *Fine-grained*, de un solo repo y solo Actions; vive solo en el servidor de Vercel. Si vence, el botón muestra `actualizacion_fallo` y la corrida diaria sigue igual (usa el token propio del workflow) |
+| Exceso de toasts | Catálogo cerrado, máximo 3 visibles, ninguno por agregar o quitar productos y resumen una vez al día |
 | Términos de uso de las tiendas | 1 consulta por producto al día, pausa de 1 s, User-Agent propio, robots.txt respetado |

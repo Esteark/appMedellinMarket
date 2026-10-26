@@ -19,4 +19,5 @@ paths:
 - Cada animación usa los helpers de `src/lib/animaciones.ts`, que respetan `prefers-reduced-motion`.
 - Arrastrar la hoja inferior siempre tiene alternativa: botón "Cerrar" visible (WCAG 2.5.7).
 - Nunca más de un gráfico Recharts montado por vista: pestañas que montan uno a la vez.
+- Notificaciones: solo con `avisar(clave)` de `src/lib/avisos.ts` (catálogo del paso 14 del blueprint); nunca un texto de toast suelto ni un toast como único lugar de la información. Nada de overlays que bloqueen la app mientras algo carga: el estado de carga va dentro del botón que lo inició.
 - Selectores estables para e2e: `data-testid`, y `data-origen` / `data-minimo` en las celdas de precio (blueprint §6).

@@ -30,7 +30,7 @@ Node fijado en `.nvmrc` (24.22.1); pnpm en `packageManager`. Versiones de depend
 
 ## Stack
 
-Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix) · Supabase (Postgres + RLS + Auth + Realtime) · sin ORM · Recharts · GSAP · Vitest + Playwright · Biome · Vercel + GitHub Actions.
+Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix) · Supabase (Postgres + RLS + Auth + Realtime) · sin ORM · Recharts · GSAP · react-hot-toast · Vitest + Playwright · Biome · Vercel + GitHub Actions.
 
 ## Arquitectura
 
@@ -104,6 +104,7 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 | `SUPABASE_SERVICE_ROLE_KEY`                                       | paso 3                          | scripts, corrida        | igual (secret)                                       |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ADMIN_EMAIL` | nunca (opcionales)              | `src/corrida/correo.ts` | Gmail con contraseña de aplicación                   |
 | `CORRIDA_USER_AGENT`                                              | nunca (tiene valor por defecto) | `src/corrida/tipos.ts`  | `.env.example`                                       |
+| `GITHUB_DISPATCH_TOKEN`, `GITHUB_REPO`                            | nunca (opcionales; paso 14)     | `src/lib/github.ts`     | GitHub fine-grained token, solo Actions R/W (secret) |
 
 `.env.example` se sube y se mantiene al día. `.env.local` nunca.
 
@@ -118,7 +119,7 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 
 ## Innegociables
 
-1. La service role key solo existe en `src/corrida/admin.ts`, `scripts/` y los secrets de GitHub. Nunca en `src/app`, `src/components` ni en una variable `NEXT_PUBLIC_*`.
+1. La service role key solo existe en `src/corrida/admin.ts`, `scripts/` y los secrets de GitHub. Nunca en `src/app`, `src/components` ni en una variable `NEXT_PUBLIC_*`. Igual con `GITHUB_DISPATCH_TOKEN`: solo `src/lib/github.ts` (servidor).
 2. Una corrida que falla no puede pasar en silencio: excepción → exit 1 (GitHub avisa) y correo al admin; tienda en `fallo` → correo.
 3. Respetar robots.txt, User-Agent propio, ≥1 s entre peticiones a la misma tienda. Ísimo no tiene adaptador. Nunca saltar captchas ni logins.
 4. Los fixtures de `tests/fixtures/` se capturan con `pnpm capturar`; nunca se escriben a mano.
