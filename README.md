@@ -212,10 +212,11 @@ Se construye por pasos verificables; cada paso cerrado tiene su etiqueta `paso-N
 | 9–10 | Alertas, correo al admin y workflow diario | ✅ |
 | 11–13 | Base web, catálogo, lista, detalle, fluctuación y gráficos | ✅ |
 | 14 | Cuentas de usuario, notificaciones y botón "Actualizar precios" | ⏳ |
-| 15 | Precios anotados a mano | ⏳ |
-| 16 | Alertas en la web con Realtime | ⏳ |
-| 17 | Planes Hogar y Dieta | ⏳ |
-| 18 | e2e y auditoría de accesibilidad | ⏳ |
+| 15 | Responsive para móvil y tableta, con deslizadores | ⏳ |
+| 16 | Precios anotados a mano | ⏳ |
+| 17 | Alertas en la web con Realtime | ⏳ |
+| 18 | Planes Hogar y Dieta | ⏳ |
+| 19 | e2e y auditoría de accesibilidad | ⏳ |
 
 ---
 

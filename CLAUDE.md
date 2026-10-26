@@ -105,6 +105,7 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `ADMIN_EMAIL` | nunca (opcionales)              | `src/corrida/correo.ts` | Gmail con contraseña de aplicación                   |
 | `CORRIDA_USER_AGENT`                                              | nunca (tiene valor por defecto) | `src/corrida/tipos.ts`  | `.env.example`                                       |
 | `GITHUB_DISPATCH_TOKEN`, `GITHUB_REPO`                            | nunca (opcionales; paso 14)     | `src/lib/github.ts`     | GitHub fine-grained token, solo Actions R/W (secret) |
+| `ENABLE_EXPERIMENTAL_COREPACK=1`                                  | despliegue                      | Vercel (build)          | para que Vercel use pnpm 12 de `packageManager`      |
 
 `.env.example` se sube y se mantiene al día. `.env.local` nunca.
 

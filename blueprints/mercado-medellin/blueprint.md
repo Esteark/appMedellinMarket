@@ -344,6 +344,7 @@ Las variables están en `workspace/.env.example`. En local, `pnpm env:local` gen
 | `CORRIDA_USER_AGENT` | User-Agent de la corrida |
 | `GITHUB_DISPATCH_TOKEN` | Solo Vercel (servidor). Token *fine-grained* de GitHub limitado a este repo con permiso **Actions: Read and write** y nada más. Lo lee solo `src/lib/github.ts`. **Nunca** en una variable `NEXT_PUBLIC_*`. Opcional: sin él, el botón "Actualizar precios" muestra el aviso `actualizacion_fallo` |
 | `GITHUB_REPO` | Solo Vercel (servidor). `dueño/repo` del workflow, p. ej. `Esteark/appMedellinMarket` |
+| `ENABLE_EXPERIMENTAL_COREPACK` | Solo Vercel, valor `1`. Vercel documenta pnpm hasta la 10 y el lockfile es de pnpm 12; con Corepack usa el `packageManager` de `package.json` |
 
 Cómo carga cada herramienta las variables:
 - Los scripts importan `./cargar-env` como su **primer** import.
@@ -504,7 +505,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - Accesibilidad: `role="status"` con `aria-live="polite"` (lo trae la librería) y `aria-live="assertive"` para los errores. Las acciones son botones reales que se alcanzan con teclado.
   - **Un toast nunca es el único lugar de la información:** lo que avisa también se ve en la página (encabezado, banner, `/alertas`, estado del botón o error junto al campo del formulario).
   - `src/lib/avisos.ts` contiene el catálogo único `AVISOS` (clave → tipo y texto) y `avisar(clave, datos?)`. Ningún componente escribe textos de toast sueltos.
-- **Catálogo de avisos.** Los pasos 15, 16 y 17 usan las claves de su fila; si hace falta un aviso nuevo, se agrega aquí primero.
+- **Catálogo de avisos.** Los pasos 16, 17 y 18 usan las claves de su fila; si hace falta un aviso nuevo, se agrega aquí primero.
 
   | Clave | Cuándo | Tipo | Texto |
   |---|---|---|---|
@@ -529,19 +530,19 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   | `actualizacion_parcial` | Terminó con fuentes caídas | aviso | "Precios actualizados, pero sin datos de: {tiendas}." |
   | `actualizacion_fallo` | GitHub no aceptó el disparo o falta el token | error | "No se pudo iniciar la actualización. Intenta más tarde." |
   | `actualizacion_tarda` | 20 min sin una corrida nueva | error | "La actualización no terminó en 20 minutos. Si falló, el admin recibe un correo." |
-  | `alerta_nueva` | Llega una alerta por Realtime (paso 16; junto con la animación 7) | info + "Ver" | El `mensaje` de la alerta |
-  | `preferencias_guardadas` | Umbral de ahorro guardado (paso 16) | éxito | "Preferencias guardadas." |
-  | `anotado_guardado` | Server action de anotados correcta (paso 15) | éxito | "Precio anotado: {precio} en {tienda}." |
+  | `alerta_nueva` | Llega una alerta por Realtime (paso 17; junto con la animación 7) | info + "Ver" | El `mensaje` de la alerta |
+  | `preferencias_guardadas` | Umbral de ahorro guardado (paso 17) | éxito | "Preferencias guardadas." |
+  | `anotado_guardado` | Server action de anotados correcta (paso 16) | éxito | "Precio anotado: {precio} en {tienda}." |
   | `anotado_invalido` | zod rechaza el precio (también junto al campo) | error | "El precio debe ser un entero entre 100 y 10.000.000." |
   | `anotar_sin_sesion` | Intentar anotar sin sesión | info + "Ingresar" | "Inicia sesión para anotar precios." |
-  | `plan_usado` | "Usar como mi lista" (paso 17) | info + "Deshacer" | "Tu lista ahora es el plan {plan} ({n} productos)." |
-  | `plan_sumado` | "Sumar a mi lista" (paso 17) | éxito | "Sumamos {n} productos del plan {plan} a tu lista." |
+  | `plan_usado` | "Usar como mi lista" (paso 18) | info + "Deshacer" | "Tu lista ahora es el plan {plan} ({n} productos)." |
+  | `plan_sumado` | "Sumar a mi lista" (paso 18) | éxito | "Sumamos {n} productos del plan {plan} a tu lista." |
   | `sin_conexion` | Una server action o un `fetch` falla por red | error | "Sin conexión. Revisa tu internet e intenta de nuevo." |
 
   Agregar o quitar un producto con el stepper **no** genera toast: ya lo comunican la animación 1 y el contador, y un toast por clic sería ruido.
 - **Resumen del día** (`src/components/avisos/resumen-del-dia.tsx`, montado en el layout):
   - Sale una vez por día y por dispositivo. La clave `mercado-medellin:resumen` guarda `hoyBogota()`; se lee y se escribe dentro de try/catch, y si falla no se muestra (mejor nada que repetirlo en cada carga).
-  - **Con sesión:** las alertas no leídas de hoy del usuario, ordenadas con `ordenarAlertas`; un toast `alerta_nueva` por cada una hasta 3 y, si hay más, `resumen_alertas` con el resto. Mientras no exista `/alertas` (paso 16), la acción "Ver" no se muestra.
+  - **Con sesión:** las alertas no leídas de hoy del usuario, ordenadas con `ordenarAlertas`; un toast `alerta_nueva` por cada una hasta 3 y, si hay más, `resumen_alertas` con el resto. Mientras no exista `/alertas` (paso 17), la acción "Ver" no se muestra.
   - **Sin sesión, o con sesión y sin alertas:** `datos_viejos` si la corrida tiene más de 26 h y `fuentes_caidas` si hay fuentes caídas.
   - Si todo está bien, no sale nada.
 - **Botón "Actualizar precios"** (`src/components/avisos/actualizar-precios.tsx`, dentro del banner rojo del encabezado):
@@ -572,27 +573,54 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
     - Una respuesta distinta de 204 → `{ ok: false }`.
     - Sin token → `{ ok: false }` sin llamar a `fetch`.
 
-**15. Anotados.**
+**15. Responsive móvil y tableta, con deslizadores.**
+- **Hacer:**
+  - **Puntos de quiebre:** móvil < 640 px, tableta 640–1023 px y escritorio ≥ 1024 px.
+    - Rejilla del catálogo: 2 columnas en móvil, 3 en tableta, 3 en escritorio con el carrito lateral y 4 desde 1280 px.
+    - El carrito lateral sticky de 340 px empieza en 1024 px. En tableta y móvil va la barra inferior con su hoja.
+    - Actualizar la fila **Grilla catálogo** de `CLAUDE.md` con estos valores.
+  - **Deslizador** `src/components/deslizador.tsx` (`"use client"`), una fila horizontal reutilizable:
+    - Desplazamiento con `scroll-snap` y barra de desplazamiento oculta.
+    - Un degradado en cada borde que aparece solo cuando hay más contenido hacia ese lado. Se calcula con la posición del scroll y un `ResizeObserver`.
+    - Flechas ‹ › que solo se ven con puntero fino (`@media (hover: hover) and (pointer: fine)`) y avanzan el 80 % del ancho. En pantallas táctiles se desliza con el dedo.
+    - Al recibir foco con el teclado, cada opción hace `scrollIntoView({ inline: "nearest" })`.
+    - Con `prefers-reduced-motion`, el desplazamiento es instantáneo.
+  - **Usan el deslizador:** los chips de grupo, los chips de tienda, las pestañas (la activa se centra al cargar), "En fluctuación" y, en los pasos siguientes, los chips de planes y las pestañas de gráficos.
+  - **Encabezado compacto en móvil:** una sola línea con "Actualizado …", los puntos y "X/8 fuentes OK". La lista "Sin datos recientes" va plegada en un `<details>` ("Ver fuentes"). El banner rojo se acorta a "Precios de hace {n} días" con el botón del paso 14.
+  - **Objetivos táctiles:** con `pointer: coarse`, todo control mide al menos 44 × 44 px (stepper, chips, "Cerrar", pestañas). Con puntero fino basta el mínimo de WCAG 2.5.8 (24 px).
+  - **iPhone y Android con muesca:** `viewport-fit=cover` (export `viewport` del layout). La barra del carrito y las hojas suman `env(safe-area-inset-bottom)` a su padding inferior, y el contenido deja espacio para la barra.
+  - **Formularios:** los `input` usan `font-size` ≥ 16 px en móvil para que iOS no haga zoom al enfocarlos. Esto aplica a la búsqueda y a los formularios de los pasos 14 y 16.
+  - **Hojas:** en móvil apaisado (alto < 500 px) la hoja usa `max-h-[96vh]`. En tableta y escritorio queda centrada con un ancho máximo de 560 px.
+  - **Carrito en móvil:** el botón "Ver lista" se integra en la barra (toda la barra abre la hoja) en lugar de ocupar una fila aparte.
+  - **Tablas anchas** (anotados, paso 16): desplazamiento horizontal dentro de su contenedor, con la primera columna (producto) fija.
+- **Hecho cuando:** pasa el e2e `tests/e2e/responsive.spec.ts` en tres viewports: 360 × 740 táctil (`hasTouch`, `isMobile`), 768 × 1024 táctil y 1280 × 800 con ratón. Debe comprobar:
+  - En los tres, `/` y `/antojos` no tienen desplazamiento horizontal (`scrollWidth <= innerWidth`).
+  - La rejilla tiene 2, 3 y 3 columnas respectivamente.
+  - Las flechas del deslizador se ven solo en 1280 × 800, y pulsar › varias veces deja visible el último chip de tiendas.
+  - En los viewports táctiles, todo botón o enlace visible mide al menos 44 px de alto.
+  - La búsqueda tiene `font-size` ≥ 16 px en 360 × 740.
+
+**16. Anotados.**
 - **Hacer:** `/anotados` con la tabla editable y la server action. Avisos `anotado_guardado`, `anotado_invalido` y `anotar_sin_sesion` del catálogo del paso 14.
 - **Hecho cuando:** pasa el e2e `tests/e2e/anotados.spec.ts`: anotar un precio menor y más reciente → aparece en azul y reemplaza al automático en `/`.
 
-**16. Alertas en la web.**
+**17. Alertas en la web.**
 - **Hacer:** `/alertas`, la campana con Realtime (animación 7) y el umbral de ahorro. Cada alerta que llega por Realtime muestra `alerta_nueva` con "Ver" → `/alertas`; guardar el umbral muestra `preferencias_guardadas`. Desde aquí, la acción "Ver" del resumen del día se activa.
 - **Hecho cuando:** pasa la prueba de integración: insertar una alerta para el usuario la muestra en `/alertas`.
 
-**17. Hogar y Dieta.**
+**18. Hogar y Dieta.**
 - **Hacer:** `src/data/planes.ts`, `/hogar` y `/dieta`. Avisos `plan_usado` (con "Deshacer", que restaura la lista anterior) y `plan_sumado`.
 - **Hecho cuando:** CUANDO se pulsa "Usar como mi lista" en `/hogar`, EL SISTEMA DEBE cargar los 28 ítems de `PLANES.hogar` (es el conteo del archivo origen).
 
-**18. Calidad.**
+**19. Calidad.**
 - **Hacer:** `tests/e2e/publico.spec.ts` (sin sesión se ven precios) y axe en `/`, `/anotados` y `/hogar`.
 - **Hecho cuando:** CUANDO corre `pnpm test:e2e`, EL SISTEMA DEBE salir con 0 y sin violaciones `serious` ni `critical`.
 
 ## 11. Lanzamiento (manual, con tus cuentas)
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
-2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa.
-3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*`, más `GITHUB_REPO` y `GITHUB_DISPATCH_TOKEN`. El token se crea en GitHub → Settings → Developer settings → Fine-grained tokens: solo este repositorio, permiso **Actions: Read and write** y vencimiento de 1 año (anotar la fecha para renovarlo).
+2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa. En Auth → URL Configuration, poner como *Site URL* el dominio de Vercel y agregar `https://<dominio>/**` (y `http://localhost:3000/**`) a las *Redirect URLs*; sin esto, los enlaces de confirmación y de recuperación del paso 14 llevan a localhost.
+3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*` y `ENABLE_EXPERIMENTAL_COREPACK=1`, más `GITHUB_REPO` y `GITHUB_DISPATCH_TOKEN`. El token se crea en GitHub → Settings → Developer settings → Fine-grained tokens: solo este repositorio, permiso **Actions: Read and write** y vencimiento de 1 año (anotar la fecha para renovarlo).
 4. **GitHub:** usar un repo **privado**, cargar los secrets de la sección 6 y lanzar `workflow_dispatch` una vez. Comprobar que aparece una fila nueva en `corridas` y que llega el correo si alguna tienda falla.
 5. **Seguimiento:** a la semana, revisar en el panel de Supabase que el proyecto no se pausó.
 
