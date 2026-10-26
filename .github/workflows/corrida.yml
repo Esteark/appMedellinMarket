@@ -1,0 +1,26 @@
+name: corrida
+on:
+  schedule: [{ cron: "17 11 * * *" }] # 6:17 a. m. Bogotá; fuera de la hora en punto
+  workflow_dispatch: {}
+concurrency: { group: corrida, cancel-in-progress: false }
+permissions: { contents: read }
+jobs:
+  corrida:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm corrida
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "465"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          CORRIDA_USER_AGENT: "MercadoMedellinBot/1.0 (+uso familiar; contacto en README)"
