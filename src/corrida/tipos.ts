@@ -29,6 +29,8 @@ export type Hallazgo = {
   precio: number;
   sku: string | null;
   url: string;
+  /** Fecha del dato si no es la de hoy (SIPSA: fecha del boletín). */
+  fecha?: string;
 };
 
 export type Adaptador = {

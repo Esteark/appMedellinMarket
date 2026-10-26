@@ -25,10 +25,12 @@ export function fetchFalso(
     pedidas.push(url);
     const archivo = archivoDe.get(url);
     if (!archivo) return new Response("", { status: 404 });
-    const texto = readFileSync(`${carpeta}/${archivo}`, "utf8");
-    return new Response(variar ? variar(archivo, texto) : texto, {
-      status: 200,
-    });
+    // Bytes tal cual: hay fixtures binarios (xlsx, pdf).
+    const bytes = readFileSync(`${carpeta}/${archivo}`);
+    return new Response(
+      variar ? variar(archivo, bytes.toString("utf8")) : bytes,
+      { status: 200 },
+    );
   }) as typeof fetch;
   return { fetch: falso, pedidas };
 }

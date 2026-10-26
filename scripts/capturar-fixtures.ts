@@ -4,13 +4,14 @@
 // Uso: pnpm capturar <vtex|euro|sipsa>
 import "./cargar-env";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { fechasCandidatas, urlsBoletin } from "@/corrida/adaptadores/sipsa";
 import { urlConsulta } from "@/corrida/adaptadores/vtex";
 import { permitido } from "@/corrida/robots";
 import { contextoReal } from "@/corrida/tipos";
 
 const grupo = process.argv[2];
 const ctx = contextoReal();
-const capturas: Record<string, string> = {}; // archivo → contenido
+const capturas: Record<string, Buffer> = {}; // archivo → bytes tal cual
 const urls: Record<string, string> = {}; // archivo → url
 
 async function capturar(archivo: string, url: string): Promise<string> {
@@ -21,10 +22,10 @@ async function capturar(archivo: string, url: string): Promise<string> {
   });
   await ctx.esperar(ctx.pausaMs);
   if (!res.ok) throw new Error(`${url} respondió ${res.status}`);
-  const texto = await res.text();
-  capturas[archivo] = texto;
+  const bytes = Buffer.from(await res.arrayBuffer());
+  capturas[archivo] = bytes;
   urls[archivo] = url;
-  return texto;
+  return bytes.toString("utf8");
 }
 
 const consulta = (termino: string | null, sku: string | null = null) =>
@@ -64,9 +65,25 @@ try {
       "croissant.html",
       `${euro}/pan-croissant-x6und--300gr-esponjados-072/p`,
     );
+  } else if (grupo === "sipsa") {
+    await capturar("robots.txt", "https://www.dane.gov.co/robots.txt");
+    // El boletín más nuevo publicado entre hoy y 3 días atrás.
+    let fecha: string | undefined;
+    for (const candidata of fechasCandidatas(ctx.hoy)) {
+      try {
+        await capturar("anexo.xlsx", urlsBoletin(candidata).anexo);
+        fecha = candidata;
+        break;
+      } catch {
+        // no publicado ese día (fin de semana, festivo)
+      }
+    }
+    if (!fecha)
+      throw new Error("no hay boletín SIPSA de hoy ni de 3 días atrás");
+    await capturar("boletin.pdf", urlsBoletin(fecha).boletin);
   } else {
     throw new Error(
-      `Grupo no soportado todavía: ${grupo ?? "(ninguno)"}. Use vtex o euro.`,
+      `Grupo no soportado: ${grupo ?? "(ninguno)"}. Use vtex, euro o sipsa.`,
     );
   }
 } catch (e) {

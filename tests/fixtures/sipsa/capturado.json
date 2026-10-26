@@ -1,0 +1,9 @@
+{
+  "fecha": "2026-10-26",
+  "userAgent": "MercadoMedellinBot/1.0 (+uso familiar; contacto en README)",
+  "urls": {
+    "robots.txt": "https://www.dane.gov.co/robots.txt",
+    "anexo.xlsx": "https://www.dane.gov.co/files/operaciones/SIPSA/anex-SIPSADiario-26oct2026.xlsx",
+    "boletin.pdf": "https://www.dane.gov.co/files/operaciones/SIPSA/bol-SIPSADiario-26oct2026.pdf"
+  }
+}
