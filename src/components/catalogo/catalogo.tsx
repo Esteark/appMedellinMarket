@@ -8,6 +8,7 @@ import { useLista } from "@/components/carrito/use-lista";
 import { cascada, pulso, volar } from "@/lib/animaciones";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { cn } from "@/lib/utils";
+import { Fluctuacion } from "./fluctuacion";
 import { Tarjeta } from "./tarjeta";
 
 gsap.registerPlugin(useGSAP);
@@ -151,6 +152,11 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
             </p>
           )}
         </section>
+        <Fluctuacion
+          productos={productos.filter(
+            (p) => grupos.includes(p.grupo) && p.serie.length >= 2,
+          )}
+        />
       </div>
       <Carrito
         lista={lista}

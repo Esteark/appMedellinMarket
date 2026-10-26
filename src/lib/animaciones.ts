@@ -123,3 +123,76 @@ export function deslizar(
     ease: "power3.out",
   });
 }
+
+/** 5 · Las barras por tienda crecen desde la izquierda. */
+export function crecer(objetivos: Objetivo) {
+  if (!gsap.utils.toArray(objetivos).length) return;
+  gsap.from(objetivos, {
+    scaleX: 0,
+    transformOrigin: "left center",
+    duration: d(0.5),
+    stagger: d(0.06),
+    delay: d(0.2),
+    ease: "power2.out",
+  });
+}
+
+/** 5 · Las líneas de los mini gráficos se dibujan. */
+export function dibujar(lineas: SVGPathElement[]) {
+  for (const linea of lineas) {
+    const largo = linea.getTotalLength();
+    gsap.fromTo(
+      linea,
+      { strokeDasharray: largo, strokeDashoffset: largo },
+      { strokeDashoffset: 0, duration: d(0.7), ease: "power2.out" },
+    );
+  }
+}
+
+/** Entrada de una hoja inferior y su fondo. */
+export function abrirHoja(hoja: Element, fondo: Element) {
+  gsap.fromTo(fondo, { opacity: 0 }, { opacity: 1, duration: d(0.25) });
+  gsap.fromTo(
+    hoja,
+    { y: "100%" },
+    { y: 0, duration: d(0.38), ease: "power3.out" },
+  );
+}
+
+/** Salida de una hoja inferior; `alTerminar` la desmonta. */
+export function cerrarHoja(
+  hoja: Element,
+  fondo: Element,
+  alTerminar: () => void,
+) {
+  gsap.to(fondo, { opacity: 0, duration: d(0.2) });
+  gsap.to(hoja, {
+    y: "100%",
+    duration: d(0.28),
+    ease: "power2.in",
+    onComplete: alTerminar,
+  });
+}
+
+/**
+ * 4 · La hoja se cierra arrastrando su asa hacia abajo (> 110 px); si no, vuelve.
+ * El botón "Cerrar" siempre es la alternativa (WCAG 2.5.7). Devuelve cómo deshacerlo.
+ */
+export async function arrastrable(
+  hoja: Element,
+  asa: Element,
+  cerrar: () => void,
+) {
+  const { Draggable } = await import("gsap/Draggable");
+  gsap.registerPlugin(Draggable);
+  const [arrastre] = Draggable.create(hoja, {
+    type: "y",
+    trigger: asa,
+    bounds: { minY: 0, maxY: 2000 },
+    onDragEnd() {
+      if (this.y > 110) cerrar();
+      else gsap.to(hoja, { y: 0, duration: d(0.25), ease: "power3.out" });
+    },
+  });
+  return () => arrastre.kill();
+}

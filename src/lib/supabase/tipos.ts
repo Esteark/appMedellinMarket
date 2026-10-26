@@ -260,7 +260,21 @@ isOneToOne: true
                 }
           }
           Views: {
-            "precio_efectivo": {
+            "historial_minimo": {
+                  Row: {
+                    "fecha": string | null,"precio": number | null,"producto_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "precios_historial_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"precio_efectivo": {
                   Row: {
                     "estado": string | null,"fecha": string | null,"fuente": string | null,"precio": number | null,"producto_id": string | null,"revisar": boolean | null,"tienda_id": string | null
                   }

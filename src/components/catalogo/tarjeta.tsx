@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,11 @@ export function Tarjeta({
         cantidad > 0 && "border-save",
       )}
     >
-      <div className="flex flex-col gap-0.5 px-3 pt-3 pb-1.5">
+      <Link
+        href={`/producto/${p.id}`}
+        scroll={false}
+        className="flex flex-col gap-0.5 rounded-t-[14px] px-3 pt-3 pb-1.5"
+      >
         <span
           data-emoji
           className="w-max text-3xl leading-tight"
@@ -68,7 +73,7 @@ export function Tarjeta({
               <Etiqueta key={e} tipo={e} cambio={p.cambio} deHoy={p.deHoy} />
             ))}
         </div>
-      </div>
+      </Link>
       <div className="mt-auto flex items-center justify-between gap-1.5 px-2.5 pt-1.5 pb-2.5">
         <button
           type="button"

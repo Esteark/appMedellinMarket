@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: "Compara precios de mercado en las tiendas de Medellín.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
@@ -27,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Pestanas />
         </Suspense>
         {children}
+        {modal}
       </body>
     </html>
   );

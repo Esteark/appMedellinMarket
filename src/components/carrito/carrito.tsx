@@ -1,7 +1,9 @@
 "use client";
 
 import { useGSAP } from "@gsap/react";
-import { type Ref, useMemo, useRef } from "react";
+import { type Ref, useMemo, useRef, useState } from "react";
+import { GraficosLista } from "@/components/graficos/graficos-lista";
+import { Hoja } from "@/components/hoja";
 import { contar } from "@/lib/animaciones";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
@@ -52,6 +54,21 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
     };
   }, [lista, productos, tiendas]);
 
+  const [hojaAbierta, setHojaAbierta] = useState(false);
+  const [graficos, setGraficos] = useState(false);
+  const detalleLista = items.length > 0 && (
+    <ul className="flex flex-col gap-1.5 text-sm">
+      {items.map((i) => (
+        <li key={i.id} className="flex justify-between gap-2">
+          <span className="truncate">
+            {porId.get(i.id)?.emoji} {porId.get(i.id)?.nombre ?? i.id} × {i.q}
+          </span>
+          <span className="flex-none text-muted-foreground">{i.tienda}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
   // 2 · Total y ahorro cuentan hasta el nuevo valor.
   const mostrado = useRef({ total: 0, ahorro: 0 });
   const totalEl = useRef<HTMLElement>(null);
@@ -74,6 +91,7 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
         <div className="flex min-w-0 items-center gap-2.5">
           <div
             ref={icono}
+            data-carrito-icono
             aria-hidden="true"
             className="relative grid size-[42px] flex-none place-items-center rounded-xl bg-secondary text-xl"
           >
@@ -107,19 +125,46 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
         </div>
       </div>
       {items.length > 0 && (
-        <ul className="mt-3 hidden flex-col gap-1.5 border-t pt-3 text-sm min-[900px]:flex">
-          {items.map((i) => (
-            <li key={i.id} className="flex justify-between gap-2">
-              <span className="truncate">
-                {porId.get(i.id)?.emoji} {porId.get(i.id)?.nombre ?? i.id} ×{" "}
-                {i.q}
-              </span>
-              <span className="flex-none text-muted-foreground">
-                {i.tienda}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <button
+          type="button"
+          onClick={() => setHojaAbierta(true)}
+          className="mt-2 w-full rounded-[10px] border py-1.5 text-sm font-medium min-[900px]:hidden"
+        >
+          Ver mi lista y gráficos
+        </button>
+      )}
+      {items.length > 0 && (
+        <div className="mt-3 hidden flex-col gap-3 border-t pt-3 min-[900px]:flex">
+          {detalleLista}
+          <button
+            type="button"
+            aria-expanded={graficos}
+            onClick={() => setGraficos((g) => !g)}
+            className="self-start text-sm font-medium text-anot-ink"
+          >
+            {graficos ? "Ocultar gráficos" : "Ver gráficos"}
+          </button>
+          {graficos && (
+            <GraficosLista
+              lista={lista}
+              productos={productos}
+              tiendas={tiendas}
+            />
+          )}
+        </div>
+      )}
+      {hojaAbierta && (
+        <Hoja titulo="lista-titulo" alCerrar={() => setHojaAbierta(false)}>
+          <h2 id="lista-titulo" className="text-[19px] font-semibold">
+            Mi lista
+          </h2>
+          {detalleLista}
+          <GraficosLista
+            lista={lista}
+            productos={productos}
+            tiendas={tiendas}
+          />
+        </Hoja>
       )}
     </aside>
   );
