@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { Encabezado } from "@/components/encabezado";
+import { Pestanas } from "@/components/pestanas";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,6 +22,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Suspense fallback={<div className="h-10 border-b bg-card" />}>
           <Encabezado />
+        </Suspense>
+        <Suspense fallback={<div className="h-11 border-b" />}>
+          <Pestanas />
         </Suspense>
         {children}
       </body>

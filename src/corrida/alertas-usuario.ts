@@ -5,7 +5,9 @@ import {
   alertaSubida,
   alertasMasBarato,
 } from "@/lib/alertas/reglas";
+import { restarDias } from "@/lib/fecha";
 import type { Lista, Precios } from "@/lib/precios/lista";
+import { todas } from "@/lib/supabase/paginar";
 import type { TablesInsert } from "@/lib/supabase/tipos";
 
 const TIPOS_USUARIO = [
@@ -14,28 +16,6 @@ const TIPOS_USUARIO = [
   "subida",
   "caro_por_clima",
 ];
-
-type Pagina<T> = PromiseLike<{
-  data: T[] | null;
-  error: { message: string } | null;
-}>;
-
-/** PostgREST corta en 1000 filas: pide de a 1000 hasta que no venga una página llena. */
-async function todas<T>(
-  pedir: (desde: number, hasta: number) => Pagina<T>,
-  que: string,
-): Promise<T[]> {
-  const filas: T[] = [];
-  for (let desde = 0; ; desde += 1000) {
-    const { data, error } = await pedir(desde, desde + 999);
-    if (error) throw new Error(`${que}: ${error.message}`);
-    filas.push(...(data ?? []));
-    if (!data || data.length < 1000) return filas;
-  }
-}
-
-const restarDias = (fecha: string, dias: number) =>
-  new Date(Date.parse(fecha) - dias * 86_400_000).toISOString().slice(0, 10);
 
 /**
  * Calcula las alertas de cada usuario con lista y las escribe. Idempotente: antes de insertar

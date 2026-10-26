@@ -1,7 +1,7 @@
 // Prueba de humo: arranca el build de producción (`next start` en el puerto 3100), pide una
 // ruta y comprueba la respuesta. Sale 0 si todo cuadra, 1 si no. Siempre apaga el servidor.
 //
-// Uso: pnpm humo [--ruta api/salud] [--estado 200] [--contiene texto]... [--claves a,b]
+// Uso: pnpm humo [--ruta .] [--estado 200] [--contiene texto]... [--claves a,b]
 // --ruta va SIN barra inicial (Git Bash convierte "/x" en una ruta de Windows); "." = "/".
 // Si la respuesta es JSON con estado 200, además exige `ok === true`.
 import { spawn } from "node:child_process";
@@ -10,7 +10,7 @@ import { parseArgs } from "node:util";
 const PUERTO = 3100;
 const { values } = parseArgs({
   options: {
-    ruta: { type: "string", default: "api/salud" },
+    ruta: { type: "string", default: "." },
     estado: { type: "string", default: "200" },
     contiene: { type: "string", multiple: true, default: [] },
     claves: { type: "string", default: "" },

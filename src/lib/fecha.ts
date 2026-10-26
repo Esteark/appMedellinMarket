@@ -33,3 +33,10 @@ export function cuando(iso: string, ahora: Date = new Date()): string {
   }).format(instante);
   return `${dia} ${hora}`;
 }
+
+/** "AAAA-MM-DD" menos `dias` (aritmética de calendario, sin zona horaria). */
+export function restarDias(fecha: string, dias: number): string {
+  return new Date(Date.parse(fecha) - dias * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
