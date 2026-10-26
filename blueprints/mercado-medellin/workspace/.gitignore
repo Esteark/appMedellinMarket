@@ -1,0 +1,37 @@
+# dependencias
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# pruebas
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# env: los valores reales nunca se suben; la plantilla sí (la negación va DESPUÉS del patrón)
+.env*
+!.env.example
+
+# supabase local
+supabase/.branches
+supabase/.temp
+
+# carpeta temporal del scaffold en el Bootstrap
+/tmp-scaffold/
+
+# varios
+.DS_Store
+*.pem
+npm-debug.log*
+pnpm-debug.log*
+.vercel
+.claude/settings.local.json

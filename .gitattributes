@@ -1,0 +1,6 @@
+# LF en todo el repo: Biome formatea con LF y Windows (core.autocrlf) no debe reescribirlo.
+* text=auto eol=lf
+*.xlsx binary
+*.pdf binary
+*.png binary
+*.ico binary

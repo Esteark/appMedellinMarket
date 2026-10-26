@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install --frozen-lockfile)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm format)",
+      "Bash(pnpm build)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm humo:*)",
+      "Bash(pnpm env:local)",
+      "Bash(pnpm migrar)",
+      "Bash(pnpm gen:tipos)",
+      "Bash(pnpm corrida --ayuda)",
+      "Bash(pnpm capturar:*)",
+      "Bash(pnpm add -D @axe-core/playwright)",
+      "Bash(pnpm exec supabase init)",
+      "Bash(pnpm exec supabase status)",
+      "Bash(pnpm exec supabase start)",
+      "Bash(pnpm exec supabase stop)",
+      "Bash(pnpm exec supabase db reset)",
+      "Bash(pnpm exec supabase test db)",
+      "Bash(pnpm exec supabase migration new:*)",
+      "Bash(pnpm exec biome check .)",
+      "Bash(pnpm exec biome check --write .)",
+      "Bash(pnpm exec tsc --noEmit)",
+      "Bash(pnpm exec playwright install chromium)",
+      "Bash(docker info)",
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(wc -l)",
+      "Bash(tail -n 1)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add -A)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "deny": [
+      "Read(./.env.local)",
+      "Bash(git push:*)",
+      "Bash(pnpm exec supabase link:*)",
+      "Bash(pnpm exec supabase db push:*)",
+      "Bash(pnpm exec supabase db reset --linked:*)"
+    ]
+  }
+}

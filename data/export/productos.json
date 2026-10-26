@@ -1,0 +1,1010 @@
+{
+  "aceite": {
+    "emoji": "🫗",
+    "grupo": "Despensa",
+    "id": "aceite",
+    "nombre": "Aceite de girasol",
+    "unidad": "1 L"
+  },
+  "aceite_oliva": {
+    "emoji": "🫒",
+    "grupo": "Despensa",
+    "id": "aceite_oliva",
+    "nombre": "Aceite de oliva",
+    "unidad": "500 ml"
+  },
+  "aceitunas": {
+    "emoji": "🫒",
+    "grupo": "Gourmet",
+    "id": "aceitunas",
+    "nombre": "Aceitunas",
+    "unidad": "300 g"
+  },
+  "aguacate": {
+    "emoji": "🥑",
+    "grupo": "Frutas",
+    "id": "aguacate",
+    "nombre": "Aguacate hass",
+    "unidad": "kg"
+  },
+  "ahuyama": {
+    "emoji": "🎃",
+    "grupo": "Verduras",
+    "id": "ahuyama",
+    "nombre": "Ahuyama",
+    "unidad": "kg"
+  },
+  "ajo": {
+    "emoji": "🧄",
+    "grupo": "Verduras",
+    "id": "ajo",
+    "nombre": "Ajo",
+    "unidad": "cabeza"
+  },
+  "apio": {
+    "emoji": "🥬",
+    "grupo": "Verduras",
+    "id": "apio",
+    "nombre": "Apio",
+    "unidad": "manojo"
+  },
+  "arepa": {
+    "emoji": "🫓",
+    "grupo": "Granos",
+    "id": "arepa",
+    "nombre": "Arepa de maíz x5",
+    "unidad": "paquete"
+  },
+  "arequipe": {
+    "emoji": "🍮",
+    "grupo": "Mecato",
+    "id": "arequipe",
+    "nombre": "Arequipe",
+    "unidad": "500 g"
+  },
+  "aromatica": {
+    "emoji": "🍵",
+    "grupo": "Despensa",
+    "id": "aromatica",
+    "nombre": "Aromática x20",
+    "unidad": "caja"
+  },
+  "arracacha": {
+    "emoji": "🥕",
+    "grupo": "Tubérculos",
+    "id": "arracacha",
+    "nombre": "Arracacha",
+    "unidad": "kg"
+  },
+  "arroz": {
+    "emoji": "🍚",
+    "grupo": "Granos",
+    "id": "arroz",
+    "nombre": "Arroz",
+    "unidad": "1 kg"
+  },
+  "arveja_seca": {
+    "emoji": "🫘",
+    "grupo": "Granos",
+    "id": "arveja_seca",
+    "nombre": "Arveja seca",
+    "unidad": "500 g"
+  },
+  "arveja_verde": {
+    "emoji": "🫛",
+    "grupo": "Verduras",
+    "id": "arveja_verde",
+    "nombre": "Arveja verde desgranada",
+    "unidad": "kg"
+  },
+  "atun": {
+    "emoji": "🥫",
+    "grupo": "Proteínas",
+    "id": "atun",
+    "nombre": "Atún en lata",
+    "unidad": "160 g"
+  },
+  "avena": {
+    "emoji": "🥣",
+    "grupo": "Granos",
+    "id": "avena",
+    "nombre": "Avena en hojuelas",
+    "unidad": "500 g"
+  },
+  "azucar": {
+    "emoji": "🍬",
+    "grupo": "Despensa",
+    "id": "azucar",
+    "nombre": "Azúcar",
+    "unidad": "1 kg"
+  },
+  "banano": {
+    "emoji": "🍌",
+    "grupo": "Frutas",
+    "id": "banano",
+    "nombre": "Banano",
+    "unidad": "kg"
+  },
+  "blanqueador": {
+    "emoji": "🧴",
+    "grupo": "Aseo",
+    "id": "blanqueador",
+    "nombre": "Blanqueador",
+    "unidad": "1 L"
+  },
+  "bocadillo": {
+    "emoji": "🟥",
+    "grupo": "Mecato",
+    "id": "bocadillo",
+    "nombre": "Bocadillo veleño",
+    "unidad": "500 g"
+  },
+  "bolsas_basura": {
+    "emoji": "🗑️",
+    "grupo": "Aseo",
+    "id": "bolsas_basura",
+    "nombre": "Bolsas de basura x10",
+    "unidad": "paquete"
+  },
+  "brie": {
+    "emoji": "🧀",
+    "grupo": "Gourmet",
+    "id": "brie",
+    "nombre": "Queso brie",
+    "unidad": "125 g"
+  },
+  "brocoli": {
+    "emoji": "🥦",
+    "grupo": "Verduras",
+    "id": "brocoli",
+    "nombre": "Brócoli",
+    "unidad": "unidad"
+  },
+  "cafe": {
+    "emoji": "☕",
+    "grupo": "Despensa",
+    "id": "cafe",
+    "nombre": "Café molido",
+    "unidad": "500 g"
+  },
+  "caldo": {
+    "emoji": "🧊",
+    "grupo": "Despensa",
+    "id": "caldo",
+    "nombre": "Caldo de gallina en cubos x8",
+    "unidad": "caja"
+  },
+  "cebolla": {
+    "emoji": "🧅",
+    "grupo": "Verduras",
+    "id": "cebolla",
+    "nombre": "Cebolla cabezona",
+    "unidad": "kg"
+  },
+  "cebolla_morada": {
+    "emoji": "🧅",
+    "grupo": "Verduras",
+    "id": "cebolla_morada",
+    "nombre": "Cebolla morada",
+    "unidad": "kg"
+  },
+  "cebollin": {
+    "emoji": "🌿",
+    "grupo": "Verduras",
+    "id": "cebollin",
+    "nombre": "Cebollín",
+    "unidad": "manojo"
+  },
+  "cerdo": {
+    "emoji": "🥓",
+    "grupo": "Proteínas",
+    "id": "cerdo",
+    "nombre": "Cerdo (chuleta)",
+    "unidad": "kg"
+  },
+  "cerveza": {
+    "emoji": "🍺",
+    "grupo": "Bebidas",
+    "id": "cerveza",
+    "nombre": "Cerveza lata x6",
+    "unidad": "6 × 330 ml"
+  },
+  "chocolate": {
+    "emoji": "🍫",
+    "grupo": "Despensa",
+    "id": "chocolate",
+    "nombre": "Chocolate de mesa",
+    "unidad": "500 g"
+  },
+  "chocolate_oscuro": {
+    "emoji": "🍫",
+    "grupo": "Gourmet",
+    "id": "chocolate_oscuro",
+    "nombre": "Chocolate oscuro 70%",
+    "unidad": "100 g"
+  },
+  "chocolatinas": {
+    "emoji": "🍫",
+    "grupo": "Mecato",
+    "id": "chocolatinas",
+    "nombre": "Chocolatinas x12",
+    "unidad": "paquete"
+  },
+  "chorizo": {
+    "emoji": "🌭",
+    "grupo": "Proteínas",
+    "id": "chorizo",
+    "nombre": "Chorizo antioqueño",
+    "unidad": "500 g"
+  },
+  "cilantro": {
+    "emoji": "🌿",
+    "grupo": "Verduras",
+    "id": "cilantro",
+    "nombre": "Cilantro",
+    "unidad": "atado"
+  },
+  "color": {
+    "emoji": "🟠",
+    "grupo": "Despensa",
+    "id": "color",
+    "nombre": "Color / achiote",
+    "unidad": "55 g"
+  },
+  "comino": {
+    "emoji": "🟤",
+    "grupo": "Despensa",
+    "id": "comino",
+    "nombre": "Comino molido",
+    "unidad": "50 g"
+  },
+  "costilla": {
+    "emoji": "🍖",
+    "grupo": "Proteínas",
+    "id": "costilla",
+    "nombre": "Costilla de res",
+    "unidad": "kg"
+  },
+  "crema_avellana": {
+    "emoji": "🍫",
+    "grupo": "Mecato",
+    "id": "crema_avellana",
+    "nombre": "Crema de chocolate y avellana",
+    "unidad": "350 g"
+  },
+  "crema_dental": {
+    "emoji": "🪥",
+    "grupo": "Aseo",
+    "id": "crema_dental",
+    "nombre": "Crema dental",
+    "unidad": "100 ml"
+  },
+  "crema_leche": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "crema_leche",
+    "nombre": "Crema de leche",
+    "unidad": "200 ml"
+  },
+  "croissant": {
+    "emoji": "🥐",
+    "grupo": "Panadería",
+    "id": "croissant",
+    "nombre": "Croissant",
+    "unidad": "unidad"
+  },
+  "detergente": {
+    "emoji": "🧺",
+    "grupo": "Aseo",
+    "id": "detergente",
+    "nombre": "Detergente en polvo",
+    "unidad": "1 kg"
+  },
+  "espinaca": {
+    "emoji": "🥬",
+    "grupo": "Verduras",
+    "id": "espinaca",
+    "nombre": "Espinaca",
+    "unidad": "bolsa 500 g"
+  },
+  "esponjilla": {
+    "emoji": "🧽",
+    "grupo": "Aseo",
+    "id": "esponjilla",
+    "nombre": "Esponjilla x3",
+    "unidad": "paquete"
+  },
+  "fresa": {
+    "emoji": "🍓",
+    "grupo": "Frutas",
+    "id": "fresa",
+    "nombre": "Fresa",
+    "unidad": "500 g"
+  },
+  "frijol": {
+    "emoji": "🫘",
+    "grupo": "Granos",
+    "id": "frijol",
+    "nombre": "Fríjol cargamanto",
+    "unidad": "500 g"
+  },
+  "frutos_secos": {
+    "emoji": "🌰",
+    "grupo": "Gourmet",
+    "id": "frutos_secos",
+    "nombre": "Mezcla de frutos secos",
+    "unidad": "300 g"
+  },
+  "galletas_rellenas": {
+    "emoji": "🍪",
+    "grupo": "Mecato",
+    "id": "galletas_rellenas",
+    "nombre": "Galletas rellenas x12",
+    "unidad": "paquete"
+  },
+  "galletas_soda": {
+    "emoji": "🍘",
+    "grupo": "Despensa",
+    "id": "galletas_soda",
+    "nombre": "Galletas de soda (9 tacos)",
+    "unidad": "paquete"
+  },
+  "garbanzo": {
+    "emoji": "🫘",
+    "grupo": "Granos",
+    "id": "garbanzo",
+    "nombre": "Garbanzo",
+    "unidad": "500 g"
+  },
+  "gaseosa": {
+    "emoji": "🥤",
+    "grupo": "Bebidas",
+    "id": "gaseosa",
+    "nombre": "Gaseosa",
+    "unidad": "1,5 L"
+  },
+  "gomitas": {
+    "emoji": "🍬",
+    "grupo": "Mecato",
+    "id": "gomitas",
+    "nombre": "Gomitas",
+    "unidad": "100 g"
+  },
+  "gouda": {
+    "emoji": "🧀",
+    "grupo": "Gourmet",
+    "id": "gouda",
+    "nombre": "Queso gouda",
+    "unidad": "250 g"
+  },
+  "guayaba": {
+    "emoji": "🍈",
+    "grupo": "Frutas",
+    "id": "guayaba",
+    "nombre": "Guayaba",
+    "unidad": "kg"
+  },
+  "habichuela": {
+    "emoji": "🫛",
+    "grupo": "Verduras",
+    "id": "habichuela",
+    "nombre": "Habichuela",
+    "unidad": "kg"
+  },
+  "harina_maiz": {
+    "emoji": "🌽",
+    "grupo": "Granos",
+    "id": "harina_maiz",
+    "nombre": "Harina de maíz precocida",
+    "unidad": "1 kg"
+  },
+  "harina_trigo": {
+    "emoji": "🌾",
+    "grupo": "Granos",
+    "id": "harina_trigo",
+    "nombre": "Harina de trigo",
+    "unidad": "1 kg"
+  },
+  "helado": {
+    "emoji": "🍨",
+    "grupo": "Mecato",
+    "id": "helado",
+    "nombre": "Helado",
+    "unidad": "1 L"
+  },
+  "hierbas": {
+    "emoji": "🌿",
+    "grupo": "Despensa",
+    "id": "hierbas",
+    "nombre": "Hierbas finas / orégano",
+    "unidad": "paquete 15 g"
+  },
+  "higado": {
+    "emoji": "🥩",
+    "grupo": "Proteínas",
+    "id": "higado",
+    "nombre": "Hígado de res",
+    "unidad": "kg"
+  },
+  "huevos": {
+    "emoji": "🥚",
+    "grupo": "Proteínas",
+    "id": "huevos",
+    "nombre": "Huevos AA x30",
+    "unidad": "cubeta"
+  },
+  "jabon_bano": {
+    "emoji": "🧼",
+    "grupo": "Aseo",
+    "id": "jabon_bano",
+    "nombre": "Jabón de baño x3",
+    "unidad": "paquete"
+  },
+  "jabon_barra": {
+    "emoji": "🧼",
+    "grupo": "Aseo",
+    "id": "jabon_barra",
+    "nombre": "Jabón en barra para ropa x3",
+    "unidad": "paquete"
+  },
+  "jamon": {
+    "emoji": "🥓",
+    "grupo": "Proteínas",
+    "id": "jamon",
+    "nombre": "Jamón tajado",
+    "unidad": "250 g"
+  },
+  "jamon_serrano": {
+    "emoji": "🥓",
+    "grupo": "Gourmet",
+    "id": "jamon_serrano",
+    "nombre": "Jamón serrano",
+    "unidad": "100 g"
+  },
+  "jugo_caja": {
+    "emoji": "🧃",
+    "grupo": "Bebidas",
+    "id": "jugo_caja",
+    "nombre": "Jugo en caja",
+    "unidad": "1 L"
+  },
+  "kumis": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "kumis",
+    "nombre": "Kumis",
+    "unidad": "1 L"
+  },
+  "leche": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "leche",
+    "nombre": "Leche entera",
+    "unidad": "1,1 L"
+  },
+  "leche_condensada": {
+    "emoji": "🥫",
+    "grupo": "Mecato",
+    "id": "leche_condensada",
+    "nombre": "Leche condensada",
+    "unidad": "395 g"
+  },
+  "leche_deslactosada": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "leche_deslactosada",
+    "nombre": "Leche deslactosada",
+    "unidad": "1,1 L"
+  },
+  "leche_polvo": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "leche_polvo",
+    "nombre": "Leche en polvo",
+    "unidad": "bolsa 900 g"
+  },
+  "lechuga": {
+    "emoji": "🥬",
+    "grupo": "Verduras",
+    "id": "lechuga",
+    "nombre": "Lechuga crespa",
+    "unidad": "unidad"
+  },
+  "lenteja": {
+    "emoji": "🫘",
+    "grupo": "Granos",
+    "id": "lenteja",
+    "nombre": "Lenteja",
+    "unidad": "500 g"
+  },
+  "limon": {
+    "emoji": "🍋",
+    "grupo": "Frutas",
+    "id": "limon",
+    "nombre": "Limón tahití",
+    "unidad": "kg"
+  },
+  "loza": {
+    "emoji": "🧽",
+    "grupo": "Aseo",
+    "id": "loza",
+    "nombre": "Jabón lavaloza",
+    "unidad": "500 g"
+  },
+  "lulo": {
+    "emoji": "🟠",
+    "grupo": "Frutas",
+    "id": "lulo",
+    "nombre": "Lulo",
+    "unidad": "kg"
+  },
+  "maicitos": {
+    "emoji": "🌽",
+    "grupo": "Granos",
+    "id": "maicitos",
+    "nombre": "Maicitos dulces",
+    "unidad": "lata 300 g"
+  },
+  "maiz_trillado": {
+    "emoji": "🌽",
+    "grupo": "Granos",
+    "id": "maiz_trillado",
+    "nombre": "Maíz trillado (peto)",
+    "unidad": "500 g"
+  },
+  "manchego": {
+    "emoji": "🧀",
+    "grupo": "Gourmet",
+    "id": "manchego",
+    "nombre": "Queso manchego",
+    "unidad": "250 g"
+  },
+  "mandarina": {
+    "emoji": "🍊",
+    "grupo": "Frutas",
+    "id": "mandarina",
+    "nombre": "Mandarina",
+    "unidad": "kg"
+  },
+  "mango": {
+    "emoji": "🥭",
+    "grupo": "Frutas",
+    "id": "mango",
+    "nombre": "Mango",
+    "unidad": "kg"
+  },
+  "mani": {
+    "emoji": "🥜",
+    "grupo": "Mecato",
+    "id": "mani",
+    "nombre": "Maní salado",
+    "unidad": "200 g"
+  },
+  "mantequilla": {
+    "emoji": "🧈",
+    "grupo": "Lácteos",
+    "id": "mantequilla",
+    "nombre": "Mantequilla",
+    "unidad": "250 g"
+  },
+  "manzana": {
+    "emoji": "🍎",
+    "grupo": "Frutas",
+    "id": "manzana",
+    "nombre": "Manzana roja",
+    "unidad": "kg"
+  },
+  "maracuya": {
+    "emoji": "🟡",
+    "grupo": "Frutas",
+    "id": "maracuya",
+    "nombre": "Maracuyá",
+    "unidad": "kg"
+  },
+  "margarina": {
+    "emoji": "🧈",
+    "grupo": "Despensa",
+    "id": "margarina",
+    "nombre": "Margarina",
+    "unidad": "250 g"
+  },
+  "mayonesa": {
+    "emoji": "🥫",
+    "grupo": "Despensa",
+    "id": "mayonesa",
+    "nombre": "Mayonesa",
+    "unidad": "bolsa 400 g"
+  },
+  "mazorca": {
+    "emoji": "🌽",
+    "grupo": "Verduras",
+    "id": "mazorca",
+    "nombre": "Mazorca",
+    "unidad": "unidad"
+  },
+  "miel": {
+    "emoji": "🍯",
+    "grupo": "Despensa",
+    "id": "miel",
+    "nombre": "Miel de abeja",
+    "unidad": "frasco 500 g"
+  },
+  "molida": {
+    "emoji": "🥩",
+    "grupo": "Proteínas",
+    "id": "molida",
+    "nombre": "Carne molida de res",
+    "unidad": "kg"
+  },
+  "mora": {
+    "emoji": "🫐",
+    "grupo": "Frutas",
+    "id": "mora",
+    "nombre": "Mora",
+    "unidad": "kg"
+  },
+  "mostaza": {
+    "emoji": "🥫",
+    "grupo": "Despensa",
+    "id": "mostaza",
+    "nombre": "Mostaza",
+    "unidad": "bolsa 200 g"
+  },
+  "muffin": {
+    "emoji": "🧁",
+    "grupo": "Panadería",
+    "id": "muffin",
+    "nombre": "Muffin",
+    "unidad": "unidad"
+  },
+  "muslos": {
+    "emoji": "🍗",
+    "grupo": "Proteínas",
+    "id": "muslos",
+    "nombre": "Muslos de pollo",
+    "unidad": "kg"
+  },
+  "naranja": {
+    "emoji": "🍊",
+    "grupo": "Frutas",
+    "id": "naranja",
+    "nombre": "Naranja valencia",
+    "unidad": "kg"
+  },
+  "pan_frances": {
+    "emoji": "🥖",
+    "grupo": "Panadería",
+    "id": "pan_frances",
+    "nombre": "Pan francés / baguette",
+    "unidad": "unidad 250 g"
+  },
+  "pan_integral": {
+    "emoji": "🍞",
+    "grupo": "Panadería",
+    "id": "pan_integral",
+    "nombre": "Pan tajado integral",
+    "unidad": "600 g"
+  },
+  "pan_tajado": {
+    "emoji": "🍞",
+    "grupo": "Panadería",
+    "id": "pan_tajado",
+    "nombre": "Pan tajado blanco",
+    "unidad": "600 g"
+  },
+  "pandebono": {
+    "emoji": "🧀",
+    "grupo": "Panadería",
+    "id": "pandebono",
+    "nombre": "Pandebono",
+    "unidad": "unidad"
+  },
+  "panela": {
+    "emoji": "🟫",
+    "grupo": "Despensa",
+    "id": "panela",
+    "nombre": "Panela",
+    "unidad": "1 kg"
+  },
+  "papa": {
+    "emoji": "🥔",
+    "grupo": "Tubérculos",
+    "id": "papa",
+    "nombre": "Papa pastusa",
+    "unidad": "kg"
+  },
+  "papa_criolla": {
+    "emoji": "🥔",
+    "grupo": "Tubérculos",
+    "id": "papa_criolla",
+    "nombre": "Papa criolla",
+    "unidad": "kg"
+  },
+  "papas_fritas": {
+    "emoji": "🥔",
+    "grupo": "Mecato",
+    "id": "papas_fritas",
+    "nombre": "Papas fritas",
+    "unidad": "150 g"
+  },
+  "papaya": {
+    "emoji": "🍈",
+    "grupo": "Frutas",
+    "id": "papaya",
+    "nombre": "Papaya",
+    "unidad": "kg"
+  },
+  "papel": {
+    "emoji": "🧻",
+    "grupo": "Aseo",
+    "id": "papel",
+    "nombre": "Papel higiénico x12",
+    "unidad": "paquete"
+  },
+  "paprika": {
+    "emoji": "🌶️",
+    "grupo": "Despensa",
+    "id": "paprika",
+    "nombre": "Paprika / pimentón molido",
+    "unidad": "paquete 50 g"
+  },
+  "parmesano": {
+    "emoji": "🧀",
+    "grupo": "Lácteos",
+    "id": "parmesano",
+    "nombre": "Queso parmesano o costeño rallado",
+    "unidad": "250 g"
+  },
+  "parmesano_madurado": {
+    "emoji": "🧀",
+    "grupo": "Gourmet",
+    "id": "parmesano_madurado",
+    "nombre": "Queso parmesano madurado (bloque)",
+    "unidad": "200 g"
+  },
+  "pasta": {
+    "emoji": "🍝",
+    "grupo": "Granos",
+    "id": "pasta",
+    "nombre": "Pasta spaghetti",
+    "unidad": "500 g"
+  },
+  "pasta_ajo": {
+    "emoji": "🧄",
+    "grupo": "Despensa",
+    "id": "pasta_ajo",
+    "nombre": "Pasta de ajo",
+    "unidad": "frasco 200 g"
+  },
+  "pepino": {
+    "emoji": "🥒",
+    "grupo": "Verduras",
+    "id": "pepino",
+    "nombre": "Pepino",
+    "unidad": "kg"
+  },
+  "pimenton": {
+    "emoji": "🫑",
+    "grupo": "Verduras",
+    "id": "pimenton",
+    "nombre": "Pimentón",
+    "unidad": "kg"
+  },
+  "pina": {
+    "emoji": "🍍",
+    "grupo": "Frutas",
+    "id": "pina",
+    "nombre": "Piña",
+    "unidad": "unidad"
+  },
+  "platano": {
+    "emoji": "🍌",
+    "grupo": "Tubérculos",
+    "id": "platano",
+    "nombre": "Plátano hartón",
+    "unidad": "kg"
+  },
+  "pollo": {
+    "emoji": "🍗",
+    "grupo": "Proteínas",
+    "id": "pollo",
+    "nombre": "Pechuga de pollo",
+    "unidad": "kg"
+  },
+  "pollo_entero": {
+    "emoji": "🐔",
+    "grupo": "Proteínas",
+    "id": "pollo_entero",
+    "nombre": "Pollo entero",
+    "unidad": "kg"
+  },
+  "queso": {
+    "emoji": "🧀",
+    "grupo": "Lácteos",
+    "id": "queso",
+    "nombre": "Queso campesino",
+    "unidad": "500 g"
+  },
+  "queso_crema": {
+    "emoji": "🧀",
+    "grupo": "Lácteos",
+    "id": "queso_crema",
+    "nombre": "Queso crema",
+    "unidad": "tarro 230 g"
+  },
+  "queso_mozzarella": {
+    "emoji": "🧀",
+    "grupo": "Lácteos",
+    "id": "queso_mozzarella",
+    "nombre": "Queso mozzarella / doble crema",
+    "unidad": "500 g"
+  },
+  "remolacha": {
+    "emoji": "🟣",
+    "grupo": "Verduras",
+    "id": "remolacha",
+    "nombre": "Remolacha",
+    "unidad": "kg"
+  },
+  "repollo": {
+    "emoji": "🥬",
+    "grupo": "Verduras",
+    "id": "repollo",
+    "nombre": "Repollo",
+    "unidad": "kg"
+  },
+  "res_desmechar": {
+    "emoji": "🥩",
+    "grupo": "Proteínas",
+    "id": "res_desmechar",
+    "nombre": "Res para desmechar (falda)",
+    "unidad": "kg"
+  },
+  "res_sudar": {
+    "emoji": "🥩",
+    "grupo": "Proteínas",
+    "id": "res_sudar",
+    "nombre": "Carne de res para sudar (posta)",
+    "unidad": "kg"
+  },
+  "sal": {
+    "emoji": "🧂",
+    "grupo": "Despensa",
+    "id": "sal",
+    "nombre": "Sal",
+    "unidad": "1 kg"
+  },
+  "salami": {
+    "emoji": "🍕",
+    "grupo": "Gourmet",
+    "id": "salami",
+    "nombre": "Salami",
+    "unidad": "100 g"
+  },
+  "salchicha": {
+    "emoji": "🌭",
+    "grupo": "Proteínas",
+    "id": "salchicha",
+    "nombre": "Salchicha",
+    "unidad": "500 g"
+  },
+  "salsa_tomate": {
+    "emoji": "🥫",
+    "grupo": "Despensa",
+    "id": "salsa_tomate",
+    "nombre": "Salsa de tomate",
+    "unidad": "400 g"
+  },
+  "sardinas": {
+    "emoji": "🐟",
+    "grupo": "Proteínas",
+    "id": "sardinas",
+    "nombre": "Sardinas en lata",
+    "unidad": "425 g"
+  },
+  "shampoo": {
+    "emoji": "🧴",
+    "grupo": "Aseo",
+    "id": "shampoo",
+    "nombre": "Shampoo",
+    "unidad": "400 ml"
+  },
+  "soya": {
+    "emoji": "🥢",
+    "grupo": "Despensa",
+    "id": "soya",
+    "nombre": "Salsa de soya",
+    "unidad": "165 ml"
+  },
+  "suavizante": {
+    "emoji": "🧺",
+    "grupo": "Aseo",
+    "id": "suavizante",
+    "nombre": "Suavizante de ropa",
+    "unidad": "1 L"
+  },
+  "tilapia": {
+    "emoji": "🐟",
+    "grupo": "Proteínas",
+    "id": "tilapia",
+    "nombre": "Tilapia",
+    "unidad": "kg"
+  },
+  "toallas_higienicas": {
+    "emoji": "🩹",
+    "grupo": "Aseo",
+    "id": "toallas_higienicas",
+    "nombre": "Toallas higiénicas x10",
+    "unidad": "paquete"
+  },
+  "tocino": {
+    "emoji": "🥓",
+    "grupo": "Proteínas",
+    "id": "tocino",
+    "nombre": "Tocino (barriga de cerdo)",
+    "unidad": "kg"
+  },
+  "tomate": {
+    "emoji": "🍅",
+    "grupo": "Verduras",
+    "id": "tomate",
+    "nombre": "Tomate chonto",
+    "unidad": "kg"
+  },
+  "tomate_arbol": {
+    "emoji": "🍅",
+    "grupo": "Frutas",
+    "id": "tomate_arbol",
+    "nombre": "Tomate de árbol",
+    "unidad": "kg"
+  },
+  "torta_chocolate": {
+    "emoji": "🎂",
+    "grupo": "Panadería",
+    "id": "torta_chocolate",
+    "nombre": "Torta de chocolate",
+    "unidad": "entera ~1 kg"
+  },
+  "uva_isabelina": {
+    "emoji": "🍇",
+    "grupo": "Frutas",
+    "id": "uva_isabelina",
+    "nombre": "Uva isabelina",
+    "unidad": "kg"
+  },
+  "vino_tinto": {
+    "emoji": "🍷",
+    "grupo": "Bebidas",
+    "id": "vino_tinto",
+    "nombre": "Vino tinto",
+    "unidad": "750 ml"
+  },
+  "yogur": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "yogur",
+    "nombre": "Yogur",
+    "unidad": "1 L"
+  },
+  "yogur_griego": {
+    "emoji": "🥛",
+    "grupo": "Lácteos",
+    "id": "yogur_griego",
+    "nombre": "Yogur griego",
+    "unidad": "tarro 500 g"
+  },
+  "yuca": {
+    "emoji": "🥔",
+    "grupo": "Tubérculos",
+    "id": "yuca",
+    "nombre": "Yuca",
+    "unidad": "kg"
+  },
+  "zanahoria": {
+    "emoji": "🥕",
+    "grupo": "Verduras",
+    "id": "zanahoria",
+    "nombre": "Zanahoria",
+    "unidad": "kg"
+  }
+}

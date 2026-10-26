@@ -1,0 +1,531 @@
+# Mercado Medellín: blueprint de construcción
+
+> **Estado:** versión de un solo archivo, escrita para ahorrar tokens. **No pasó el validador ni la prueba de humo.** Las versiones sí se verificaron el 22-oct-2026.
+> Archivos que la acompañan en esta misma carpeta:
+> - `workspace/`: CLAUDE.md, AGENTS.md, `.claude/`, configs, scripts y `data/`. Se copia a la raíz del proyecto en el Bootstrap.
+> - `workspace/data/export/*.json`: los datos reales del artifact.
+> - `workspace/data/origen/*`: los planes Hogar y Dieta del artifact.
+>
+> Si este archivo y `workspace/CLAUDE.md` se contradicen en un comando, manda `workspace/CLAUDE.md`.
+
+---
+
+## 1. Qué es y qué no es
+
+La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín: Éxito, Carulla, D1, Euro, La Minorista (SIPSA), Ara, Ísimo y PriceSmart. Tiene además 2 tiendas manuales: Solofruver y Tienda/Carnicería de barrio. Con eso arma la lista de la familia, calcula cuál es la mejor tienda y el óptimo dividido, genera alertas y muestra el historial. También marca ↑/↓ cuando un precio sube o baja, muestra la causa climática según el DANE/SIPSA e incluye una sección de productos en fluctuación.
+
+- La lectura es pública, sin sesión.
+- El registro es abierto, con email y contraseña.
+- **Objetivo n.º 1:** que la base de datos se actualice sola y que ningún fallo pase en silencio.
+
+**Fuera de la v1:**
+- Push web, Telegram o WhatsApp.
+- Resumen diario por correo.
+- Login con Google.
+- Ara, Ísimo y PriceSmart automáticos (siguen por anotados).
+- Rappi y folletos PDF.
+- Pantalla para aprobar revisiones.
+- IA o LLM.
+- Roles o panel de administración.
+- Exportar a CSV, multi-idioma, PWA u offline.
+
+## 2. Stack y versiones (verificadas el 22-oct-2026 contra npm, nodejs.org y GitHub)
+
+| Capa | Paquete y pin |
+|---|---|
+| Runtime | Node **24.22.1** (`.nvmrc`). No usar Node 26 antes del 28-oct-2026. |
+| Gestor de paquetes | pnpm **12.15.0** (`packageManager`) |
+| Lenguaje | typescript **~6.0.3** (el `latest` es la 7: nunca instalarlo sin pin) · @types/node **24** |
+| Web | next / create-next-app **16.4.2** · react / react-dom **19.3.1** · @types/react(-dom) **19.3.0** |
+| Estilos | tailwindcss, @tailwindcss/postcss y @tailwindcss/turbopack **4.3.3** · shadcn CLI **4.22.1** (`--base radix`) |
+| Supabase | @supabase/supabase-js **2.118.0** · @supabase/ssr **0.12.7** (versión exacta) · supabase CLI **2.121.0** (devDependency; necesita Docker) |
+| Validación | zod **4.6.7** |
+| Gráficos | recharts **3.10.1** + react-is **19.3.1** |
+| Animación | gsap **3.15.0** (Draggable viene incluido; licencia gratuita) · @gsap/react **2.1.2** |
+| Pruebas | vitest **5.0.5** · @playwright/test **1.64.1** · @axe-core/playwright: **verificar antes de instalar** (no se investigó) |
+| Calidad | @biomejs/biome **2.6.2** · tsx **4.23.15** |
+| Scrapers | cheerio **1.2.0** · exceljs **4.4.0** (sin mantenimiento desde 2023, riesgo aceptado) · unpdf **1.9.1** |
+| Correo | nodemailer **10.2.1** · @types/nodemailer **8.0.2** (compatibilidad no confirmada; la decide `pnpm typecheck` en el paso 9) |
+| CI | actions/checkout@v7 · actions/setup-node@v7 · pnpm/action-setup@v6 |
+
+**Decisiones de arquitectura:**
+- Supabase Auth es la única fuente de sesión.
+- Una sola herramienta de migraciones: la CLI de Supabase, con SQL. No hay ORM.
+- La corrida diaria va en **GitHub Actions** (repo privado), no en Vercel ni en Edge Functions, por el límite de 2 s de CPU de estas últimas.
+- El correo sale por **SMTP de Gmail** con contraseña de aplicación.
+
+## 3. Estructura
+
+```
+src/app/                 rutas: / (canasta), antojos, hogar, dieta, anotados, alertas, producto/[id],
+                         ingresar, registro, recuperar, api/salud
+src/components/          catalogo/, carrito/, detalle/, graficos/, ui/ (shadcn)
+src/lib/                 supabase/{server,client,tipos}.ts, precios/{lista,etiquetas}.ts,
+                         alertas/reglas.ts, unidades.ts, fecha.ts, datos.ts
+src/corrida/             orquestador.ts, normalizar.ts, admin.ts, alertas-usuario.ts, correo.ts,
+                         adaptadores/{vtex,euro,sipsa}.ts
+src/data/planes.ts       portado de data/origen/constantes-artifact.js
+src/proxy.ts             refresco de sesión (Next 16: proxy, no middleware)
+scripts/                 cargar-env.ts, env-local.ts, humo.ts (ya en workspace/), migrar.ts,
+                         corrida.ts, capturar-fixtures.ts
+supabase/migrations/     0001_esquema.sql
+supabase/tests/          rls.test.sql (pgTAP)
+tests/unit|integracion|e2e|fixtures/
+.github/workflows/corrida.yml
+data/                    export/ y origen/ (copiados de workspace; excluidos de lint, tsc y tests)
+```
+
+## 4. Datos: `supabase/migrations/0001_esquema.sql` (contenido completo)
+
+```sql
+create type estado_precio as enum ('real','estimado','sin_dato','simulado');
+create type estado_fuente as enum ('ok','parcial','fallo');
+
+create table tiendas (id text primary key, nombre text not null, color text not null,
+  manual boolean not null default false, nota text);
+
+create table productos (id text primary key, nombre text not null, grupo text not null,
+  unidad text not null, unidad_base text not null check (unidad_base in ('g','ml','u')),
+  cantidad_base numeric not null, frecuencia text not null check (frecuencia in ('diaria','semanal')),
+  emoji text);
+
+create table producto_fuente (producto_id text references productos, tienda_id text references tiendas,
+  url text, termino text, sku text, factor numeric, activo boolean not null default true,
+  primary key (producto_id, tienda_id));
+
+create table precios_actuales (producto_id text references productos, tienda_id text references tiendas,
+  precio integer, fecha date not null, fuente text, estado estado_precio not null, nota text,
+  revisar boolean not null default false, updated_at timestamptz not null default now(),
+  primary key (producto_id, tienda_id));
+
+create table precios_historial (id bigserial primary key, producto_id text references productos,
+  tienda_id text references tiendas, fecha date not null, precio integer, estado estado_precio not null,
+  unique (producto_id, tienda_id, fecha));
+create index on precios_historial (producto_id, fecha desc);
+
+create table corridas (id bigserial primary key, inicio timestamptz not null default now(), fin timestamptz,
+  fuentes jsonb, conteos jsonb, notas text);
+
+create table tienda_estado (tienda_id text primary key references tiendas, estado estado_fuente, ultimo_ok date);
+
+create table clima_causas (producto_id text references productos, fecha date not null, texto text not null,
+  es_clima boolean not null, fuente_url text, primary key (producto_id, fecha));
+
+create table anotados (producto_id text references productos, tienda_id text references tiendas,
+  precio integer not null check (precio between 100 and 10000000),
+  fecha date not null default (now() at time zone 'America/Bogota')::date,
+  autor uuid references auth.users default auth.uid(), primary key (producto_id, tienda_id));
+
+create table listas (user_id uuid primary key references auth.users on delete cascade,
+  items jsonb not null default '{}', tienda_preferida text references tiendas default 'exito',
+  updated_at timestamptz not null default now());
+
+create table alertas (id bigserial primary key, user_id uuid references auth.users on delete cascade,
+  tipo text not null check (tipo in ('mas_barato','mercado_completo','subida','caro_por_clima','fuente_caida')),
+  producto_id text, tienda_id text, monto integer, mensaje text not null,
+  creada timestamptz not null default now(), leida boolean not null default false);
+
+create table preferencias_notif (user_id uuid primary key references auth.users on delete cascade,
+  umbral_ahorro integer not null default 1000);
+
+create view precio_efectivo with (security_invoker = true) as
+select coalesce(p.producto_id, a.producto_id) producto_id, coalesce(p.tienda_id, a.tienda_id) tienda_id,
+  case when a.precio is not null and (p.precio is null or p.estado <> 'real' or a.fecha >= p.fecha)
+       then a.precio else p.precio end as precio,
+  case when a.precio is not null and (p.precio is null or p.estado <> 'real' or a.fecha >= p.fecha)
+       then 'anotado' else p.estado::text end as estado,
+  greatest(p.fecha, a.fecha) as fecha, p.fuente, coalesce(p.revisar, false) revisar
+from precios_actuales p full join anotados a
+  on a.producto_id = p.producto_id and a.tienda_id = p.tienda_id;
+
+-- RLS
+alter table tiendas enable row level security;          create policy leer on tiendas for select using (true);
+alter table productos enable row level security;        create policy leer on productos for select using (true);
+alter table precios_actuales enable row level security; create policy leer on precios_actuales for select using (true);
+alter table precios_historial enable row level security;create policy leer on precios_historial for select using (true);
+alter table corridas enable row level security;         create policy leer on corridas for select using (true);
+alter table tienda_estado enable row level security;    create policy leer on tienda_estado for select using (true);
+alter table clima_causas enable row level security;     create policy leer on clima_causas for select using (true);
+alter table producto_fuente enable row level security;  -- sin políticas: solo service_role
+alter table anotados enable row level security;
+create policy leer on anotados for select using (true);
+create policy crear on anotados for insert to authenticated with check (autor = auth.uid());
+create policy editar on anotados for update to authenticated using (true) with check (autor = auth.uid());
+create policy borrar on anotados for delete to authenticated using (autor = auth.uid());
+alter table listas enable row level security;
+create policy propia on listas for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table preferencias_notif enable row level security;
+create policy propia on preferencias_notif for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table alertas enable row level security;
+create policy leer on alertas for select to authenticated using (auth.uid() = user_id);
+create policy marcar on alertas for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter publication supabase_realtime add table alertas;
+```
+
+**Reglas de carga** (las aplica `scripts/migrar.ts` sobre `data/export/`):
+- **Productos:** 144. `frecuencia` se asigna por grupo:
+  - **diaria:** Frutas, Verduras, Tubérculos, Proteínas, Lácteos, Granos, Panadería.
+  - **semanal:** Despensa, Aseo, Mecato, Bebidas, Gourmet.
+- **`unidad_base` y `cantidad_base`:** salen de `unidad`.
+  1. Se cambia la coma decimal por punto.
+  2. Se aplica `/(\d+(?:\.\d+)?)\s*(kg|g|ml|l)\b/i`: kg → g ×1000 y L → ml ×1000.
+  3. `"kg"` sola → g 1000.
+  4. `"6 × 330 ml"` → ml 1980.
+  5. Cualquier otra unidad → `u`, 1.
+- **Tiendas:** 10, con id, nombre, color y manual. Salen de `TIENDAS` en `data/origen/constantes-artifact.js`.
+- **Precios actuales:** 144 × 8 = **1.152** filas desde `precios.json`. Si `fuente` empieza por `http`, además se hace upsert de `producto_fuente.url`.
+- **Historial:** una fila por (fecha, tienda) con precio numérico de cada `serie`, conservando el `estado`, incluido `simulado`.
+- **Estado de tiendas y corridas:** `tienda_estado` y una fila en `corridas` salen de `meta.json`.
+- **Anotados:** `anotados.json` está vacío hoy; si trae datos, se cargan con `autor = null`.
+
+## 5. Reglas de negocio (exactas)
+
+**Precio efectivo.** Es la vista `precio_efectivo`. El anotado gana si el automático no es válido, si no es `real` o si el anotado es igual o más reciente. El precio es `null` cuando el estado es `sin_dato`.
+
+**Cálculos de la lista.** La lista es `{id: cantidad}`, y estas funciones viven en `src/lib/precios/lista.ts`:
+- Total por tienda visible y faltantes de cada una.
+- **Mejor tienda completa:** la más barata entre las que tienen todos los productos.
+- **Óptimo dividido:** cada producto en su tienda más barata.
+- **Ahorro:** mejor tienda completa − óptimo dividido.
+
+**Alertas** (`src/lib/alertas/reglas.ts`): se ordenan por monto; se muestran 5 y un botón "ver todas".
+
+| Alerta | Cuándo salta | Para quién / monto |
+|---|---|---|
+| `mas_barato` | Otra tienda es ≥10 % y ≥ `umbral_ahorro` (por defecto 1000) más barata que la tienda preferida | Monto = diferencia × cantidad |
+| `mercado_completo` | Otra tienda completa sale ≥5 % más barata | |
+| `subida` | El precio supera en ≥15 % el promedio de los 7 puntos previos | |
+| `caro_por_clima` | `subida` y además existe una `clima_causas.es_clima` de los últimos 7 días | |
+| `fuente_caida` | Una tienda automática quedó en `fallo` o lleva ≥3 días sin `ultimo_ok` | Solo correo al admin |
+
+**Etiquetas** (`src/lib/precios/etiquetas.ts`):
+- **↑/↓:** precio actual contra el promedio de los 7 días previos, con umbral de ±15 %.
+- **🌧️ clima:** hay una causa `es_clima` en los últimos 7 días.
+- **sin dato**, **anotado**, **estimado**, **mayorista** (cuando la fuente es SIPSA) y **revisar** (`revisar = true`).
+- **desactualizado:** cuando `hoy − fecha > (1 si diaria · 7 si semanal) + 3` días.
+- **En fluctuación:** cambio de ≥15 % en 7 días, o coeficiente de variación ≥ 0.12 en 30 días.
+
+**Clasificador de clima.** No usa IA. Es una regex que ignora mayúsculas y acentos, aplicada a la frase de Medellín:
+`lluvia|lluvioso|invierno|ola invernal|verano|sequ[ií]a|helada|clima|clim[aá]tic|fen[oó]meno de (la )?ni[nñ]a|el ni[nñ]o|temporal|inundaci`.
+- El texto se guarda literal.
+- La UI dice "Causa según DANE (SIPSA)" o "causa no reportada".
+- **Nunca se inventa un precio ni una causa.**
+
+## 6. La corrida (`scripts/corrida.ts` → `src/corrida/orquestador.ts`)
+
+1. **Qué productos toca:** todos los días los grupos de frecuencia diaria. Los lunes, o con `--todo`, también los semanales. El orden de prioridad es frescos → proteínas, lácteos y granos → despensa, panadería y aseo → antojos.
+2. **Cómo consulta:** las tiendas van en paralelo, y dentro de cada tienda las consultas son secuenciales con ≥1 s de pausa. El User-Agent es `CORRIDA_USER_AGENT`. Respeta robots.txt: Ísimo no tiene adaptador, y en Euro solo se leen páginas `/p`. Nunca salta captchas ni logins.
+3. **VTEX** (Éxito, Carulla, D1):
+   - Consulta: `GET https://www.<host>/api/catalog_system/pub/products/search?ft=<termino>&_from=0&_to=4`.
+   - Si ya hay `sku` guardado, usa `?fq=skuId:<sku>`.
+   - En D1 los términos son de una sola palabra.
+   - Precio = `items[0].sellers[0].commertialOffer.Price`. Se descarta si `AvailableQuantity` es 0 o el precio es 0.
+   - El `skuId` encontrado se guarda.
+4. **Euro:** lee la página `producto_fuente.url` (`/p`) y saca el precio del `<script type="application/ld+json">` (`offers.price`) o, si no está, del `__STATE__`. Usa cheerio.
+5. **SIPSA:**
+   - Busca `https://www.dane.gov.co/files/operaciones/SIPSA/anex-SIPSADiario-<dd><mmm><aaaa>.xlsx` y el PDF `bol-SIPSADiario-…pdf`, con el mes en español abreviado y en minúscula (ene … dic). Prueba hoy y hasta 3 días atrás.
+   - Del xlsx (exceljs) toma las filas de Medellín (Central Mayorista de Antioquia), en $/kg.
+   - Del PDF (unpdf) toma las frases que mencionan Medellín y el producto, y las escribe en `clima_causas`.
+   - Solo aplica el dato si es más nuevo que el guardado. Usa `fuente = "SIPSA (mayorista)"` y la fecha del boletín.
+6. **Normalización** (`normalizar.ts`): si la unidad del hallazgo no es la del producto, devuelve `null`. Si no, calcula `v = precio × cantidad_base / cantidad_hallazgo` y redondea a la centena cuando hubo conversión.
+7. **Validación y escritura:**
+   - Un cambio de más de 35 % frente al último precio real se escribe igual, pero con `revisar = true`.
+   - Si no hubo hallazgo, no se toca `precios_actuales`.
+   - Se hace upsert de `precios_actuales` (estado `real`, `fecha = hoyBogota()`) y de `precios_historial` (`on conflict (producto_id, tienda_id, fecha) do update`).
+   - Al final se inserta la fila en `corridas` y se hace upsert de `tienda_estado`:
+     - **ok:** más del 50 % de los productos que se intentaron en esa tienda.
+     - **parcial:** al menos 1.
+     - **fallo:** 0.
+   - `ultimo_ok` = hoy si quedó ok o parcial.
+8. **Alertas por usuario:** se calculan para cada usuario con lista. Antes se borran las no leídas del mismo tipo y producto del mismo día, para que repetir la corrida no las duplique.
+9. **Correo al admin:**
+   - Se envía **un** correo a `ADMIN_EMAIL` si hubo `fuente_caida` o una excepción.
+   - Usa nodemailer con SMTP 465 y `secure: true`.
+   - Si falta configuración SMTP, solo lo registra en consola.
+10. **Idempotencia y exit code:**
+   - Correrla dos veces el mismo día deja el mismo estado.
+   - Sale con exit 0 aunque haya tiendas en fallo; exit 1 solo ante una excepción no controlada (y GitHub avisa por correo).
+11. **Pruebas:** usan un `fetch` inyectado que sirve fixtures **reales**, capturados con `pnpm capturar <vtex|euro|sipsa>` y guardados en `tests/fixtures/<tienda>/`. Nunca se escriben a mano.
+
+**Workflow `.github/workflows/corrida.yml`:**
+
+```yaml
+name: corrida
+on:
+  schedule: [{ cron: "17 11 * * *" }]   # 6:17 a. m. Bogotá; fuera de la hora en punto
+  workflow_dispatch: {}
+concurrency: { group: corrida, cancel-in-progress: false }
+jobs:
+  corrida:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm corrida
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "465"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          CORRIDA_USER_AGENT: "MercadoMedellinBot/1.0 (+uso familiar; contacto en README)"
+```
+
+## 7. Web y diseño
+
+**Encabezado:**
+- "Actualizado: hoy 6:06 a. m.", un punto de color por tienda y "X/8 fuentes OK".
+- Las tiendas con `ultimo_ok` ausente o de hace ≥3 días.
+- **Banner rojo** si la última corrida tiene más de 26 h.
+- Campana de alertas: solo con sesión, alimentada por Realtime sobre `alertas`.
+
+**La lista:**
+- Sin sesión vive en `localStorage`, siempre dentro de try/catch.
+- Con sesión se guarda en `listas` mediante una server action.
+- Al iniciar sesión, la lista local se fusiona con la guardada.
+
+**Anotados:**
+- Tabla producto × tienda, incluidas las manuales, con el precio más bajo resaltado en azul.
+- La escritura usa zod (entero entre 100 y 10.000.000) y requiere sesión.
+
+**Hogar y Dieta:** el contenido sale de `data/origen/*`, portado a `src/data/planes.ts`. Tienen botones "Usar como mi lista" y "Sumar a mi lista".
+
+**Gráficos:** Recharts, con un solo gráfico montado por vista. Son tres: total por tienda, historial de 30 días y gasto por grupo (colores `GCOL`).
+
+**`/api/salud`:** devuelve `{ ok:true, ultimaCorrida, horasDesdeCorrida, fuentesOk }` con 200 cuando la base de datos responde.
+
+**Tokens de diseño:** están en `workspace/CLAUDE.md` (sección Sistema de diseño) y van en `src/app/globals.css`, con modo claro y oscuro. El prototipo aprobado está en https://claude.ai/artifact/S6PbvgsR3xzoTTCZJGA7kg.
+
+| Token | Claro | Oscuro |
+|---|---|---|
+| fondo / superficie / texto | `#FAFAF7` / `#FFFFFF` / `#0F172A` | `#0E1116` / `#161A21` / `#E7EAEE` |
+| ahorro (save) | `#10B981` · tinta `#047857` · fondo `#E7F7F0` | `#34D399` · `#6EE7B7` · `#0F2A20` |
+| sube (up) | `#EF4444` · `#B42318` · `#FDECEC` | `#F87171` · `#FCA5A5` · `#2C1616` |
+| aviso (warn) | `#F59E0B` · `#8A5300` · `#FEF4DE` | `#FBBF24` · `#FCD34D` · `#2A2110` |
+| anotado | `#2563EB` · `#1D4ED8` · `#E8EFFD` | `#60A5FA` · `#93C5FD` · `#132238` |
+| clima | `#0EA5E9` · `#0369A1` · `#E0F2FE` | `#38BDF8` · `#7DD3FC` · `#0C2A3A` |
+
+Tipografía Inter (next/font) y `tabular-nums` en todos los números.
+
+**Animaciones** (GSAP con `useGSAP` y `contextSafe`, todas dentro de `gsap.matchMedia()`; con reduce, la duración es 0):
+
+| # | Animación |
+|---|---|
+| 1 | El emoji vuela en arco al carrito (0.55 s, escala 0.45) y el icono del carrito rebota |
+| 2 | El total y el ahorro cuentan hasta el nuevo valor (0.5 s, snap de 100) |
+| 3 | Las tarjetas entran en cascada (y 10 → 0, 0.28 s, stagger 0.03) |
+| 4 | Hoja inferior que se cierra arrastrando (Draggable `y`; cierra si y > 110 px) |
+| 5 | Las barras crecen (scaleX, stagger 0.06) y el mini gráfico se dibuja (0.7 s) |
+| 6 | El subrayado de la pestaña se desliza (0.3 s) |
+| 7 | La campana se sacude una vez (0, −16, 14, −10, 6, 0 en 0.6 s) |
+| 8 | Las etiquetas de hoy pulsan una vez (escala 1.18, yoyo) |
+
+## 8. Variables de entorno
+
+Las variables están en `workspace/.env.example`. En local, `pnpm env:local` genera `.env.local` a partir de `supabase status -o json`.
+
+| Variable | Dónde vive |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Vercel |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Vercel |
+| `SUPABASE_URL` | Solo scripts y GitHub secrets |
+| `SUPABASE_SERVICE_ROLE_KEY` | Solo scripts y GitHub secrets. **Nunca** en una variable `NEXT_PUBLIC_*` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | `SMTP_PASS` es la contraseña de aplicación de Gmail; requiere la verificación en 2 pasos activa |
+| `ADMIN_EMAIL` | Quien recibe el correo de fallos |
+| `CORRIDA_USER_AGENT` | User-Agent de la corrida |
+
+Cómo carga cada herramienta las variables:
+- Los scripts importan `./cargar-env` como su **primer** import.
+- `vitest.config.ts` carga `.env.local`.
+- Next.js las carga solo.
+
+## 9. Bootstrap
+
+Se corre una vez en una carpeta vacía nueva. Es bash (en Windows, Git Bash) y se puede re-ejecutar sin romper nada.
+
+**Requisitos:**
+- Node 24.22.1.
+- Git.
+- **Docker Desktop** corriendo (`docker info` debe salir con 0).
+
+```bash
+set -e
+B="ruta/a/blueprints/mercado-medellin"            # ← ruta real de este bundle, entre comillas
+# corepack 0.36 no arranca pnpm 12 (binario nativo, sin bin/pnpm.cjs) → instalar con npm
+[ "$(pnpm -v 2>/dev/null)" = "12.15.0" ] || npm install -g pnpm@12.15.0
+# 1) scaffold (solo si aún no existe package.json)
+[ -f package.json ] || {
+  pnpm create next-app@16.4.2 _tmp --ts --app --tailwind --biome --src-dir --use-pnpm --yes
+  (shopt -s dotglob; mv _tmp/* . ); rmdir _tmp
+}
+# 2) copiar workspace/ sin pisar nada que ya exista (re-ejecutable, exit 0)
+(cd "$B/workspace" && find . -type f) | while read -r f; do
+  [ -e "$f" ] || { mkdir -p "$(dirname "$f")"; cp "$B/workspace/$f" "$f"; }
+done
+# 3) dependencias con pin
+pnpm add next@16.4.2 react@19.3.1 react-dom@19.3.1 @supabase/supabase-js@2.118.0 @supabase/ssr@0.12.7 \
+  zod@4.6.7 recharts@3.10.1 react-is@19.3.1 gsap@3.15.0 @gsap/react@2.1.2
+pnpm add -D typescript@~6.0.3 @types/node@24 @types/react@19.3.0 @types/react-dom@19.3.0 \
+  @biomejs/biome@2.6.2 vitest@5.0.5 @playwright/test@1.64.1 tsx@4.23.15 supabase@2.121.0 \
+  cheerio@1.2.0 exceljs@4.4.0 unpdf@1.9.1 nodemailer@10.2.1 @types/nodemailer@8.0.2
+pnpm approve-builds --all
+pnpm install --frozen-lockfile
+pnpm exec playwright install --with-deps chromium
+pnpm dlx shadcn@4.22.1 init --base radix --no-monorepo --yes || true   # ya inicializado → no falla
+# 4) git
+git rev-parse --git-dir >/dev/null 2>&1 || { git init -b main; git add -A; git commit -m "bootstrap"; }
+```
+
+**Ediciones manuales después del Bootstrap:**
+
+1. Agregar a `package.json`:
+   - `"packageManager": "pnpm@12.15.0"`.
+   - `"engines": {"node": ">=24.22.1 <25"}`.
+   - Estos scripts:
+
+```json
+"dev": "next dev", "build": "next build", "start": "next start",
+"typecheck": "tsc --noEmit", "lint": "biome check .", "format": "biome check --write .",
+"test": "vitest run", "test:e2e": "playwright test", "humo": "tsx scripts/humo.ts",
+"env:local": "tsx scripts/env-local.ts", "migrar": "tsx scripts/migrar.ts",
+"gen:tipos": "supabase gen types --lang typescript --local > src/lib/supabase/tipos.ts",
+"corrida": "tsx scripts/corrida.ts", "capturar": "tsx scripts/capturar-fixtures.ts"
+```
+
+2. En `biome.json`:
+   - Poner `$schema` en `.../2.6.2/schema.json`.
+   - Agregar a `files.includes`: `"!**/*.svg"`, `"!blueprints"`, `"!data"`, `"!supabase/.temp"`, `"!src/lib/supabase/tipos.ts"`.
+   - Mantener `css.parser.tailwindDirectives: true`.
+
+3. Confirmar que `.gitignore` excluye `.env.local` y **no** excluye `.env.example`. Si tiene un patrón `.env*`, agregar la línea `!.env.example`.
+
+## 10. Pasos de construcción
+
+Cada paso cierra con `pnpm typecheck && pnpm lint && pnpm test` en verde y luego:
+
+```bash
+git add -A && git commit -m "paso NN" && git tag paso-NN
+```
+
+Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y después `pnpm env:local`.
+
+**1. Esqueleto con `/api/salud`.**
+- **Hacer:** `src/app/api/salud/route.ts` con un stub `{ok:true}`.
+- **Hecho cuando:** CUANDO corre `pnpm build && pnpm humo --ruta api/salud --contiene '"ok":true'`, EL SISTEMA DEBE salir con 0.
+- **Verificar:** ese mismo comando.
+
+**2. Esquema y RLS.**
+- **Hacer:** `supabase init`; `supabase/migrations/0001_esquema.sql` (sección 4); `supabase/tests/rls.test.sql`.
+- **Pruebas pgTAP:**
+  - anon puede leer `precios_actuales` y no puede insertar en ella.
+  - anon recibe 0 filas de `producto_fuente`.
+  - El usuario A no ve la lista del usuario B.
+  - Un usuario no puede anotar con un `autor` ajeno.
+- **Hecho cuando:** CUANDO corre `pnpm exec supabase db reset && pnpm exec supabase test db`, EL SISTEMA DEBE pasar todas las pruebas.
+
+**3. Migración de datos.**
+- **Hacer:** `scripts/migrar.ts` con las reglas de la sección 4, más `pnpm gen:tipos`.
+- **Hecho cuando:** CUANDO corre `pnpm migrar`, EL SISTEMA DEBE imprimir `productos=144 precios=1152 tiendas=10` y salir con 0. El script compara él mismo cada conteo contra el JSON de origen y aborta si no coincide.
+
+**4. Lógica pura.**
+- **Hacer:** `lista.ts`, `etiquetas.ts`, `reglas.ts`, `unidades.ts`, `fecha.ts`, con sus pruebas en `tests/unit/`.
+- **Hecho cuando:** CUANDO corre `pnpm test tests/unit`, EL SISTEMA DEBE pasar casos para:
+  - mejor tienda completa y óptimo dividido;
+  - las 5 alertas;
+  - ↑/↓ en el borde exacto de ±15 %;
+  - "desactualizado" para diaria y para semanal;
+  - las 5 reglas de unidades de la sección 4.
+
+**5. Adaptador VTEX.**
+- **Hacer:** `normalizar.ts`, `adaptadores/vtex.ts` y `scripts/capturar-fixtures.ts`; luego correr `pnpm capturar vtex` para guardar fixtures reales.
+- **Hecho cuando:** CUANDO las pruebas sirven los fixtures reales, EL SISTEMA DEBE:
+  - devolver precio, `sku` y url;
+  - devolver `null` si `AvailableQuantity` es 0;
+  - devolver `null` si la unidad no es convertible.
+
+**6. Adaptador Euro.**
+- **Hacer:** `adaptadores/euro.ts` con su prueba sobre fixtures reales de páginas `/p`.
+- **Hecho cuando:** extrae `offers.price`, y no hace ninguna petición a rutas prohibidas por robots (la prueba lo comprueba con el `fetch` espía).
+
+**7. Adaptador SIPSA.**
+- **Hacer:** `adaptadores/sipsa.ts` con xlsx, PDF y el clasificador de clima; probarlo con un boletín real capturado.
+- **Hecho cuando:**
+  - una frase con "lluvias" da `es_clima = true`;
+  - una frase con "menor oferta" sin término climático da `false`;
+  - el precio sale en $/kg.
+
+**8. Orquestador.**
+- **Hacer:** `orquestador.ts`, `admin.ts` y `scripts/corrida.ts`; prueba de integración contra la base local con un `fetch` falso.
+- **Hecho cuando:** CUANDO la corrida se ejecuta dos veces el mismo día, EL SISTEMA DEBE dejar idénticos `precios_actuales` e historial. Además:
+  - un salto de más de 35 % queda con `revisar = true`;
+  - una tienda con 0 hallazgos queda en `fallo`.
+
+**9. Alertas y correo.**
+- **Hacer:** `alertas-usuario.ts` y `correo.ts` (transporte inyectable; en las pruebas, `jsonTransport`).
+- **Hecho cuando:**
+  - una lista con un producto ≥10 % más barato en otra tienda genera exactamente 1 `mas_barato`, aunque la corrida se repita;
+  - una tienda en `fallo` produce exactamente 1 correo.
+
+**10. Workflow.**
+- **Hacer:** `.github/workflows/corrida.yml` (sección 6).
+- **Hecho cuando:** `grep -q '17 11 \* \* \*' .github/workflows/corrida.yml && grep -q workflow_dispatch .github/workflows/corrida.yml` sale con 0.
+
+**11. Base web.**
+- **Hacer:** `src/lib/supabase/{server,client}.ts` (`getAll`/`setAll`), `src/proxy.ts` con `getClaims()`, el layout con encabezado de frescura y banner, y el `/api/salud` real.
+- **Hecho cuando:** `pnpm build && pnpm humo --ruta api/salud --contiene ultimaCorrida` sale con 0.
+
+**12. Catálogo.**
+- **Hacer:** `/` y `/antojos`: búsqueda, chips, tarjetas con etiquetas, stepper y carrito (localStorage), con las animaciones 1, 2, 3, 6 y 8.
+- **Hecho cuando:** `pnpm build && pnpm humo --contiene "Canasta familiar"` sale con 0.
+
+**13. Detalle, fluctuación y gráficos.**
+- **Hacer:** `/producto/[id]` como hoja, la sección "En fluctuación" y los 3 gráficos, con las animaciones 4 y 5.
+- **Hecho cuando:** `pnpm humo --ruta producto/aceite --contiene "Aceite"` sale con 0.
+
+**14. Auth.**
+- **Hacer:** `/registro`, `/ingresar`, `/recuperar` y salir; guardar la lista en `listas` y fusionarla con la local.
+- **Hecho cuando:** pasa el e2e `tests/e2e/lista.spec.ts`: registrarse → agregar 2 productos → recargar → siguen ahí.
+
+**15. Anotados.**
+- **Hacer:** `/anotados` con la tabla editable y la server action.
+- **Hecho cuando:** pasa el e2e `tests/e2e/anotados.spec.ts`: anotar un precio menor y más reciente → aparece en azul y reemplaza al automático en `/`.
+
+**16. Alertas en la web.**
+- **Hacer:** `/alertas`, la campana con Realtime (animación 7) y el umbral de ahorro.
+- **Hecho cuando:** pasa la prueba de integración: insertar una alerta para el usuario la muestra en `/alertas`.
+
+**17. Hogar y Dieta.**
+- **Hacer:** `src/data/planes.ts`, `/hogar` y `/dieta`.
+- **Hecho cuando:** CUANDO se pulsa "Usar como mi lista" en `/hogar`, EL SISTEMA DEBE cargar los 28 ítems de `PLANES.hogar` (es el conteo del archivo origen).
+
+**18. Calidad.**
+- **Hacer:** `tests/e2e/publico.spec.ts` (sin sesión se ven precios) y axe en `/`, `/anotados` y `/hogar`.
+- **Hecho cuando:** CUANDO corre `pnpm test:e2e`, EL SISTEMA DEBE salir con 0 y sin violaciones `serious` ni `critical`.
+
+## 11. Lanzamiento (manual, con tus cuentas)
+
+1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
+2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa.
+3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*`.
+4. **GitHub:** usar un repo **privado**, cargar los secrets de la sección 6 y lanzar `workflow_dispatch` una vez. Comprobar que aparece una fila nueva en `corridas` y que llega el correo si alguna tienda falla.
+5. **Seguimiento:** a la semana, revisar en el panel de Supabase que el proyecto no se pausó.
+
+## 12. Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| Un sitio cambia o bloquea | Estado `fallo`, correo al admin, SKU guardado, fixtures en las pruebas |
+| GitHub retrasa o salta el cron | Banner a las 26 h, `/api/salud`, `workflow_dispatch` para correrla a mano |
+| Errores de unidades | `unidad_base`, `normalizar` devuelve `null` si no puede convertir, `revisar` en saltos de más de 35 % |
+| Registro abierto | Cada anotado tiene autor y se puede revertir. Aceptado |
+| Pausa del plan gratis de Supabase | La corrida escribe en la base a diario; revisar en el panel |
+| exceljs sin mantenimiento | Solo lee un xlsx público; se puede cambiar de librería sin tocar el resto |
+| La redacción de SIPSA cambia | El clima solo se marca con coincidencia explícita; si no, "causa no reportada" |
+| Términos de uso de las tiendas | 1 consulta por producto al día, pausa de 1 s, User-Agent propio, robots.txt respetado |

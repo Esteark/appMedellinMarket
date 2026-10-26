@@ -1,0 +1,26 @@
+{
+  "estado": {
+    "fuentes": {
+      "ara": "fallo",
+      "carulla": "ok",
+      "d1": "ok",
+      "euro": "ok",
+      "exito": "ok",
+      "isimo": "fallo",
+      "minorista": "fallo",
+      "pricesmart": "fallo"
+    },
+    "notas": "Corrida 22-oct-2026: precios reales de hoy en Éxito 118, Carulla 118, D1 103, Euro 99 de 144. Fallos: Ara (sitio no legible; único folleto público vencido el 14-oct), Ísimo (robots lo prohíbe), PriceSmart (sin fuente oficial legible; Rappi tiene precios de PriceSmart Guayabal pero no se usaron por ser precio de intermediario), Minorista (SIPSA de hoy no publicado; anexo Excel ilegible; se cargaron banano y mandarina del boletín 21-oct y zanahoria del 20-oct). Descartados: tilapia Euro (solo filete), papas fritas D1 (producto distinto). Frutas/verduras por unidad sin peso conservan su último precio.",
+    "ultimaCorrida": "2026-10-22T06:06:47-05:00",
+    "ultimoOk": {
+      "ara": null,
+      "carulla": "2026-10-22",
+      "d1": "2026-10-22",
+      "euro": "2026-10-22",
+      "exito": "2026-10-22",
+      "isimo": null,
+      "minorista": null,
+      "pricesmart": null
+    }
+  }
+}

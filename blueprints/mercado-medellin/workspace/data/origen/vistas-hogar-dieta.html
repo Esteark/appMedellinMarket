@@ -1,0 +1,139 @@
+<!-- Copia literal de las vistas Hogar y Dieta del artifact original (22-oct-2026). Fuente del contenido estático de /hogar y /dieta. -->
+  <!-- HOGAR -->
+  <section id="v-hogar" class="pv" role="tabpanel" hidden>
+    <div>
+      <h2>Presupuesto del hogar · 6 personas, 4 aportantes</h2>
+      <p class="lead">Alta proteína y fibra. Carnes ajustadas de $375.000 a $400.000 al mes. Abajo comparas el presupuesto con tu lista de mercado y con los precios de hoy.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi hi"><div class="lbl">Total mes · escenario medio</div><div class="val">$1.633.300</div><div class="note">Carnes en $400.000</div></div>
+      <div class="kpi"><div class="lbl">Aporte por trabajador</div><div class="val">$408.325</div><div class="note">4 trabajadores · ~$94.230/semana</div></div>
+      <div class="kpi"><div class="lbl">Huevos al mes</div><div class="val">600</div><div class="note">20 panales x30 · $300.000</div></div>
+    </div>
+
+    <div class="box">
+      <div class="sec-head"><h3 style="margin:0">Tu lista vs. el presupuesto</h3>
+        <div class="seg" id="escSeg" role="group" aria-label="Escenario"></div></div>
+      <div id="hogarCmp"></div>
+    </div>
+
+    <div class="box">
+      <div><h3 style="margin:0 0 4px">Mercado sugerido del mes</h3>
+      <p class="hint" style="margin:0">El plan no trae cantidades de verduras: estas se calcularon para que sumen cerca de $110.000 por semana. Ajústalas en la lista después de cargarlas.</p></div>
+      <div id="hogarPlan"></div>
+      <div class="btns"><button class="btn pri" data-act="plan" data-plan="hogar" data-mode="replace">Usar como mi lista</button><button class="btn" data-act="plan" data-plan="hogar" data-mode="add">Sumar a mi lista</button></div>
+    </div>
+
+    <div class="two">
+      <div>
+        <h2>Desglose mensual</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Rubro</th><th>Detalle</th><th class="r">Mensual</th></tr></thead>
+          <tbody>
+            <tr><td>Carnes</td><td>Res molida, cerdo, pechuga de pollo (antes $375.000)</td><td class="r num">$400.000</td></tr>
+            <tr><td>Huevos</td><td>5 panales/semana · $15.000 c/u (D1, Solofruver, Plaza de Flórez / La América)</td><td class="r num">$300.000</td></tr>
+            <tr><td>Yogurt griego</td><td>~4 tarros grandes/semana, para aderezos</td><td class="r num">$140.000</td></tr>
+            <tr><td>Leche en polvo</td><td>2 bolsas × $30.000</td><td class="r num">$60.000</td></tr>
+            <tr><td>Leche líquida</td><td>2 bolsas × $3.500</td><td class="r num">$7.000</td></tr>
+            <tr><td>Verduras y frutas</td><td>$110.000/semana × 4,33</td><td class="r num">$476.300</td></tr>
+            <tr><td>Granos, especias y despensa</td><td>Aceite de oliva, salsas, especias finas, poco arroz, arepas/parva</td><td class="r num">$150.000</td></tr>
+            <tr><td>Colchón de reserva</td><td>Reposición de lácteos y perecederos</td><td class="r num">$100.000</td></tr>
+            <tr class="total"><td>Total</td><td></td><td class="r num">$1.633.300</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h2>Escenarios</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Nivel</th><th class="r">Total mes</th><th class="r">Por trabajador</th><th class="r">Semana</th></tr></thead>
+          <tbody>
+            <tr><td>Básico · marcas aliadas / mayoristas</td><td class="r num">$1.425.000</td><td class="r num">$356.250</td><td class="r num">~$82.210</td></tr>
+            <tr class="total"><td>Medio · estimado real</td><td class="r num">$1.633.300</td><td class="r num">$408.325</td><td class="r num">~$94.230</td></tr>
+            <tr><td>Ideal · premium / margen amplio</td><td class="r num">$1.825.000</td><td class="r num">$456.250</td><td class="r num">~$105.290</td></tr>
+          </tbody>
+        </table></div>
+        <ul class="tips" style="margin-top:12px">
+          <li><b>Básico:</b> verduras en Plaza Mayorista o de Flórez y huevos por bulto o distribuidor directo.</li>
+          <li><b>Medio:</b> el consumo real: $400.000 en carnes, 600 huevos, yogurt griego constante, verduras de $110.000/semana y colchón de $100.000.</li>
+          <li><b>Ideal:</b> absorbe la temporada y permite yogurt de marca especializada o cortes magros de primera.</li>
+        </ul>
+        <p class="hint">El ajuste de carnes suma $25.000 al mes: $6.250 más por trabajador (~$1.440 por semana). Antes: básico $1.400.000 · medio $1.608.300 · ideal $1.800.000.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIETA -->
+  <section id="v-dieta" class="pv" role="tabpanel" hidden>
+    <div>
+      <h2>Plan de mercado · dieta familia de 5</h2>
+      <p class="lead">Ensaladas diarias, cenas, desayunos y proteínas. Tope objetivo $800.000 – $1.000.000 al mes. Los costos con precios de hoy salen del comparador.</p>
+    </div>
+    <div class="kpis" id="dietaKpis"></div>
+    <p class="callout">Los totales semanales del PDF están por debajo de lo que suman sus propios artículos: la lista de verduras de cada semana suma $79.000, o sea $316.000 al mes y no $234.000.</p>
+    <div class="box">
+      <h3 style="margin:0">Cargar el plan en tu lista</h3>
+      <div class="btns">
+        <button class="btn pri" data-act="plan" data-plan="semana" data-mode="replace">Lista base de la semana</button>
+        <button class="btn" data-act="plan" data-plan="mes" data-mode="replace">Plan del mes completo</button>
+        <button class="btn" data-act="plan" data-plan="semana" data-mode="add">Sumar lista base a mi lista</button>
+      </div>
+      <p class="hint" style="margin:0">Equivalencias usadas: 10 limones ≈ 1 kg; la cebolla “morada y blanca” se reparte mitad y mitad.</p>
+    </div>
+
+    <div class="two">
+      <div>
+        <h2>Por categoría (según el PDF)</h2>
+        <div class="scroll"><table>
+          <thead><tr><th>Categoría</th><th>Cantidad/mes</th><th class="r">PDF</th><th class="r">%</th></tr></thead>
+          <tbody>
+            <tr><td>Carnes y atún</td><td>~20 kg</td><td class="r num">$248.000</td><td class="r num">21,1</td></tr>
+            <tr><td>Huevos</td><td>16 canastas x30</td><td class="r num">$240.000</td><td class="r num">20,5</td></tr>
+            <tr><td>Verduras y hortalizas</td><td>Lista semanal</td><td class="r num">$234.000</td><td class="r num">19,9</td></tr>
+            <tr><td>Lácteos y quesos</td><td>Según lista</td><td class="r num">$160.000</td><td class="r num">13,6</td></tr>
+            <tr><td>Frutas</td><td>Según lista</td><td class="r num">$92.000</td><td class="r num">7,8</td></tr>
+            <tr><td>Leguminosas</td><td>~26 paquetes</td><td class="r num">$82.000</td><td class="r num">7,0</td></tr>
+            <tr><td>Especias, salsas, básicos</td><td>Mensual</td><td class="r num">$71.000</td><td class="r num">6,1</td></tr>
+            <tr><td>Pastas y maicitos</td><td>20 + 8 paquetes</td><td class="r num">$46.000</td><td class="r num">3,9</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h2>Proteína por porción</h2>
+        <div class="box"><div class="hb" id="protBars"></div></div>
+        <p class="hint">Las leguminosas son la proteína más barata. Un día a la semana con carne de lentejas baja el costo.</p>
+      </div>
+    </div>
+
+    <div>
+      <h2>Compras por semana</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Semana</th><th>Qué se compra</th><th class="r">PDF</th><th class="r">Suma real</th></tr></thead>
+        <tbody>
+          <tr><td>Semana 1</td><td>Lista base + especias, salsas, quesos, miel y atún</td><td class="r num">$371.500</td><td class="r num">$411.500</td></tr>
+          <tr><td>Semana 2</td><td>Lista base + 1 paquete de garbanzos</td><td class="r num">$263.500</td><td class="r num">$283.500</td></tr>
+          <tr><td>Semana 3</td><td>Lista base + sal y pasta de ajo</td><td class="r num">$277.500</td><td class="r num">$286.500</td></tr>
+          <tr><td>Semana 4</td><td>Solo lista base</td><td class="r num">$253.000</td><td class="r num">$278.500</td></tr>
+          <tr class="total"><td>Mes</td><td></td><td class="r num">$1.165.500</td><td class="r num">$1.260.000</td></tr>
+        </tbody>
+      </table></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+        <details><summary>Lista base semanal · $278.500</summary><div class="scroll"><table><thead><tr><th>Producto</th><th>Cantidad</th><th class="r">Precio PDF</th></tr></thead><tbody id="baseList"></tbody></table></div></details>
+        <details><summary>Extras de la semana 1 · $133.000</summary><div class="scroll"><table><thead><tr><th>Producto</th><th>Cantidad</th><th class="r">Precio PDF</th></tr></thead><tbody id="extraList"></tbody></table></div></details>
+      </div>
+      <p class="hint">Para bajar al tope de $1.000.000 el PDF sugiere: lentejas a 3 paquetes por semana, pasta de ajo casera y atún cada dos semanas.</p>
+    </div>
+
+    <div class="two">
+      <div><h3>Dónde comprar</h3><ul class="tips">
+        <li>Verduras y frutas: Plaza Minorista o galerías del barrio, hasta 30 % más barato.</li>
+        <li>Huevos, yogurt, pastas, maicitos: D1.</li>
+        <li>Carnes: carnicería de confianza, comparando precio por kg.</li>
+        <li>Leguminosas a granel: naturistas o tienda del barrio.</li></ul></div>
+      <div><h3>Ahorros puntuales</h3><ul class="tips">
+        <li>Olla grande de lentejas o garbanzos el domingo, dura 4–5 días.</li>
+        <li>Queso costeño duro (~$12.000/250 g) en vez de parmesano.</li>
+        <li>Pasta de ajo casera: 2 cabezas + 3 cdas de aceite + sal, ~$4.000 vs $10.000.</li>
+        <li>Aguacate verde para madurar en casa; cilantro en vaso con agua; lechuga en papel absorbente.</li></ul></div>
+    </div>
+  </section>
+
