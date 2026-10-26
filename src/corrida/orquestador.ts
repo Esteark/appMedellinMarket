@@ -2,7 +2,10 @@ import { euro } from "@/corrida/adaptadores/euro";
 import { leerBoletin, minorista } from "@/corrida/adaptadores/sipsa";
 import { d1 } from "@/corrida/adaptadores/vtex";
 import type { Admin } from "@/corrida/admin";
+import { alertasUsuarios } from "@/corrida/alertas-usuario";
+import type { Aviso } from "@/corrida/correo";
 import type { Adaptador, Consulta, Contexto, Hallazgo } from "@/corrida/tipos";
+import { alertasFuenteCaida } from "@/lib/alertas/reglas";
 import type { TablesInsert } from "@/lib/supabase/tipos";
 import type { UnidadBase } from "@/lib/unidades";
 
@@ -37,6 +40,8 @@ export type Opciones = {
   /** Limitar a estos productos (pruebas). */
   productos?: string[];
   adaptadores?: Adaptador[];
+  /** Correo al admin (fuente_caida). Sin él solo queda en el resumen. */
+  aviso?: Aviso;
 };
 
 export type ConteoTienda = {
@@ -52,6 +57,9 @@ export type Resumen = {
   escritos: number;
   revisar: number;
   causas: number;
+  alertas: number;
+  /** Tiendas automáticas en fallo o con ≥3 días sin ultimo_ok. */
+  caidas: string[];
 };
 
 type Respuesta<T> = { data: T | null; error: { message: string } | null };
@@ -263,6 +271,32 @@ export async function correr(
     );
   }
 
+  // 6. Fuentes caídas: solo las tiendas automáticas (las demás van por anotados y
+  // estarían "caídas" siempre). Un único correo al admin por corrida.
+  const caidas = alertasFuenteCaida(
+    datos(
+      await db
+        .from("tienda_estado")
+        .select("tienda_id, estado, ultimo_ok")
+        .in("tienda_id", tiendas),
+      "tienda_estado",
+    ),
+    ctx.hoy,
+  );
+  if (caidas.length && opciones.aviso)
+    await opciones.aviso(
+      `${caidas.length} fuente(s) caída(s) el ${ctx.hoy}`,
+      caidas
+        .map((c) => {
+          const n = conteos[c.tienda_id ?? ""];
+          return `- ${c.tienda_id}: ${n ? `${n.estado}, ${n.hallazgos}/${n.intentados} hallazgos` : "sin datos"}`;
+        })
+        .join("\n"),
+    );
+
+  // 7. Alertas de cada usuario con lista.
+  const alertas = await alertasUsuarios(db, ctx.hoy);
+
   revisa(
     await db
       .from("corridas")
@@ -272,7 +306,7 @@ export async function correr(
           Object.entries(conteos).map(([t, c]) => [t, c.estado]),
         ),
         conteos,
-        notas: `productos=${productos.length} escritos=${filasActual.length} causas=${causas}`,
+        notas: `productos=${productos.length} escritos=${filasActual.length} causas=${causas} alertas=${alertas} caidas=${caidas.length}`,
       })
       .eq("id", corrida.id),
     "corridas",
@@ -284,5 +318,7 @@ export async function correr(
     escritos: filasActual.length,
     revisar: filasActual.filter((f) => f.revisar).length,
     causas,
+    alertas,
+    caidas: caidas.map((c) => c.tienda_id ?? ""),
   };
 }

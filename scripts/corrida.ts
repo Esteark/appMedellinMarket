@@ -4,6 +4,7 @@
 import "./cargar-env";
 import { parseArgs } from "node:util";
 import { clienteAdmin } from "@/corrida/admin";
+import { crearAviso, transporteDesdeEnv } from "@/corrida/correo";
 import { correr } from "@/corrida/orquestador";
 import { contextoReal } from "@/corrida/tipos";
 
@@ -21,9 +22,18 @@ if (values.ayuda) {
   process.exit(0);
 }
 
+const aviso = crearAviso(
+  transporteDesdeEnv(),
+  process.env.ADMIN_EMAIL,
+  process.env.SMTP_USER,
+);
+
 try {
   const ctx = contextoReal();
-  const resumen = await correr(clienteAdmin(), ctx, { todo: values.todo });
+  const resumen = await correr(clienteAdmin(), ctx, {
+    todo: values.todo,
+    aviso,
+  });
   console.log(`Corrida ${resumen.corrida_id} (${ctx.hoy})`);
   for (const [tienda, c] of Object.entries(resumen.tiendas)) {
     console.log(
@@ -31,11 +41,17 @@ try {
     );
   }
   console.log(
-    `  escritos=${resumen.escritos} revisar=${resumen.revisar} causas=${resumen.causas}`,
+    `  escritos=${resumen.escritos} revisar=${resumen.revisar} causas=${resumen.causas} alertas=${resumen.alertas} caídas=${resumen.caidas.join(",") || "ninguna"}`,
   );
   process.exit(0);
 } catch (e) {
-  // shortcut: el correo al admin llega en el paso 9; por ahora solo exit 1 (GitHub avisa).
   console.error("CORRIDA FALLÓ:", e);
+  // Primero el correo; si también falla, el exit 1 hace que GitHub avise igual.
+  await aviso(
+    "La corrida falló",
+    e instanceof Error ? (e.stack ?? e.message) : String(e),
+  ).catch((errorCorreo) =>
+    console.error("Tampoco salió el correo:", errorCorreo),
+  );
   process.exit(1);
 }
