@@ -219,8 +219,7 @@ alter publication supabase_realtime add table alertas;
 2. **Cómo consulta:** las tiendas van en paralelo, y dentro de cada tienda las consultas son secuenciales con ≥1 s de pausa. El User-Agent es `CORRIDA_USER_AGENT`. Respeta robots.txt: Ísimo no tiene adaptador, y en Euro solo se leen páginas `/p`. Nunca salta captchas ni logins.
 3. **VTEX** (solo D1; Éxito y Carulla quedaron por anotados, ver §1):
    - Consulta: `GET https://www.<host>/api/catalog_system/pub/products/search?ft=<termino>&_from=0&_to=4`.
-   - Si ya hay `sku` guardado, usa `?fq=skuId:<sku>`.
-   - En D1 los términos son de una sola palabra.
+   - **Cambio del 26-oct-2026:** la corrida solo hace consultas exactas: `?fq=alternateIds_RefId:<n>` con el número final de la URL `/p` (91 productos) o, si no hay URL `/p`, `?fq=skuId:<sku>`. La búsqueda por término ya no se usa: en D1 devolvía otro producto ("arveja" → arveja seca 500 g, "maiz" → Maizena) y su SKU quedaba fijado. Los 12 productos que solo tenían término siguen por anotados hasta que alguien les ponga su URL `/p` o su SKU.
    - Precio = `items[0].sellers[0].commertialOffer.Price`. Se descarta si `AvailableQuantity` es 0 o el precio es 0.
    - El `skuId` encontrado se guarda.
 4. **Euro:** lee la página `producto_fuente.url` (`/p`) y saca el precio del `<script type="application/ld+json">` (`offers.price`) o, si no está, del `__STATE__`. Usa cheerio.

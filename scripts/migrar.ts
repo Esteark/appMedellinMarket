@@ -152,7 +152,13 @@ for (const [producto_id, porTienda] of Object.entries(precios)) {
       estado: p.estado,
     });
     if (p.fuente?.startsWith("http"))
-      filasFuente.push({ producto_id, tienda_id, url: p.fuente });
+      filasFuente.push({
+        producto_id,
+        tienda_id,
+        url: p.fuente,
+        // Las URLs de búsqueda VTEX traen el término en ?ft=; las /p, no.
+        termino: new URL(p.fuente).searchParams.get("ft"),
+      });
   }
 }
 

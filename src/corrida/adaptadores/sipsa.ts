@@ -228,4 +228,10 @@ async function buscar(c: Consulta, ctx: Contexto): Promise<Hallazgo | null> {
   };
 }
 
-export const minorista: Adaptador = { tienda: "minorista", buscar };
+const CUBIERTOS = new Set(Object.values(PRODUCTOS));
+
+export const minorista: Adaptador = {
+  tienda: "minorista",
+  cubre: (c) => CUBIERTOS.has(c.producto_id),
+  buscar,
+};

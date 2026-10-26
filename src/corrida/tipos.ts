@@ -35,6 +35,8 @@ export type Hallazgo = {
 
 export type Adaptador = {
   tienda: string;
+  /** ¿Tiene con qué buscar este producto? Solo esos cuentan como intentados en tienda_estado. */
+  cubre: (consulta: Consulta) => boolean;
   buscar: (consulta: Consulta, ctx: Contexto) => Promise<Hallazgo | null>;
 };
 

@@ -7,26 +7,28 @@ import { type Contexto, USER_AGENT_POR_DEFECTO } from "@/corrida/tipos";
  * del fixture (sin existencias, precio 0…): los archivos nunca se editan.
  */
 export function fetchFalso(
-  grupo: string,
+  grupos: string | string[],
   variar?: (archivo: string, texto: string) => string,
 ) {
-  const carpeta = `tests/fixtures/${grupo}`;
-  const { urls } = JSON.parse(
-    readFileSync(`${carpeta}/capturado.json`, "utf8"),
-  ) as {
-    urls: Record<string, string>;
-  };
-  const archivoDe = new Map(
-    Object.entries(urls).map(([archivo, url]) => [url, archivo]),
-  );
+  // url → ruta del fixture, de todos los grupos pedidos
+  const rutaDe = new Map<string, string>();
+  for (const grupo of [grupos].flat()) {
+    const carpeta = `tests/fixtures/${grupo}`;
+    const { urls } = JSON.parse(
+      readFileSync(`${carpeta}/capturado.json`, "utf8"),
+    ) as { urls: Record<string, string> };
+    for (const [archivo, url] of Object.entries(urls))
+      rutaDe.set(url, `${carpeta}/${archivo}`);
+  }
   const pedidas: string[] = [];
   const falso = (async (entrada: string | URL | Request) => {
     const url = entrada instanceof Request ? entrada.url : String(entrada);
     pedidas.push(url);
-    const archivo = archivoDe.get(url);
-    if (!archivo) return new Response("", { status: 404 });
+    const ruta = rutaDe.get(url);
+    if (!ruta) return new Response("", { status: 404 });
     // Bytes tal cual: hay fixtures binarios (xlsx, pdf).
-    const bytes = readFileSync(`${carpeta}/${archivo}`);
+    const bytes = readFileSync(ruta);
+    const archivo = ruta.slice(ruta.lastIndexOf("/") + 1);
     return new Response(
       variar ? variar(archivo, bytes.toString("utf8")) : bytes,
       { status: 200 },

@@ -92,4 +92,8 @@ async function buscar(c: Consulta, ctx: Contexto): Promise<Hallazgo | null> {
   return { producto_id: c.producto_id, precio, sku: p.sku, url: c.url };
 }
 
-export const euro: Adaptador = { tienda: "euro", buscar };
+export const euro: Adaptador = {
+  tienda: "euro",
+  cubre: (c) => c.url != null && PAGINA_P.test(c.url),
+  buscar,
+};

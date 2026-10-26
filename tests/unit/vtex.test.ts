@@ -37,6 +37,36 @@ describe("adaptador VTEX (D1) sobre fixtures reales", () => {
     });
   });
 
+  it("por RefId de la URL /p consulta el producto exacto", async () => {
+    const { fetch, pedidas } = fetchFalso("vtex");
+    const h = await d1.buscar(
+      consulta({
+        producto_id: "aceite",
+        unidad_base: "ml",
+        cantidad_base: 1000,
+        url: "https://www.d1.com.co/aceite-girasol-don-olio-12004357/p",
+      }),
+      contextoPrueba(fetch),
+    );
+    expect(pedidas).toContain(
+      "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=alternateIds_RefId:12004357",
+    );
+    // "Aceite de Girasol Don Olio 900 Ml" a 7990 → 1 L = 8878 → 8900
+    expect(h).toMatchObject({ producto_id: "aceite", precio: 8900 });
+  });
+
+  it("en la corrida solo intenta consultas exactas (SKU o RefId), nunca por término", () => {
+    expect(d1.cubre(consulta({ sku: "657" }))).toBe(true);
+    expect(
+      d1.cubre(
+        consulta({
+          url: "https://www.d1.com.co/aceite-girasol-don-olio-12004357/p",
+        }),
+      ),
+    ).toBe(true);
+    expect(d1.cubre(consulta({ termino: "arveja" }))).toBe(false);
+  });
+
   it("por término salta resultados no convertibles y normaliza a la unidad del producto", async () => {
     const { fetch } = fetchFalso("vtex");
     const ctx = contextoPrueba(fetch);

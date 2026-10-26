@@ -48,6 +48,18 @@ try {
     const sku = ajo[0]?.items?.[0]?.itemId;
     if (!sku) throw new Error("la búsqueda de ajo no trajo skuId");
     await capturar("d1-sku.json", consulta(null, sku));
+    // Consulta exacta por RefId (la que usa la corrida): aceite de la URL /p del export.
+    await capturar(
+      "d1-refid.json",
+      urlConsulta({
+        producto_id: "aceite",
+        unidad_base: "ml",
+        cantidad_base: 1000,
+        termino: null,
+        sku: null,
+        url: "https://www.d1.com.co/aceite-girasol-don-olio-12004357/p",
+      }) as string,
+    );
   } else if (grupo === "euro") {
     const euro = "https://www.eurosupermercados.com.co";
     await capturar("robots.txt", `${euro}/robots.txt`);

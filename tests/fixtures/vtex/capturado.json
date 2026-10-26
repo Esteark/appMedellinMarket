@@ -6,6 +6,7 @@
     "d1-ajo.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=ajo&_from=0&_to=4",
     "d1-arroz.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=arroz&_from=0&_to=4",
     "d1-leche.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=leche&_from=0&_to=4",
-    "d1-sku.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=skuId:657"
+    "d1-sku.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=skuId:657",
+    "d1-refid.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=alternateIds_RefId:12004357"
   }
 }

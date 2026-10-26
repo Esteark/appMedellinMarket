@@ -6,6 +6,8 @@ import { unidadBase } from "@/lib/unidades";
 
 // Solo D1: Éxito y Carulla prohíben /api/ en robots.txt (blueprint §1).
 const HOST = "https://www.d1.com.co";
+// En las páginas /p de D1 el número final es el RefId del producto.
+const REF_ID = /-(\d+)\/p$/;
 
 const Respuesta = z.array(
   z.object({
@@ -31,6 +33,9 @@ const Respuesta = z.array(
 
 export function urlConsulta(c: Consulta): string | null {
   const base = `${HOST}/api/catalog_system/pub/products/search`;
+  // Primero el RefId de la URL /p (estable, lo eligió una persona); luego el SKU guardado.
+  const refId = c.url?.match(REF_ID)?.[1];
+  if (refId) return `${base}?fq=alternateIds_RefId:${refId}`;
   if (c.sku) return `${base}?fq=skuId:${encodeURIComponent(c.sku)}`;
   // D1 falla con espacios o "+": solo la primera palabra del término.
   const palabra = c.termino?.trim().split(/\s+/)[0];
@@ -75,4 +80,10 @@ async function buscar(c: Consulta, ctx: Contexto): Promise<Hallazgo | null> {
   return null;
 }
 
-export const d1: Adaptador = { tienda: "d1", buscar };
+export const d1: Adaptador = {
+  tienda: "d1",
+  // Solo consultas exactas (SKU o RefId de la página /p). Por término, D1 devuelve otro
+  // producto con frecuencia ("arveja" → arveja seca 500 g) y su SKU quedaría fijado.
+  cubre: (c) => c.sku != null || REF_ID.test(c.url ?? ""),
+  buscar,
+};
