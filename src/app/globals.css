@@ -224,3 +224,21 @@
     @apply font-sans;
   }
 }
+
+/* Toasts (react-hot-toast): tokens y un acento por tipo. */
+.aviso {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+}
+.aviso-exito {
+  border-left-color: var(--save);
+}
+.aviso-info {
+  border-left-color: var(--anot);
+}
+.aviso-aviso {
+  border-left-color: var(--warn);
+}
+.aviso-error {
+  border-left-color: var(--up);
+}

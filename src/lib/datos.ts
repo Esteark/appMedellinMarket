@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { cache } from "react";
 import { alertasFuenteCaida } from "@/lib/alertas/reglas";
 import { hoyBogota, restarDias } from "@/lib/fecha";
 import {
@@ -26,8 +27,8 @@ export type Frescura = {
   fuentesOk: number;
 };
 
-/** Estado de la corrida para el encabezado y /api/salud. Lanza si la base no responde. */
-export async function frescura(fijo?: Date): Promise<Frescura> {
+/** Estado de la corrida para el encabezado y /api/salud. Lanza si la base no responde. Una vez por petición. */
+export const frescura = cache(async (fijo?: Date): Promise<Frescura> => {
   // Con cacheComponents la hora solo puede leerse en tiempo de petición.
   await connection();
   const ahora = fijo ?? new Date();
@@ -71,7 +72,7 @@ export async function frescura(fijo?: Date): Promise<Frescura> {
     fuentes,
     fuentesOk: fuentes.filter((f) => f.ok).length,
   };
-}
+});
 
 export type TiendaCatalogo = { id: string; nombre: string; color: string };
 
@@ -349,5 +350,42 @@ export async function detalle(id: string): Promise<Detalle | null> {
     origen: Object.fromEntries(
       ids.map((t) => [t, efectivo.get(`${p.id}|${t}`)?.estado ?? null]),
     ),
+  };
+}
+
+export type Usuario = { id: string; email: string };
+
+/** Usuario de la sesión según los claims del JWT (nunca `getSession()`). Una vez por petición. */
+export const usuario = cache(async (): Promise<Usuario | null> => {
+  // getClaims lee la hora para validar el JWT: solo en tiempo de petición.
+  await connection();
+  const db = await clienteServidor();
+  const { data } = await db.auth.getClaims();
+  if (!data?.claims.sub) return null;
+  return { id: data.claims.sub, email: String(data.claims.email ?? "") };
+});
+
+export type AlertaHoy = { id: number; mensaje: string; monto: number };
+
+/** Lista guardada y alertas no leídas de hoy del usuario con sesión. RLS filtra por usuario. */
+export async function datosSesion(): Promise<{
+  lista: Record<string, number> | null;
+  alertas: AlertaHoy[];
+}> {
+  await connection();
+  const db = await clienteServidor();
+  const [lista, alertas] = await Promise.all([
+    db.from("listas").select("items").maybeSingle(),
+    db
+      .from("alertas")
+      .select("id, mensaje, monto")
+      .eq("leida", false)
+      .gte("creada", `${hoyBogota()}T00:00:00-05:00`),
+  ]);
+  for (const r of [lista, alertas])
+    if (r.error) throw new Error(r.error.message);
+  return {
+    lista: (lista.data?.items as Record<string, number> | undefined) ?? null,
+    alertas: (alertas.data ?? []).map((a) => ({ ...a, monto: a.monto ?? 0 })),
   };
 }

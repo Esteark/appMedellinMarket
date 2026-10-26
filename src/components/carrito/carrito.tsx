@@ -5,6 +5,7 @@ import { type Ref, useMemo, useRef, useState } from "react";
 import { GraficosLista } from "@/components/graficos/graficos-lista";
 import { Hoja } from "@/components/hoja";
 import { contar } from "@/lib/animaciones";
+import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import {
@@ -13,6 +14,7 @@ import {
   optimoDividido,
   totalesPorTienda,
 } from "@/lib/precios/lista";
+import { reemplazarLista } from "./use-lista";
 
 type Props = {
   lista: Lista;
@@ -56,17 +58,39 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
 
   const [hojaAbierta, setHojaAbierta] = useState(false);
   const [graficos, setGraficos] = useState(false);
+  const vaciar = () => {
+    const antes = lista;
+    reemplazarLista({});
+    setHojaAbierta(false);
+    avisar(
+      "lista_vaciada",
+      {},
+      {
+        texto: "Deshacer",
+        alPulsar: () => reemplazarLista(antes),
+      },
+    );
+  };
   const detalleLista = items.length > 0 && (
-    <ul className="flex flex-col gap-1.5 text-sm">
-      {items.map((i) => (
-        <li key={i.id} className="flex justify-between gap-2">
-          <span className="truncate">
-            {porId.get(i.id)?.emoji} {porId.get(i.id)?.nombre ?? i.id} × {i.q}
-          </span>
-          <span className="flex-none text-muted-foreground">{i.tienda}</span>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="flex flex-col gap-1.5 text-sm">
+        {items.map((i) => (
+          <li key={i.id} className="flex justify-between gap-2">
+            <span className="truncate">
+              {porId.get(i.id)?.emoji} {porId.get(i.id)?.nombre ?? i.id} × {i.q}
+            </span>
+            <span className="flex-none text-muted-foreground">{i.tienda}</span>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={vaciar}
+        className="self-start text-sm font-medium text-up-ink"
+      >
+        Vaciar lista
+      </button>
+    </>
   );
 
   // 2 · Total y ahorro cuentan hasta el nuevo valor.

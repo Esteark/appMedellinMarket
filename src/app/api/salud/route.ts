@@ -11,6 +11,8 @@ export async function GET() {
       ultimaCorrida: f.ultimaCorrida,
       horasDesdeCorrida: f.horasDesdeCorrida,
       fuentesOk: f.fuentesOk,
+      fuentesTotal: f.fuentes.length,
+      caidas: f.fuentes.filter((x) => !x.ok).map((x) => x.nombre),
     });
   } catch (e) {
     return Response.json(

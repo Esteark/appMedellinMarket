@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
+import { AvisoDeUrl } from "@/components/avisos/aviso-de-url";
+import { Sesion } from "@/components/avisos/sesion";
+import { Toaster } from "@/components/avisos/toaster";
 import { Encabezado } from "@/components/encabezado";
 import { Pestanas } from "@/components/pestanas";
 import "./globals.css";
@@ -28,6 +31,13 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         </Suspense>
         {children}
         {modal}
+        <Toaster />
+        <Suspense fallback={null}>
+          <Sesion />
+        </Suspense>
+        <Suspense fallback={null}>
+          <AvisoDeUrl />
+        </Suspense>
       </body>
     </html>
   );

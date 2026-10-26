@@ -33,18 +33,18 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 
 ## Qué hace
 
-| | |
-|---|---|
-| 🧺 **Canasta familiar y Antojos** | Catálogo con búsqueda, filtros por grupo y por tienda, y el precio más barato de cada producto con la tienda donde está. |
-| 🏷️ **Etiquetas honestas** | ↑/↓ cuando el precio cambia ±15 % contra los 7 días anteriores, 🌧️ cuando el boletín SIPSA del DANE reporta una causa climática, y avisos de *anotado*, *estimado*, *mayorista*, *revisar* o *desactualizado*. Si no hay una causa reportada, la app lo dice: nunca inventa un precio ni una causa. |
-| 📝 **Mi lista** | Se arma con un clic y se guarda en el navegador. Muestra el total en la tienda más barata que tiene todo y el **ahorro dividiendo** la compra entre tiendas. |
-| 🔍 **Detalle de producto** | Precio en cada tienda, la causa del cambio y el historial de 30 días. Se abre como hoja encima del catálogo y también tiene su propia URL para compartir. |
-| 📈 **En fluctuación** | Productos con cambios fuertes en la semana o mucha variación en el mes, con su mini gráfico. |
-| 📊 **Gráficos** | Total de la lista por tienda, gasto por grupo e historial de cada producto. |
-| 🟢 **Frescura visible** | El encabezado muestra cuándo se actualizó, qué fuentes respondieron y un banner rojo si la última corrida tiene más de 26 horas. |
-| ✉️ **Nada falla en silencio** | Si una tienda deja de responder o la corrida se cae, el administrador recibe un correo. |
+|                                   |                                                                                                                                                                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🧺 **Canasta familiar y Antojos** | Catálogo con búsqueda, filtros por grupo y por tienda, y el precio más barato de cada producto con la tienda donde está.                                                                                                                                                                            |
+| 🏷️ **Etiquetas honestas**         | ↑/↓ cuando el precio cambia ±15 % contra los 7 días anteriores, 🌧️ cuando el boletín SIPSA del DANE reporta una causa climática, y avisos de _anotado_, _estimado_, _mayorista_, _revisar_ o _desactualizado_. Si no hay una causa reportada, la app lo dice: nunca inventa un precio ni una causa. |
+| 📝 **Mi lista**                   | Se arma con un clic y se guarda en el navegador. Muestra el total en la tienda más barata que tiene todo y el **ahorro dividiendo** la compra entre tiendas.                                                                                                                                        |
+| 🔍 **Detalle de producto**        | Precio en cada tienda, la causa del cambio y el historial de 30 días. Se abre como hoja encima del catálogo y también tiene su propia URL para compartir.                                                                                                                                           |
+| 📈 **En fluctuación**             | Productos con cambios fuertes en la semana o mucha variación en el mes, con su mini gráfico.                                                                                                                                                                                                        |
+| 📊 **Gráficos**                   | Total de la lista por tienda, gasto por grupo e historial de cada producto.                                                                                                                                                                                                                         |
+| 🟢 **Frescura visible**           | El encabezado muestra cuándo se actualizó, qué fuentes respondieron y un banner rojo si la última corrida tiene más de 26 horas.                                                                                                                                                                    |
+| ✉️ **Nada falla en silencio**     | Si una tienda deja de responder o la corrida se cae, el administrador recibe un correo.                                                                                                                                                                                                             |
 
-**En camino** (ver [estado del proyecto](#estado-del-proyecto)): cuentas de usuario con la lista guardada, notificaciones, botón para actualizar precios cuando están viejos, precios anotados a mano, alertas personales y los planes *Hogar* y *Dieta*.
+**En camino** (ver [estado del proyecto](#estado-del-proyecto)): cuentas de usuario con la lista guardada, notificaciones, botón para actualizar precios cuando están viejos, precios anotados a mano, alertas personales y los planes _Hogar_ y _Dieta_.
 
 ---
 
@@ -68,35 +68,35 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 └──────────────────┘         └───────────────────────────────┘
 ```
 
-- **La corrida** (`scripts/corrida.ts` → `src/corrida/orquestador.ts`) consulta las tiendas en paralelo y, dentro de cada tienda, un producto a la vez con al menos 1 s de pausa. Convierte cada precio a la unidad base del producto (g, ml o unidad) y lo escribe solo si hubo hallazgo real. Un salto de más del 35 % se publica marcado como *revisar*. Es idempotente: correrla dos veces el mismo día deja el mismo estado.
-- **La web** (Next.js App Router) lee con la clave publicable y las políticas RLS de Supabase deciden qué se ve. Las mutaciones son *server actions* validadas con zod.
+- **La corrida** (`scripts/corrida.ts` → `src/corrida/orquestador.ts`) consulta las tiendas en paralelo y, dentro de cada tienda, un producto a la vez con al menos 1 s de pausa. Convierte cada precio a la unidad base del producto (g, ml o unidad) y lo escribe solo si hubo hallazgo real. Un salto de más del 35 % se publica marcado como _revisar_. Es idempotente: correrla dos veces el mismo día deja el mismo estado.
+- **La web** (Next.js App Router) lee con la clave publicable y las políticas RLS de Supabase deciden qué se ve. Las mutaciones son _server actions_ validadas con zod.
 - **El precio efectivo** lo calcula una vista SQL: un precio anotado a mano reemplaza al automático cuando es más reciente.
 
 ---
 
 ## Fuentes de precios
 
-| Tienda | Cómo se obtiene |
-|---|---|
-| **D1** | API pública de catálogo VTEX, por SKU |
-| **Euro** | Páginas de producto públicas (`ld+json`) |
-| **La Minorista** | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
-| **Éxito, Carulla, Ara, Ísimo, PriceSmart** | Precios anotados a mano: sus sitios lo prohíben en `robots.txt` o bloquean bots |
-| **Solofruver, Tienda/Carnicería** | Solo anotados |
+| Tienda                                     | Cómo se obtiene                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| **D1**                                     | API pública de catálogo VTEX, por SKU                                                                  |
+| **Euro**                                   | Páginas de producto públicas (`ld+json`)                                                               |
+| **La Minorista**                           | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
+| **Éxito, Carulla, Ara, Ísimo, PriceSmart** | Precios anotados a mano: sus sitios lo prohíben en `robots.txt` o bloquean bots                        |
+| **Solofruver, Tienda/Carnicería**          | Solo anotados                                                                                          |
 
 ---
 
 ## Stack
 
-| Capa | Tecnología |
-|---|---|
-| Web | Next.js 16 (App Router, Cache Components) · React 19 · TypeScript 6 |
-| Estilos | Tailwind CSS 4 · shadcn/ui · modo claro y oscuro con tokens |
-| Datos | Supabase: Postgres, Row Level Security, Auth y Realtime (sin ORM) |
-| Gráficos y movimiento | Recharts · GSAP (respeta `prefers-reduced-motion`) |
-| Corrida | Node 24 · cheerio · exceljs · unpdf · nodemailer |
-| Calidad | Vitest · Playwright · pgTAP · Biome |
-| Infraestructura | Vercel (web) · GitHub Actions (corrida diaria) |
+| Capa                  | Tecnología                                                          |
+| --------------------- | ------------------------------------------------------------------- |
+| Web                   | Next.js 16 (App Router, Cache Components) · React 19 · TypeScript 6 |
+| Estilos               | Tailwind CSS 4 · shadcn/ui · modo claro y oscuro con tokens         |
+| Datos                 | Supabase: Postgres, Row Level Security, Auth y Realtime (sin ORM)   |
+| Gráficos y movimiento | Recharts · GSAP (respeta `prefers-reduced-motion`)                  |
+| Corrida               | Node 24 · cheerio · exceljs · unpdf · nodemailer                    |
+| Calidad               | Vitest · Playwright · pgTAP · Biome                                 |
+| Infraestructura       | Vercel (web) · GitHub Actions (corrida diaria)                      |
 
 ---
 
@@ -127,18 +127,18 @@ Para reiniciar la base: `pnpm exec supabase db reset` y luego `pnpm migrar`.
 
 ## Comandos
 
-| Tarea | Comando |
-|---|---|
-| Desarrollo | `pnpm dev` |
-| Build de producción | `pnpm build` |
-| Prueba de humo sobre el build | `pnpm humo` · `pnpm humo --ruta producto/aceite --contiene "Aceite"` |
-| Typecheck · lint · formato | `pnpm typecheck` · `pnpm lint` · `pnpm format` |
-| Pruebas unitarias y de integración | `pnpm test` |
-| Pruebas de RLS (pgTAP) | `pnpm exec supabase test db` |
-| Pruebas e2e y accesibilidad | `pnpm test:e2e` |
-| Corrida de precios | `pnpm corrida` · `pnpm corrida --todo` · `pnpm corrida --ayuda` |
-| Capturar fixtures reales | `pnpm capturar vtex` · `pnpm capturar euro` · `pnpm capturar sipsa` |
-| Regenerar tipos de la base | `pnpm gen:tipos` |
+| Tarea                              | Comando                                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| Desarrollo                         | `pnpm dev`                                                           |
+| Build de producción                | `pnpm build`                                                         |
+| Prueba de humo sobre el build      | `pnpm humo` · `pnpm humo --ruta producto/aceite --contiene "Aceite"` |
+| Typecheck · lint · formato         | `pnpm typecheck` · `pnpm lint` · `pnpm format`                       |
+| Pruebas unitarias y de integración | `pnpm test`                                                          |
+| Pruebas de RLS (pgTAP)             | `pnpm exec supabase test db`                                         |
+| Pruebas e2e y accesibilidad        | `pnpm test:e2e`                                                      |
+| Corrida de precios                 | `pnpm corrida` · `pnpm corrida --todo` · `pnpm corrida --ayuda`      |
+| Capturar fixtures reales           | `pnpm capturar vtex` · `pnpm capturar euro` · `pnpm capturar sipsa`  |
+| Regenerar tipos de la base         | `pnpm gen:tipos`                                                     |
 
 **Gate de calidad:** `pnpm typecheck && pnpm lint && pnpm test` debe pasar antes de dar por hecho cualquier cambio.
 
@@ -148,14 +148,14 @@ Para reiniciar la base: `pnpm exec supabase db reset` y luego `pnpm migrar`.
 
 La plantilla está en [`.env.example`](.env.example). `.env.local` nunca se sube al repositorio.
 
-| Variable | Dónde vive | Para qué |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Vercel | URL del proyecto de Supabase |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Vercel | Clave publicable (RLS decide qué se ve) |
-| `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` | GitHub Secrets | La corrida escribe con la service role. **Nunca** en la web ni en `NEXT_PUBLIC_*` |
-| `SMTP_HOST` · `SMTP_PORT` · `SMTP_USER` · `SMTP_PASS` · `ADMIN_EMAIL` | GitHub Secrets | Correo al administrador cuando algo falla (Gmail con contraseña de aplicación) |
-| `CORRIDA_USER_AGENT` | Workflow | User-Agent propio de la corrida |
-| `GITHUB_REPO` · `GITHUB_DISPATCH_TOKEN` | Vercel (servidor) | Botón "Actualizar precios" (en desarrollo) |
+| Variable                                                              | Dónde vive        | Para qué                                                                          |
+| --------------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                                            | Vercel            | URL del proyecto de Supabase                                                      |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`                                | Vercel            | Clave publicable (RLS decide qué se ve)                                           |
+| `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY`                          | GitHub Secrets    | La corrida escribe con la service role. **Nunca** en la web ni en `NEXT_PUBLIC_*` |
+| `SMTP_HOST` · `SMTP_PORT` · `SMTP_USER` · `SMTP_PASS` · `ADMIN_EMAIL` | GitHub Secrets    | Correo al administrador cuando algo falla (Gmail con contraseña de aplicación)    |
+| `CORRIDA_USER_AGENT`                                                  | Workflow          | User-Agent propio de la corrida                                                   |
+| `GITHUB_REPO` · `GITHUB_DISPATCH_TOKEN`                               | Vercel (servidor) | Botón "Actualizar precios" (en desarrollo)                                        |
 
 ---
 
@@ -205,25 +205,24 @@ El detalle completo está en [`blueprints/mercado-medellin/blueprint.md`](bluepr
 
 Se construye por pasos verificables; cada paso cerrado tiene su etiqueta `paso-NN`.
 
-| Paso | Contenido | Estado |
-|---|---|---|
-| 1–4 | Esqueleto, esquema con RLS, migración de datos y lógica pura | ✅ |
-| 5–8 | Adaptadores D1, Euro y SIPSA, y orquestador de la corrida | ✅ |
-| 9–10 | Alertas, correo al admin y workflow diario | ✅ |
-| 11–13 | Base web, catálogo, lista, detalle, fluctuación y gráficos | ✅ |
-| 14 | Cuentas de usuario, notificaciones y botón "Actualizar precios" | ⏳ |
-| 15 | Responsive para móvil y tableta, con deslizadores | ⏳ |
-| 16 | Precios anotados a mano | ⏳ |
-| 17 | Alertas en la web con Realtime | ⏳ |
-| 18 | Planes Hogar y Dieta | ⏳ |
-| 19 | e2e y auditoría de accesibilidad | ⏳ |
+| Paso  | Contenido                                                       | Estado |
+| ----- | --------------------------------------------------------------- | ------ |
+| 1–4   | Esqueleto, esquema con RLS, migración de datos y lógica pura    | ✅     |
+| 5–8   | Adaptadores D1, Euro y SIPSA, y orquestador de la corrida       | ✅     |
+| 9–10  | Alertas, correo al admin y workflow diario                      | ✅     |
+| 11–13 | Base web, catálogo, lista, detalle, fluctuación y gráficos      | ✅     |
+| 14    | Cuentas de usuario, notificaciones y botón "Actualizar precios" | ⏳     |
+| 15    | Responsive para móvil y tableta, con deslizadores               | ⏳     |
+| 16    | Precios anotados a mano                                         | ⏳     |
+| 17    | Alertas en la web con Realtime                                  | ⏳     |
+| 18    | Planes Hogar y Dieta                                            | ⏳     |
+| 19    | e2e y auditoría de accesibilidad                                | ⏳     |
 
 ---
 
 ## Uso responsable de los datos
 
 La corrida es un bot de **uso familiar** y se comporta como tal:
-
 - Se identifica con su propio User-Agent: `MercadoMedellinBot/1.0 (+uso familiar; contacto en README)`.
 - Lee `robots.txt` antes de pedir cualquier página y respeta lo que prohíbe.
 - Hace una consulta por producto al día, en serie y con al menos 1 segundo entre peticiones a la misma tienda.
@@ -235,4 +234,4 @@ Los precios son orientativos; el precio válido es siempre el de la tienda.
 
 ## Contacto
 
-¿Administras uno de los sitios consultados y quieres que la corrida deje de visitarlo o cambie su ritmo? Abre un *issue* en [github.com/Esteark/appMedellinMarket/issues](https://github.com/Esteark/appMedellinMarket/issues) y se atiende de inmediato.
+¿Administras uno de los sitios consultados y quieres que la corrida deje de visitarlo o cambie su ritmo? Abre un _issue_ en [github.com/Esteark/appMedellinMarket/issues](https://github.com/Esteark/appMedellinMarket/issues) y se atiende de inmediato.
