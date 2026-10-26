@@ -4,3 +4,5 @@
 *.pdf binary
 *.png binary
 *.ico binary
+# Fixtures: bytes tal como los devolvió el sitio.
+tests/fixtures/** -text

@@ -1,0 +1,11 @@
+{
+  "fecha": "2026-10-26",
+  "userAgent": "MercadoMedellinBot/1.0 (+uso familiar; contacto en README)",
+  "urls": {
+    "robots.txt": "https://www.d1.com.co/robots.txt",
+    "d1-ajo.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=ajo&_from=0&_to=4",
+    "d1-arroz.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=arroz&_from=0&_to=4",
+    "d1-leche.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=leche&_from=0&_to=4",
+    "d1-sku.json": "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=skuId:657"
+  }
+}

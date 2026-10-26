@@ -41,3 +41,22 @@ describe("unidadBase (las 5 reglas de §4)", () => {
     }
   });
 });
+
+describe("unidadBase con nombres reales de D1", () => {
+  it("punto de miles no es decimal", () => {
+    expect(unidadBase("Arroz Integral Diana 1.000 G")).toEqual({
+      unidad_base: "g",
+      cantidad_base: 1000,
+    });
+  });
+  it("Gr y Grs son gramos; X900 Ml son mililitros", () => {
+    expect(unidadBase("Arroz Económico Albar 450 Grs").cantidad_base).toBe(450);
+    expect(unidadBase("Crema de Leche Larga Vida 200 Gr").cantidad_base).toBe(
+      200,
+    );
+    expect(unidadBase("Leche Súper Cremosa Latti X900 Ml")).toEqual({
+      unidad_base: "ml",
+      cantidad_base: 900,
+    });
+  });
+});

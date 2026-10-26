@@ -1,0 +1,52 @@
+# Disallow all crawlers access to certain pages. 
+
+User-agent: *
+
+# =================================================================
+# ALLOWS (Permitir rastreo de recursos críticos (CSS, JS, Imágenes))
+# Esto es vital para que Google renderice la página correctamente.
+# =================================================================
+
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.svg$
+
+
+# =================================================================
+# DISALLOWS (Bloqueo de Rutas Privadas o de bajo valor SEO)
+# =================================================================
+
+Disallow: /account/*
+Disallow: /login/*
+Disallow: /checkout/*
+Disallow: /busca/*
+Disallow: /quick-view/*
+Disallow: /espiar/*
+Disallow: /buscapagina/*
+
+# =================================================================
+# DISALLOWS (Bloqueo de Query Strings de VTEX y Seguimiento)
+# El asterisco (*) inicial bloquea el parámetro en cualquier parte de la URL.
+# =================================================================
+
+Disallow: *initialMap=
+Disallow: *initialQuery=
+Disallow: *map=
+Disallow: *searchState=
+Disallow: *sc=
+Disallow: *riode=
+Disallow: *workspace=
+Disallow: *q=*&map=
+Disallow: *OrderBy=
+Disallow: *srlid=
+Disallow: *utm_source= 
+Disallow: *utm_medium=
+Disallow: *utm_campaign=
+
+
+# UBICACIÓN DEL SITEMAP
+Sitemap: https://www.d1.com.co/sitemap.xml

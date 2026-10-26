@@ -23,6 +23,7 @@ La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín
 - Resumen diario por correo.
 - Login con Google.
 - Ara, Ísimo y PriceSmart automáticos (siguen por anotados).
+- Éxito y Carulla automáticos (siguen por anotados). Decidido el 26-oct-2026: su robots.txt prohíbe `/api/` y Cloudflare responde 429 al User-Agent propio en las páginas `/p`. No se esquiva.
 - Rappi y folletos PDF.
 - Pantalla para aprobar revisiones.
 - IA o LLM.
@@ -216,7 +217,7 @@ alter publication supabase_realtime add table alertas;
 
 1. **Qué productos toca:** todos los días los grupos de frecuencia diaria. Los lunes, o con `--todo`, también los semanales. El orden de prioridad es frescos → proteínas, lácteos y granos → despensa, panadería y aseo → antojos.
 2. **Cómo consulta:** las tiendas van en paralelo, y dentro de cada tienda las consultas son secuenciales con ≥1 s de pausa. El User-Agent es `CORRIDA_USER_AGENT`. Respeta robots.txt: Ísimo no tiene adaptador, y en Euro solo se leen páginas `/p`. Nunca salta captchas ni logins.
-3. **VTEX** (Éxito, Carulla, D1):
+3. **VTEX** (solo D1; Éxito y Carulla quedaron por anotados, ver §1):
    - Consulta: `GET https://www.<host>/api/catalog_system/pub/products/search?ft=<termino>&_from=0&_to=4`.
    - Si ya hay `sku` guardado, usa `?fq=skuId:<sku>`.
    - En D1 los términos son de una sola palabra.

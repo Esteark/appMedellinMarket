@@ -17,7 +17,8 @@
       "!blueprints",
       "!data",
       "!supabase/.temp",
-      "!src/lib/supabase/tipos.ts"
+      "!src/lib/supabase/tipos.ts",
+      "!tests/fixtures"
     ]
   },
   "formatter": {
