@@ -16,6 +16,8 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     exclude: ["node_modules/**", "blueprints/**", "data/**", "tests/e2e/**"],
     environment: "node",
+    // Hasta el paso 4 no hay pruebas; sin esto el gate falla en los pasos 1-3.
+    passWithNoTests: true,
     // Las pruebas de integración comparten una sola base local: nunca en paralelo.
     fileParallelism: false,
     testTimeout: 30000,
