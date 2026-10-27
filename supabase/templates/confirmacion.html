@@ -1,0 +1,9 @@
+<!-- Confirmar registro. {{ .RedirectTo }} es la dirección que pide la app (…/auth/confirmar?siguiente=/),
+     ya validada contra las Redirect URLs. El enlace lleva el token_hash: se verifica con verifyOtp,
+     sin PKCE, así que funciona abierto desde otro navegador o desde el celular. -->
+<h2>Confirma tu cuenta</h2>
+<p>Gracias por registrarte en Mercado Medellín. Confirma tu correo para empezar:</p>
+<p>
+  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=signup">Confirmar mi cuenta</a>
+</p>
+<p>Si no fuiste tú, ignora este correo.</p>

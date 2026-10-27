@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ingresar } from "@/app/auth/acciones";
+import { CargandoAuth } from "@/components/auth/cargando";
 import { FormularioAuth } from "@/components/auth/formulario";
 
 export const metadata: Metadata = {
@@ -24,8 +25,10 @@ async function ConNota({ searchParams }: PageProps<"/ingresar">) {
       enlaces={ENLACES}
       nota={
         error === "enlace"
-          ? "El enlace no es válido o expiró. Pide uno nuevo."
-          : undefined
+          ? "El enlace no es válido, ya se usó o expiró. Pide uno nuevo."
+          : error === "navegador"
+            ? "Abre el enlace en el mismo navegador donde pediste el correo, o pide uno nuevo."
+            : undefined
       }
     />
   );
@@ -33,17 +36,7 @@ async function ConNota({ searchParams }: PageProps<"/ingresar">) {
 
 export default function Ingresar(props: PageProps<"/ingresar">) {
   return (
-    <Suspense
-      fallback={
-        <FormularioAuth
-          titulo="Ingresar"
-          accion={ingresar}
-          campos={["email", "clave"]}
-          boton="Ingresar"
-          enlaces={ENLACES}
-        />
-      }
-    >
+    <Suspense fallback={<CargandoAuth titulo="Ingresar" />}>
       <ConNota {...props} />
     </Suspense>
   );

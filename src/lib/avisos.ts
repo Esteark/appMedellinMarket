@@ -26,6 +26,11 @@ export const AVISOS = {
     emoji: "🔑",
     texto: "Contraseña actualizada.",
   },
+  correo_confirmado: {
+    tipo: "exito",
+    emoji: "✅",
+    texto: "Correo confirmado. Ya tienes tu cuenta lista.",
+  },
   sesion_cerrada: {
     tipo: "info",
     emoji: "👋",
@@ -165,6 +170,7 @@ export const AVISOS_DE_URL: ClaveAviso[] = [
   "sesion_iniciada",
   "registro_ok",
   "clave_cambiada",
+  "correo_confirmado",
   "sesion_cerrada",
 ];
 

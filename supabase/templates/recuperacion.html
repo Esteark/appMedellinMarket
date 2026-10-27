@@ -1,0 +1,7 @@
+<!-- Recuperar contraseña. {{ .RedirectTo }} es …/auth/confirmar?siguiente=/nueva-clave; ver confirmacion.html. -->
+<h2>Cambia tu contraseña</h2>
+<p>Pediste cambiar la contraseña de tu cuenta de Mercado Medellín:</p>
+<p>
+  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery">Elegir una contraseña nueva</a>
+</p>
+<p>Si no fuiste tú, ignora este correo: tu contraseña sigue igual.</p>

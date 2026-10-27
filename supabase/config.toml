@@ -161,7 +161,12 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# 3000 = pnpm dev; 3100 = servidor de los e2e (playwright.config.ts).
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/**",
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3100/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -243,6 +248,15 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Correos con el token_hash en el enlace (paso 26): ver supabase/templates/.
+[auth.email.template.confirmation]
+subject = "Confirma tu cuenta en Mercado Medellín"
+content_path = "./supabase/templates/confirmacion.html"
+
+[auth.email.template.recovery]
+subject = "Cambia tu contraseña de Mercado Medellín"
+content_path = "./supabase/templates/recuperacion.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

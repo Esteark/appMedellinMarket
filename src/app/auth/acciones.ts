@@ -63,7 +63,10 @@ export async function registrar(
   const { error } = await db.auth.signUp({
     email: v.data.email,
     password: v.data.clave,
-    options: { emailRedirectTo: `${await origen()}/auth/confirmar` },
+    // Con "?": la plantilla del correo le agrega &token_hash=…&type=signup (supabase/templates).
+    options: {
+      emailRedirectTo: `${await origen()}/auth/confirmar?siguiente=/`,
+    },
   });
   if (error)
     return {

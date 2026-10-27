@@ -517,6 +517,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   | `clave_cambiada` | Nueva contraseña guardada | éxito | "Contraseña actualizada." |
   | `sesion_cerrada` | Salir | info | "Sesión cerrada. Tu lista queda en este dispositivo." |
   | `pdf_no_generado` | "Descargar PDF" falla (paso 25) | error | "No se pudo crear el PDF. Intenta de nuevo." |
+  | `correo_confirmado` | `/auth/confirmar` con `type=signup` (paso 26; también en `AVISOS_DE_URL`) | éxito | "Correo confirmado. Ya tienes tu cuenta lista." |
   | `sesion_no_cerrada` | Salir falla (paso 23) | error | "No se pudo cerrar la sesión. Intenta de nuevo." |
   | `sesion_expirada` | Una server action responde sin sesión | aviso | "Tu sesión expiró. Inicia sesión de nuevo." |
   | `lista_fusionada` | Al iniciar sesión con lista local no vacía | éxito | "Unimos la lista de este dispositivo con la guardada ({n} productos)." |
@@ -707,6 +708,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - Pasa un e2e de recuperación: registrarse → cerrar sesión → pedir recuperar → leer el correo en Mailpit → abrir el enlace → escribir la nueva contraseña → ingresar con ella. El enlace del correo empieza por la Site URL configurada y trae `token_hash`.
   - Pasa un e2e de confirmación sobre `/auth/confirmar`: un `token_hash` válido (generado con `auth.admin.generateLink`) deja sesión abierta; uno inválido o ya usado va a `/ingresar?error=enlace` con su mensaje.
   - **Comprobación manual en producción** (se agrega al §11): registrarse con un correo real, abrir el enlace **desde el celular** y entrar; repetir con "olvidé mi contraseña".
+- **Hecho así (27-oct-2026):** la causa más probable, confirmada con el usuario (se registró desde la app de Vercel, no desde localhost), es la 1: Supabase ignora el `redirectTo` si no está en las Redirect URLs y usa el Site URL, que por defecto es `localhost`. **Eso solo se arregla en el panel de Supabase de producción (manual, ver §11.2).** En el código: plantillas `supabase/templates/confirmacion.html` y `recuperacion.html` con `{{ .RedirectTo }}&token_hash=…&type=…` (la dirección la pide la app y Supabase la valida; no se usa `{{ .SiteURL }}` porque en local el servidor de los e2e está en otro puerto); `config.toml` registra las plantillas y las Redirect URLs locales (3000 y 3100); `/auth/confirmar` redirige con el `Host` real de la petición (con `nextUrl.origin` la cookie de sesión se perdía al cambiar de host), distingue `enlace` de `navegador` y avisa `correo_confirmado`; `/nueva-clave` sin sesión explica qué hacer. El relleno de `Suspense` de `/ingresar` y `/nueva-clave` ya no es un formulario. **No se hizo** el botón "Reenviar correo": hoy se pide uno nuevo desde `/recuperar`.
 - **Dependencias nuevas:** ninguna.
 
 ## 11. Lanzamiento (manual, con tus cuentas)
