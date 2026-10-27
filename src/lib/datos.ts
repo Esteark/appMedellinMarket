@@ -1,8 +1,9 @@
 import { connection } from "next/server";
 import { cache } from "react";
 import { alertasFuenteCaida } from "@/lib/alertas/reglas";
-import { hoyBogota, restarDias } from "@/lib/fecha";
+import { diasEntre, hoyBogota, restarDias } from "@/lib/fecha";
 import {
+  desactualizado,
   type Etiqueta,
   enFluctuacion,
   etiquetas,
@@ -25,6 +26,8 @@ export type Frescura = {
   /** Tiendas automáticas (las manuales van por anotados y no cuentan). */
   fuentes: Fuente[];
   fuentesOk: number;
+  /** Tiendas sin consulta automática: solo cambian con anotados. */
+  manuales: string[];
 };
 
 /** Estado de la corrida para el encabezado y /api/salud. Lanza si la base no responde. Una vez por petición. */
@@ -41,14 +44,15 @@ export const frescura = cache(async (fijo?: Date): Promise<Frescura> => {
       .order("fin", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    db.from("tiendas").select("id, nombre").eq("manual", false).order("id"),
+    db.from("tiendas").select("id, nombre, manual").order("id"),
     db.from("tienda_estado").select("tienda_id, estado, ultimo_ok"),
   ]);
   for (const r of [corrida, tiendas, estados])
     if (r.error) throw new Error(r.error.message);
 
   const porTienda = new Map((estados.data ?? []).map((e) => [e.tienda_id, e]));
-  const filas = (tiendas.data ?? []).map((t) => ({
+  const automaticas = (tiendas.data ?? []).filter((t) => !t.manual);
+  const filas = automaticas.map((t) => ({
     tienda_id: t.id,
     estado: porTienda.get(t.id)?.estado ?? null,
     ultimo_ok: porTienda.get(t.id)?.ultimo_ok ?? null,
@@ -56,7 +60,7 @@ export const frescura = cache(async (fijo?: Date): Promise<Frescura> => {
   const caidas = new Set(
     alertasFuenteCaida(filas, hoyBogota(ahora)).map((a) => a.tienda_id),
   );
-  const fuentes = (tiendas.data ?? []).map((t) => ({
+  const fuentes = automaticas.map((t) => ({
     id: t.id,
     nombre: t.nombre,
     ok: !caidas.has(t.id),
@@ -71,6 +75,7 @@ export const frescura = cache(async (fijo?: Date): Promise<Frescura> => {
       : null,
     fuentes,
     fuentesOk: fuentes.filter((f) => f.ok).length,
+    manuales: (tiendas.data ?? []).filter((t) => t.manual).map((t) => t.nombre),
   };
 });
 
@@ -90,6 +95,8 @@ type Causa = { fecha: string; es_clima: boolean; texto: string };
 export type ResumenPrecio = {
   /** Precio efectivo por tienda; null = sin dato. */
   precios: Record<string, number | null>;
+  /** Tiendas cuyo precio está desactualizado → días desde que se vio; pudo haber cambiado. */
+  viejos: Record<string, number>;
   /** Tienda más barata, sobre la que se calculan las etiquetas. */
   mejor: { tienda: string; precio: number; estado: string } | null;
   etiquetas: Etiqueta[];
@@ -126,10 +133,17 @@ function resumir(
   hoy: string,
 ): ResumenPrecio {
   const precios: Record<string, number | null> = {};
+  const viejos: Record<string, number> = {};
   let mejor: ResumenPrecio["mejor"] = null;
   for (const t of tiendas) {
     const e = efectivo.get(`${p.id}|${t}`);
     precios[t] = e?.precio ?? null;
+    if (
+      e?.precio != null &&
+      e.fecha &&
+      desactualizado(e.fecha, hoy, p.frecuencia as Frecuencia)
+    )
+      viejos[t] = diasEntre(e.fecha, hoy);
     if (e?.precio != null && (!mejor || e.precio < mejor.precio))
       mejor = { tienda: t, precio: e.precio, estado: e.estado ?? "real" };
   }
@@ -140,6 +154,7 @@ function resumir(
   if (!mejor)
     return {
       precios,
+      viejos,
       mejor,
       etiquetas: ["sin_dato"],
       cambio: null,
@@ -151,6 +166,7 @@ function resumir(
   const suma = antes.reduce((a, b) => a + b, 0);
   return {
     precios,
+    viejos,
     mejor,
     etiquetas: etiquetas({
       precio: mejor.precio,

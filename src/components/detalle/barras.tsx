@@ -11,11 +11,13 @@ type Props = {
   tiendas: TiendaCatalogo[];
   precios: Record<string, number | null>;
   origen: Record<string, string | null>;
+  /** Tienda → días desde que se vio el precio, solo si está desactualizado. */
+  viejos: Record<string, number>;
   mejor: string | null;
 };
 
-/** Precio por tienda en barras; la más barata en verde. 5 · Las barras crecen. */
-export function Barras({ tiendas, precios, origen, mejor }: Props) {
+/** Precio por tienda en barras; la más barata en verde y las desactualizadas rayadas en ámbar. */
+export function Barras({ tiendas, precios, origen, viejos, mejor }: Props) {
   const lista = useRef<HTMLUListElement>(null);
   useGSAP(() => crecer(".relleno"), { scope: lista });
   const max = Math.max(1, ...Object.values(precios).filter((v) => v != null));
@@ -28,6 +30,7 @@ export function Barras({ tiendas, precios, origen, mejor }: Props) {
     >
       {tiendas.map((t) => {
         const precio = precios[t.id];
+        const dias = viejos[t.id];
         return (
           <li
             key={t.id}
@@ -50,6 +53,7 @@ export function Barras({ tiendas, precios, origen, mejor }: Props) {
                     className={cn(
                       "relleno block h-full rounded-md",
                       t.id === mejor ? "bg-save" : "bg-muted-foreground/45",
+                      dias != null && "barra-vieja",
                     )}
                     style={{ width: `${((precio / max) * 100).toFixed(1)}%` }}
                   />
@@ -61,6 +65,14 @@ export function Barras({ tiendas, precios, origen, mejor }: Props) {
                 >
                   {pesos(precio)}
                 </span>
+                {dias != null && (
+                  <span
+                    className="col-span-3 -mt-1.5 pl-3.5 text-[11.5px] text-warn-ink"
+                    data-testid={`viejo-${t.id}`}
+                  >
+                    ⏱ Visto hace {dias} días: puede haber cambiado
+                  </span>
+                )}
               </>
             )}
           </li>

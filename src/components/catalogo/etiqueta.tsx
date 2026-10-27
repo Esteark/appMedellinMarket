@@ -18,6 +18,7 @@ function texto(tipo: Tipo, cambio: number | null) {
   if (tipo === "baja") return cambio == null ? "↓ baja" : `↓ ${-cambio} %`;
   if (tipo === "clima") return "🌧️ clima";
   if (tipo === "sin_dato") return "sin dato";
+  if (tipo === "desactualizado") return "⏱ desactualizado";
   return tipo;
 }
 
@@ -33,6 +34,11 @@ export function Etiqueta({
   return (
     <span
       data-etiqueta={tipo}
+      title={
+        tipo === "desactualizado"
+          ? "Este precio no se ha visto hace días: puede haber cambiado"
+          : undefined
+      }
       className={cn(
         "inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
         ESTILO[tipo],

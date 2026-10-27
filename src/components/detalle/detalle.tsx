@@ -34,6 +34,7 @@ export function Detalle({ datos }: { datos: Datos }) {
         tiendas={tiendas}
         precios={p.precios}
         origen={datos.origen}
+        viejos={p.viejos}
         mejor={p.mejor?.tienda ?? null}
       />
 
@@ -54,7 +55,11 @@ export function Detalle({ datos }: { datos: Datos }) {
         <h3 className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
           Últimos 30 días por tienda
         </h3>
-        <Historial datos={datos.historial} tiendas={tiendas} />
+        <Historial
+          datos={datos.historial}
+          tiendas={tiendas}
+          viejos={p.viejos}
+        />
       </section>
 
       <Agregar id={p.id} emoji={p.emoji ?? "🛒"} />

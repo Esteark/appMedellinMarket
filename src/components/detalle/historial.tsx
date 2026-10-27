@@ -15,6 +15,7 @@ const GraficoHistorial = dynamic(
 export function Historial(props: {
   datos: Detalle["historial"];
   tiendas: TiendaCatalogo[];
+  viejos: Record<string, number>;
 }) {
   return <GraficoHistorial {...props} />;
 }

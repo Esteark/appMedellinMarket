@@ -343,3 +343,12 @@
     display: none;
   }
 }
+
+/* Barra de un precio desactualizado: rayas ámbar sobre su color (no depende solo del color: lleva texto). */
+.barra-vieja {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 4px,
+    var(--warn) 4px 7px
+  );
+}

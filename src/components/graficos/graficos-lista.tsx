@@ -34,10 +34,15 @@ export function GraficosLista({ lista, productos, tiendas }: Props) {
       .sort((a, b) => a.total - b.total)
       .map((t) => {
         const tienda = tiendas.find((x) => x.id === t.tienda);
+        // Algún producto de la lista tiene en esta tienda un precio que puede haber cambiado.
+        const vieja = productos.some(
+          (p) => lista[p.id] && p.viejos[t.tienda] != null,
+        );
         return {
-          nombre: tienda?.nombre ?? t.tienda,
+          nombre: `${tienda?.nombre ?? t.tienda}${vieja ? " ⏱" : ""}`,
           valor: t.total,
           color: tienda?.color ?? "var(--muted-foreground)",
+          vieja,
         };
       });
     const optimo = optimoDividido(lista, precios, ids);
@@ -91,10 +96,18 @@ export function GraficosLista({ lista, productos, tiendas }: Props) {
       <div role="tabpanel">
         {pestana === "tiendas" ? (
           porTienda.length ? (
-            <GraficoBarras
-              datos={porTienda}
-              etiqueta="Total de la lista en cada tienda que tiene todo"
-            />
+            <>
+              <GraficoBarras
+                datos={porTienda}
+                etiqueta="Total de la lista en cada tienda que tiene todo"
+              />
+              {porTienda.some((t) => t.vieja) && (
+                <p className="text-xs text-warn-ink">
+                  ⏱ Tiendas con precios desactualizados en tu lista: el total
+                  puede haber cambiado.
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-xs text-muted-foreground">
               Ninguna tienda tiene todos los productos.

@@ -71,6 +71,14 @@ export function Tarjeta({
               aria-hidden="true"
             />
             {tienda.nombre}
+            {p.viejos[tienda.id] != null && (
+              <span
+                className="font-medium text-warn-ink"
+                data-testid="precio-viejo"
+              >
+                · ⏱ hace {p.viejos[tienda.id]} d
+              </span>
+            )}
           </span>
         )}
         <div className="flex min-h-5 flex-wrap gap-1">

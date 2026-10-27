@@ -3,7 +3,10 @@ import { Suspense } from "react";
 import { ingresar } from "@/app/auth/acciones";
 import { FormularioAuth } from "@/components/auth/formulario";
 
-export const metadata: Metadata = { title: "Ingresar · Mercado Medellín" };
+export const metadata: Metadata = {
+  title: "Ingresar · Mercado Medellín",
+  robots: { index: false },
+};
 
 const ENLACES = [
   { href: "/registro", texto: "¿No tienes cuenta? Regístrate" },

@@ -11,7 +11,13 @@ import {
 } from "recharts";
 import { EJE, milesCortos, TOOLTIP } from "./estilo";
 
-export type Barra = { nombre: string; valor: number; color: string };
+export type Barra = {
+  nombre: string;
+  valor: number;
+  color: string;
+  /** Total con algún precio desactualizado: barra más tenue. */
+  vieja?: boolean;
+};
 
 /** Barras horizontales (total por tienda y gasto por grupo). */
 export default function GraficoBarras({
@@ -44,7 +50,11 @@ export default function GraficoBarras({
             isAnimationActive={false}
           >
             {datos.map((d) => (
-              <Cell key={d.nombre} fill={d.color} />
+              <Cell
+                key={d.nombre}
+                fill={d.color}
+                fillOpacity={d.vieja ? 0.4 : 1}
+              />
             ))}
           </Bar>
         </BarChart>

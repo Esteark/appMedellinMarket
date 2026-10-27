@@ -4,6 +4,7 @@ import { FormularioAuth } from "@/components/auth/formulario";
 
 export const metadata: Metadata = {
   title: "Nueva contraseña · Mercado Medellín",
+  robots: { index: false },
 };
 
 export default function NuevaClave() {

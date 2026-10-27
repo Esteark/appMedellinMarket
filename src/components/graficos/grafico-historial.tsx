@@ -12,10 +12,14 @@ import {
 import type { Detalle, TiendaCatalogo } from "@/lib/datos";
 import { EJE, milesCortos, TOOLTIP } from "./estilo";
 
-type Props = { datos: Detalle["historial"]; tiendas: TiendaCatalogo[] };
+type Props = {
+  datos: Detalle["historial"];
+  tiendas: TiendaCatalogo[];
+  viejos: Record<string, number>;
+};
 
-/** Historial de 30 días: una línea por tienda con datos. */
-export default function GraficoHistorial({ datos, tiendas }: Props) {
+/** Historial de 30 días: una línea por tienda con datos; punteada si su precio está desactualizado. */
+export default function GraficoHistorial({ datos, tiendas, viejos }: Props) {
   const conDatos = tiendas.filter((t) => datos.some((d) => d[t.id] != null));
   if (datos.length < 2)
     return (
@@ -46,9 +50,15 @@ export default function GraficoHistorial({ datos, tiendas }: Props) {
             <Line
               key={t.id}
               dataKey={t.id}
-              name={t.nombre}
+              name={
+                viejos[t.id] != null
+                  ? `${t.nombre} (⏱ desactualizado)`
+                  : t.nombre
+              }
               stroke={t.color}
               strokeWidth={2}
+              strokeDasharray={viejos[t.id] != null ? "4 4" : undefined}
+              strokeOpacity={viejos[t.id] != null ? 0.6 : 1}
               dot={false}
               connectNulls
               isAnimationActive={false}

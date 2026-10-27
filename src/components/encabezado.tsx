@@ -89,6 +89,16 @@ export async function Encabezado() {
               {f.fuentesOk}/{f.fuentes.length} fuentes OK
             </span>
           </span>
+          {f.manuales.length > 0 && (
+            <Link
+              href="/anotados"
+              data-testid="tiendas-manuales"
+              title={`Sin consulta automática: ${f.manuales.join(", ")}`}
+              className="text-muted-foreground underline decoration-dotted underline-offset-2"
+            >
+              +{f.manuales.length} tiendas por anotados
+            </Link>
+          )}
           {caidas.length > 0 && (
             <>
               <span className="hidden text-warn-ink sm:inline">
