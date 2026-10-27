@@ -12,7 +12,7 @@
 - Idioma de TODO el bundle: **español** (Colombia). Identificadores de código en español como en el documento del usuario (productos, precios, tiendas…).
 
 ## Proyecto
-**Mercado Medellín** (slug `mercado-medellin`). Reescritura de un artifact de Claude (un HTML con Chart.js + base de datos de documentos + tarea programada diaria que ejecutaba Claude) a una app propia. Compara precios de 144 productos de mercado en 8 tiendas de Medellín (Éxito, Carulla, D1, Euro, La Minorista/SIPSA, Ara, Ísimo, PriceSmart) + 2 tiendas manuales (Solofruver, Tienda/Carnicería de barrio), arma la lista de mercado de la familia, calcula la mejor tienda y el óptimo dividido, genera alertas, muestra historial, y — nuevo — etiquetas ↑/↓, causa climática (texto del DANE/SIPSA) y una sección de productos en fluctuación. Usuario: una familia en Medellín (5–6 personas). Lectura pública sin sesión; registro abierto (no se va a compartir el enlace).
+**Mercado Medellín** (slug `mercado-medellin`). Reescritura de un artifact de Claude (un HTML con Chart.js + base de datos de documentos + tarea programada diaria que ejecutaba Claude) a una app propia. Compara precios de 144 productos de mercado en 8 tiendas de Medellín (Éxito, Carulla, D1, Euro, La Minorista/SIPSA, Ara, Ísimo, PriceSmart) + 1 tienda manual (Tienda/Carnicería de barrio; Solofruver descartada el 27-oct-2026), arma la lista de mercado de la familia, calcula la mejor tienda y el óptimo dividido, genera alertas, muestra historial, y — nuevo — etiquetas ↑/↓, causa climática (texto del DANE/SIPSA) y una sección de productos en fluctuación. Usuario: una familia en Medellín (5–6 personas). Lectura pública sin sesión; registro abierto (no se va a compartir el enlace).
 
 **Objetivo #1 del usuario:** que la base de datos se mantenga actualizada sola y que un fallo no pase en silencio.
 
@@ -42,7 +42,7 @@ Tablas: `tiendas`, `productos` (+ `unidad_base text check in ('g','ml','u')`, `c
 - Vista `precio_efectivo` (regla de anotados del usuario, copiar tal cual del documento §6.3) con `security_invoker = true`.
 - Frecuencia por grupo: **diaria** = Frutas, Verduras, Tubérculos, Proteínas, Lácteos, Granos, Panadería. **semanal** (lunes) = Despensa, Aseo, Mecato, Bebidas, Gourmet. Etiqueta "desactualizado" cuando `hoy - fecha > (1 si diaria, 7 si semanal) + 3` días.
 - `unidad_base`/`cantidad_base` se derivan de `productos.unidad` en el script de migración con esta regla determinista (copiar como código): normalizar coma decimal; `/(\d+(?:[.,]\d+)?)\s*(kg|g|ml|L)\b/i` → kg→g×1000, L→ml×1000; `"kg"` sola → g 1000; `"6 × 330 ml"` → ml 1980; cualquier otra (unidad, cabeza, manojo, atado, paquete, caja, cubeta, "entera ~1 kg") → `u`, 1.
-- Tiendas (10) — id, nombre, color, manual: exito Éxito #F5C400; carulla Carulla #0F7A3D; euro Euro #C8102E; minorista La Minorista #8B5E3C; d1 D1 #D62828; ara Ara #E85D04; isimo Ísimo #6A4C93; pricesmart PriceSmart #0060A9 (nota "Club de membresía · presentaciones grandes, precio llevado a la unidad del producto"); solofruver Solofruver #7CB342 manual; barrio Tienda/Carnicería #64748B manual.
+- Tiendas (9 desde el paso 20) — id, nombre, color, manual: exito Éxito #F5C400; carulla Carulla #0F7A3D; euro Euro #C8102E; minorista La Minorista #8B5E3C; d1 D1 #D62828; ara Ara #E85D04; isimo Ísimo #6A4C93; pricesmart PriceSmart #0060A9 (nota "Club de membresía · presentaciones grandes, precio llevado a la unidad del producto"); barrio Tienda/Carnicería #64748B manual.
 
 ### RLS (§6.2 del usuario + esto)
 - Lectura pública (`anon` y `authenticated`, `for select using (true)`): tiendas, productos, precios_actuales, precios_historial, corridas, tienda_estado, anotados, clima_causas. `producto_fuente` NO es público (solo service_role).
@@ -176,3 +176,11 @@ La máquina donde se genera NO tiene Docker → `supabase start` no puede correr
 - pnpm 12: `allowBuilds` (no `onlyBuiltDependencies`); `pnpm approve-builds --all` no interactivo; el paquete `supabase` (CLI) descarga un binario en postinstall → necesitará aprobación; `unrs-resolver`/`sharp` según el scaffold. Nunca `dangerouslyAllowAllBuilds`.
 - Corepack: `corepack enable --install-directory "$HOME/.local/bin"` si `corepack enable` da EACCES. En Windows (máquina del usuario) usar Git Bash; §10 debe ser bash POSIX.
 - El usuario trabaja en **Windows 11** con Git Bash/PowerShell: §10 en bash (Git Bash), sin `cp -Rn` (usar copia por archivo con `[ -e ] ||` o `rsync` NO disponible en Git Bash por defecto → usar un `node -e` o `cp -n` con `|| true` comentado). Rutas con espacios (`4.Proyectos varios`) → citar siempre.
+
+## Cambios del 27-oct-2026 (pasos 20–25)
+- Se descarta Solofruver (paso 20).
+- Se evalúan La Vaquita Mercados (tienda online propia) y La Mayorista Medellín (paso 21): automática solo si robots.txt lo permite y el precio es público; si no, manual por anotados. URLs por confirmar con el usuario.
+- Gráfico "Total por tienda" no reacciona a la tienda elegida y oculta tiendas incompletas (paso 22).
+- Menú de cuenta con animación de entrada/salida (paso 23).
+- Lista agrupada por tienda/grupo con resumen fijo y secciones plegables, en lugar de un carrusel (paso 24).
+- Exportar la lista a PDF con tabla en el navegador; dependencia nueva jspdf + jspdf-autotable (paso 25).

@@ -12,7 +12,7 @@
 
 ## 1. Qué es y qué no es
 
-La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín: Éxito, Carulla, D1, Euro, La Minorista (SIPSA), Ara, Ísimo y PriceSmart. Tiene además 2 tiendas manuales: Solofruver y Tienda/Carnicería de barrio. Con eso arma la lista de la familia, calcula cuál es la mejor tienda y el óptimo dividido, genera alertas y muestra el historial. También marca ↑/↓ cuando un precio sube o baja, muestra la causa climática según el DANE/SIPSA e incluye una sección de productos en fluctuación.
+La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín: Éxito, Carulla, D1, Euro, La Minorista (SIPSA), Ara, Ísimo y PriceSmart. Tiene además 1 tienda manual: Tienda/Carnicería de barrio. Pendiente (paso 21): evaluar La Vaquita Mercados y La Mayorista Medellín. Solofruver se descartó el 27-oct-2026 (paso 20). Con eso arma la lista de la familia, calcula cuál es la mejor tienda y el óptimo dividido, genera alertas y muestra el historial. También marca ↑/↓ cuando un precio sube o baja, muestra la causa climática según el DANE/SIPSA e incluye una sección de productos en fluctuación.
 
 - La lectura es pública, sin sesión.
 - El registro es abierto, con email y contraseña.
@@ -615,6 +615,69 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 **19. Calidad.**
 - **Hacer:** `tests/e2e/publico.spec.ts` (sin sesión se ven precios) y axe en `/`, `/anotados` y `/hogar`.
 - **Hecho cuando:** CUANDO corre `pnpm test:e2e`, EL SISTEMA DEBE salir con 0 y sin violaciones `serious` ni `critical`.
+
+**20. Quitar Solofruver.** *(decisión del 27-oct-2026: la tienda se descarta)*
+- **Hacer:**
+  - Migración nueva `supabase/migrations/<ts>_quitar_solofruver.sql` que borra, en este orden, las filas de `solofruver` en `anotados`, `precios_actuales`, `precios_historial`, `producto_fuente` y `tiendas` (sin tocar migraciones ya aplicadas). Si alguna FK impide el orden, usar `on delete cascade` solo en esa migración.
+  - `scripts/migrar.ts` y `data/origen/*`: dejar de cargar `solofruver`. El conteo del paso 3 pasa a `tiendas=9` y sale de restar la tienda al JSON de origen, no de un número escrito a mano.
+  - Quitar Solofruver de §1 y de `decisiones.md` (lista de 10 tiendas y colores), `README.md` (tabla de fuentes), `CLAUDE.md` si la menciona, `sql-nube/02_catalogo.sql` y los fixtures/pruebas que la citen. `grep -ril solofruver` debe dar vacío fuera de `.git` y de las migraciones históricas.
+  - La única tienda manual que queda es Tienda/Carnicería de barrio (más las que el paso 21 deje como anotados).
+- **Hecho cuando:** CUANDO corre `pnpm exec supabase db reset && pnpm migrar`, EL SISTEMA DEBE imprimir `tiendas=9` y salir con 0; `/anotados` ya no muestra la columna Solofruver; `pnpm exec supabase test db` y el gate siguen en verde.
+
+**21. Nuevas fuentes: La Vaquita Mercados y La Mayorista Medellín.**
+- **Antes de codificar (sin esta confirmación no se sigue):**
+  - La Vaquita Mercados: tienda online `https://vaquitaexpress.com.co/` (sin el parámetro `srsltid`). La Mayorista Medellín: `https://lamayorista.com.co/`.
+  - Por cada una: leer `robots.txt`, identificar la plataforma (VTEX, Shopify, WooCommerce, propia), comprobar si el precio sale en el HTML o en un JSON público y si el catálogo cubre los productos del mercado. Registrar el resultado en `decisiones.md` con la fecha.
+- **Hacer, según el resultado (por tienda):**
+  - **Permite consulta y trae el precio:** adaptador `src/corrida/adaptadores/<id>.ts` (si es VTEX, reutilizar `vtex.ts` con el host; si no, uno nuevo con cheerio), fixtures reales con `pnpm capturar <id>`, entrada en `ADAPTADORES`, en el seed de `tiendas` (id, nombre, color nuevo con contraste ≥3:1 en claro y oscuro) y mapeo de `producto_fuente` solo para los productos que realmente encuentre. Respeta el innegociable 3 (≥1 s entre peticiones, User-Agent propio, sin saltar captchas).
+  - **Lo prohíbe o la tienda no tiene precios públicos:** queda como tienda `manual` (solo anotados), igual que Éxito y Carulla, y el motivo se escribe en `decisiones.md`.
+  - En ambos casos: migración que inserta la tienda; el contador del encabezado "X/N fuentes OK" cuenta solo las automáticas.
+- **Hecho cuando:**
+  - CUANDO se sirven los fixtures reales, el adaptador devuelve precio y url, y `null` si no hay stock o la unidad no es convertible; la prueba comprueba con el `fetch` espía que no toca rutas prohibidas por robots. (Para una tienda manual: aparece como columna en `/anotados` y como chip de tienda.)
+  - `pnpm migrar` imprime el nuevo conteo de tiendas y el gate pasa.
+
+**22. Corregir el gráfico "Total por tienda".**
+- **Qué falla (a confirmar al reproducirlo antes de tocar código):** en `graficos-lista.tsx` el gráfico siempre calcula con *todas* las tiendas y no recibe la tienda elegida en los chips del catálogo (ese estado vive dentro de `Catalogo`), así que al cambiar de tienda no cambia nada. Además filtra `faltantes.length === 0`: con tiendas de pocos precios (anotados, o las nuevas del paso 21) casi ninguna está completa y sale "Ninguna tienda tiene todos los productos". Con `isAnimationActive={false}` tampoco se nota cuando se actualiza.
+- **Hacer:**
+  - Subir la tienda elegida (o un conjunto de tiendas) a un estado compartido por `Catalogo` y `Carrito` y pasarlo a `GraficosLista`.
+  - El gráfico muestra **todas las tiendas** (o solo las elegidas, si hay selección) con su total. Para las incompletas la barra llega hasta lo que sí tienen, tenue y con la etiqueta "faltan N"; las completas llevan el sello "tiene todo". La tienda elegida se resalta.
+  - Reactivar la animación (animación 5) con duración 0 bajo `prefers-reduced-motion`; las barras se animan al cambiar los datos, no solo al montar.
+  - La lógica va en una función pura de `src/lib/precios/lista.ts` con su prueba; el componente solo dibuja.
+- **Hecho cuando:**
+  - Prueba unitaria: con 3 tiendas (una completa, dos incompletas) la función devuelve las 3 con `faltantes` correctos, y filtrada por selección devuelve solo las elegidas.
+  - E2E `tests/e2e/grafico-tiendas.spec.ts`: agregar productos, abrir gráficos y elegir otra tienda en los chips → cambian las barras visibles (se comprueba el `aria-label` y el número de barras).
+
+**23. Animación del menú de cuenta (abrir y cerrar).**
+- **Hacer:**
+  - En `src/components/menu-cuenta.tsx`, animar el panel con `data-[state=open]` / `data-[state=closed]` (Radix mantiene el nodo montado hasta que termina la salida): entrada con `opacity 0→1`, `y −6→0` y `scale .96→1` en 160–220 ms con origen en el ícono; salida inversa en 120–160 ms. Solo `transform`/`opacity`, duración 0 con `prefers-reduced-motion`.
+  - El ícono cambia de fondo con la misma curva que el panel.
+  - "Cerrar sesión": el spinner reemplaza al ícono sin saltos de ancho; si la acción falla, el menú queda abierto y muestra el aviso de error del catálogo; si funciona, el panel se cierra con la animación de salida antes de redirigir.
+- **Hecho cuando:** pasa el e2e `tests/e2e/menu-cuenta.spec.ts`: abrir → el panel es visible y con foco; `Escape` lo cierra y devuelve el foco al ícono; con `reducedMotion: "reduce"` aparece y desaparece sin transición; "Cerrar sesión" termina en `/` sin sesión.
+
+**24. La lista: de un bloque largo a una vista compacta y por tienda.**
+- **Criterio de diseño (UX):** un carrusel horizontal esconde ítems y es lento de revisar en una lista de compras. Lo que sí ayuda es agrupar como se compra, resumir arriba y permitir plegar. El deslizador del paso 15 se usa para los *selectores* (tiendas), no para los ítems.
+- **Hacer:**
+  - **Resumen fijo arriba** de la lista: total, ahorro dividiendo y n.º de productos, siempre visible (`sticky` dentro de la hoja o del aside).
+  - **Control segmentado "Por tienda | Por grupo | Todo":**
+    - *Por tienda* (por defecto, usa el óptimo dividido): una sección por tienda con su subtotal y sus productos ("Comprar en D1 · 6 productos · $48.200").
+    - *Por grupo*: secciones por grupo (frescos, lácteos…).
+    - *Todo*: la lista plana de hoy.
+  - **Secciones plegables** (acordeón) con animación de altura GSAP (150–250 ms, `matchMedia`); la primera abierta y el resto plegadas si hay más de 12 ítems.
+  - Si hay más de 4 tiendas, el selector de tienda usa el `Deslizador`.
+  - **Altura máxima:** en escritorio el aside tiene `max-h` con desplazamiento interno propio. Cada fila ≤ 56 px y stepper de 44 px en táctil.
+  - Partir en `lista-resumen.tsx`, `lista-seccion.tsx` y `lista-vista.tsx` para cumplir el límite de 250 líneas.
+- **Hecho cuando:** pasa el e2e `tests/e2e/lista-vista.spec.ts` con 15 productos de 3 tiendas: (1) "Por tienda" muestra 3 secciones con subtotales cuya suma es el total; (2) plegar una sección oculta sus filas y deja `aria-expanded="false"`; (3) cambiar a "Por grupo" y "Todo" conserva las cantidades; (4) el resumen sigue visible al desplazar la lista; (5) no hay desplazamiento horizontal en 360 px.
+
+**25. Exportar la lista a PDF.**
+- **Depende de:** pasos 21 y 24 (misma agrupación y mismas tiendas).
+- **Hacer:**
+  - Botón **"Descargar PDF"** debajo de la lista (visible solo con ≥1 producto), en `carrito.tsx` y en la hoja móvil.
+  - Contenido: título "Lista de mercado", fecha (`hoyBogota()`) y una tabla por tienda del óptimo dividido con columnas **Producto · Cantidad · Precio unitario · Subtotal**, el subtotal por tienda y el total general al final. Los precios desactualizados o anotados llevan una marca (`*`) y una nota al pie; los productos sin precio van en una tabla aparte "Sin precio". Nunca se inventa un precio (regla 7).
+  - Generación 100 % en el navegador con `jspdf` + `jspdf-autotable`, cargados con `import()` dinámico solo al pulsar. **Dependencia nueva:** se agrega a §2 y a la lista permitida de la regla 9, con versión verificada contra npm (usar el `stack-researcher`) antes de instalarla. Las filas se arman en una función pura `src/lib/precios/exportar.ts` (sin React ni jsPDF) con su prueba.
+  - Nombre del archivo: `lista-mercado-<aaaa-mm-dd>.pdf`; las tildes, la ñ y el `$` salen bien (formato `pesos()`).
+- **Hecho cuando:**
+  - `tests/unit/exportar.test.ts`: dada una lista y precios, la función devuelve las filas por tienda con subtotales y total correctos, marca los anotados y desactualizados, y separa los "sin precio".
+  - E2E `tests/e2e/pdf.spec.ts`: con 3 productos, pulsar "Descargar PDF" dispara una descarga cuyo nombre cumple `lista-mercado-\d{4}-\d{2}-\d{2}\.pdf` y el archivo empieza con `%PDF`.
 
 ## 11. Lanzamiento (manual, con tus cuentas)
 

@@ -2,7 +2,7 @@
 const TIENDAS=[{id:"exito",nombre:"Éxito",color:"#F5C400"},{id:"carulla",nombre:"Carulla",color:"#0F7A3D"},
   {id:"euro",nombre:"Euro",color:"#C8102E"},{id:"minorista",nombre:"La Minorista",color:"#8B5E3C"},
   {id:"d1",nombre:"D1",color:"#D62828"},{id:"ara",nombre:"Ara",color:"#E85D04"},{id:"isimo",nombre:"Ísimo",color:"#6A4C93"},{id:"pricesmart",nombre:"PriceSmart",color:"#0060A9",nota:"Club de membresía · presentaciones grandes, precio llevado a la unidad del producto"},
-  {id:"solofruver",nombre:"Solofruver",color:"#7CB342",manual:true},{id:"barrio",nombre:"Tienda/Carnicería",color:"#64748B",manual:true}];
+  {id:"barrio",nombre:"Tienda/Carnicería",color:"#64748B",manual:true}];
 const AUTO=TIENDAS.filter(t=>!t.manual);
 const TN=Object.fromEntries(TIENDAS.map(t=>[t.id,t]));
 const BASICOS=["Frutas","Verduras","Tubérculos","Granos","Panadería","Proteínas","Lácteos","Despensa","Aseo"];

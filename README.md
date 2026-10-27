@@ -82,7 +82,7 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 | **Euro**                                   | Páginas de producto públicas (`ld+json`)                                                               |
 | **La Minorista**                           | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
 | **Éxito, Carulla, Ara, Ísimo, PriceSmart** | Precios anotados a mano: sus sitios lo prohíben en `robots.txt` o bloquean bots                        |
-| **Solofruver, Tienda/Carnicería**          | Solo anotados                                                                                          |
+| **Tienda/Carnicería de barrio**            | Solo anotados                                                                                          |
 
 ---
 
