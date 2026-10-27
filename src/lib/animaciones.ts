@@ -26,6 +26,21 @@ export function cascada(objetivos: Objetivo) {
   });
 }
 
+/** 7 · La campana se sacude una vez. */
+export function sacudir(el: Element) {
+  if (reducir) return;
+  gsap.fromTo(
+    el,
+    { rotation: 0 },
+    {
+      keyframes: { rotation: [-16, 14, -10, 6, 0] },
+      duration: 0.6,
+      ease: "power1.inOut",
+      clearProps: "transform",
+    },
+  );
+}
+
 /** 8 · Las etiquetas que cambiaron hoy pulsan una vez. */
 export function pulso(objetivos: Objetivo) {
   if (reducir || !gsap.utils.toArray(objetivos).length) return;

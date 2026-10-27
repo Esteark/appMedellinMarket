@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { Campana } from "@/components/alertas/campana";
 import { ActualizarPrecios } from "@/components/avisos/actualizar-precios";
 import { CargandoEnlace } from "@/components/cargando";
 import { MenuCuenta } from "@/components/menu-cuenta";
@@ -124,7 +125,10 @@ function Cuenta({ u }: { u: Usuario | null }) {
   return (
     <span className="ml-auto flex items-center gap-3">
       {u ? (
-        <MenuCuenta email={u.email} />
+        <>
+          <Campana userId={u.id} />
+          <MenuCuenta email={u.email} />
+        </>
       ) : (
         <Link
           href="/ingresar"

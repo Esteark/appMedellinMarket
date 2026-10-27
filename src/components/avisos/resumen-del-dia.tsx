@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { avisar, debeResumir, seleccionarResumen } from "@/lib/avisos";
 import { hoyBogota } from "@/lib/fecha";
@@ -16,6 +17,7 @@ type Props = {
 
 /** Una vez por día y dispositivo: alertas de hoy o, si no hay, el estado de los datos. */
 export function ResumenDelDia({ alertas, viejaDesde, caidas }: Props) {
+  const router = useRouter();
   useEffect(() => {
     const hoy = hoyBogota();
     try {
@@ -26,12 +28,11 @@ export function ResumenDelDia({ alertas, viejaDesde, caidas }: Props) {
     }
     if (alertas?.length) {
       const { mostrar, resto } = seleccionarResumen(alertas);
-      // Sin `/alertas` todavía (paso 17): sin acción "Ver".
       for (const a of mostrar)
         avisar(
           "alerta_nueva",
           { mensaje: a.mensaje },
-          undefined,
+          { texto: "Ver", alPulsar: () => router.push("/alertas") },
           `alerta-${a.id}`,
         );
       if (resto) avisar("resumen_alertas", { n: resto });
@@ -39,6 +40,6 @@ export function ResumenDelDia({ alertas, viejaDesde, caidas }: Props) {
     }
     if (viejaDesde) avisar("datos_viejos", { cuando: viejaDesde });
     if (caidas.length) avisar("fuentes_caidas", { tiendas: caidas.join(", ") });
-  }, [alertas, viejaDesde, caidas]);
+  }, [alertas, viejaDesde, caidas, router]);
   return null;
 }

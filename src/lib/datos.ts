@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { cache } from "react";
-import { alertasFuenteCaida } from "@/lib/alertas/reglas";
+import { alertasFuenteCaida, ordenarAlertas } from "@/lib/alertas/reglas";
 import { diasEntre, hoyBogota, restarDias } from "@/lib/fecha";
 import {
   desactualizado,
@@ -403,6 +403,40 @@ export async function datosSesion(): Promise<{
   return {
     lista: (lista.data?.items as Record<string, number> | undefined) ?? null,
     alertas: (alertas.data ?? []).map((a) => ({ ...a, monto: a.monto ?? 0 })),
+  };
+}
+
+export type AlertaFila = {
+  id: number;
+  tipo: string;
+  mensaje: string;
+  monto: number;
+  creada: string;
+  leida: boolean;
+};
+
+/** Alertas del usuario (las 100 más recientes, por monto) y su ahorro mínimo. RLS filtra por usuario. */
+export async function alertasUsuario(): Promise<{
+  alertas: AlertaFila[];
+  umbral: number;
+}> {
+  await connection();
+  const db = await clienteServidor();
+  const [alertas, pref] = await Promise.all([
+    db
+      .from("alertas")
+      .select("id, tipo, mensaje, monto, creada, leida")
+      .order("creada", { ascending: false })
+      .limit(100),
+    db.from("preferencias_notif").select("umbral_ahorro").maybeSingle(),
+  ]);
+  for (const r of [alertas, pref])
+    if (r.error) throw new Error(r.error.message);
+  return {
+    alertas: ordenarAlertas(
+      (alertas.data ?? []).map((a) => ({ ...a, monto: a.monto ?? 0 })),
+    ),
+    umbral: pref.data?.umbral_ahorro ?? 1000,
   };
 }
 
