@@ -610,6 +610,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 
 **18. Hogar y Dieta.**
 - **Hacer:** `src/data/planes.ts`, `/hogar` y `/dieta`. Avisos `plan_usado` (con "Deshacer", que restaura la lista anterior) y `plan_sumado`.
+- **Hecho así (27-oct-2026):** `aplicarPlan` (`src/lib/precios/planes.ts`, pura) sube las cantidades fraccionarias al entero siguiente y omite ids que no estén en el catálogo. `/hogar` compara la lista (óptimo dividido) con el presupuesto por rubro. Los KPIs calculados de `/dieta` (`dietaKpis` del artifact) no se portaron; las tablas fijas sí.
 - **Hecho cuando:** CUANDO se pulsa "Usar como mi lista" en `/hogar`, EL SISTEMA DEBE cargar los 28 ítems de `PLANES.hogar` (es el conteo del archivo origen).
 
 **19. Calidad.**
