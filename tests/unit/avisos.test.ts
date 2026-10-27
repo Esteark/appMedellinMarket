@@ -9,10 +9,11 @@ import {
 } from "@/lib/avisos";
 
 describe("avisos", () => {
-  it("toda clave tiene tipo y texto no vacíos", () => {
+  it("toda clave tiene tipo, emoji y texto no vacíos", () => {
     for (const [clave, a] of Object.entries(AVISOS)) {
       expect(a.tipo, clave).toMatch(/^(exito|info|aviso|error)$/);
       expect(a.texto.trim(), clave).not.toBe("");
+      expect(a.emoji.trim(), clave).not.toBe("");
     }
   });
 

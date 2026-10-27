@@ -17,7 +17,14 @@ export function Toaster() {
       position="top-center"
       toastOptions={{
         className: "aviso",
-        style: { background: "var(--card)", color: "var(--foreground)" },
+        style: {
+          background: "var(--card)",
+          color: "var(--foreground)",
+          borderRadius: 14,
+          padding: "10px 12px",
+          maxWidth: 440,
+          boxShadow: "0 12px 32px rgb(15 23 42 / 0.16)",
+        },
       }}
     />
   );

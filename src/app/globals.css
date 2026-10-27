@@ -257,20 +257,89 @@
   }
 }
 
-/* Toasts (react-hot-toast): tokens y un acento por tipo. */
-.aviso {
-  border: 1px solid var(--border);
-  border-left-width: 4px;
-}
+/* Toasts (react-hot-toast): tokens, emoji en un círculo del color del tipo y barra de tiempo. */
 .aviso-exito {
-  border-left-color: var(--save);
+  --acento: var(--save);
+  --acento-bg: var(--save-bg);
 }
 .aviso-info {
-  border-left-color: var(--anot);
+  --acento: var(--anot);
+  --acento-bg: var(--anot-bg);
 }
 .aviso-aviso {
-  border-left-color: var(--warn);
+  --acento: var(--warn);
+  --acento-bg: var(--warn-bg);
 }
 .aviso-error {
-  border-left-color: var(--up);
+  --acento: var(--up);
+  --acento-bg: var(--up-bg);
+}
+.aviso {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.aviso::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: var(--acento);
+  transform-origin: left;
+  animation: aviso-tiempo var(--duracion, 4000ms) linear forwards;
+}
+.aviso:hover::after {
+  animation-play-state: paused;
+}
+@keyframes aviso-tiempo {
+  to {
+    transform: scaleX(0);
+  }
+}
+.aviso-icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--acento-bg);
+  font-size: 18px;
+  line-height: 1;
+}
+.aviso-cuerpo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.aviso-texto {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.aviso-accion {
+  flex: none;
+  border-radius: 999px;
+  background: var(--acento-bg);
+  padding: 4px 12px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.aviso-cerrar {
+  flex: none;
+  margin-right: -4px;
+  border-radius: 8px;
+  padding: 0 6px;
+  color: var(--muted-foreground);
+  font-size: 20px;
+  line-height: 1.4;
+}
+.aviso-cerrar:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aviso::after {
+    display: none;
+  }
 }
