@@ -282,7 +282,7 @@ jobs:
 ## 7. Web y diseño
 
 **Encabezado:**
-- "Actualizado: hoy 6:06 a. m.", un punto de color por tienda y "X/8 fuentes OK".
+- "Actualizado: hoy 6:06 a. m.", un punto de color por tienda automática y "X/3 fuentes OK" (D1, Euro y La Minorista; las manuales no cuentan).
 - Las tiendas con `ultimo_ok` ausente o de hace ≥3 días.
 - **Banner rojo** si la última corrida tiene más de 26 h, con el botón **"Actualizar precios"** (paso 14).
 - **Notificaciones (toasts):** catálogo, reglas y resumen del día en el paso 14.
@@ -586,7 +586,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
     - Al recibir foco con el teclado, cada opción hace `scrollIntoView({ inline: "nearest" })`.
     - Con `prefers-reduced-motion`, el desplazamiento es instantáneo.
   - **Usan el deslizador:** los chips de grupo, los chips de tienda, las pestañas (la activa se centra al cargar), "En fluctuación" y, en los pasos siguientes, los chips de planes y las pestañas de gráficos.
-  - **Encabezado compacto en móvil:** una sola línea con "Actualizado …", los puntos y "X/8 fuentes OK". La lista "Sin datos recientes" va plegada en un `<details>` ("Ver fuentes"). El banner rojo se acorta a "Precios de hace {n} días" con el botón del paso 14.
+  - **Encabezado compacto en móvil:** una sola línea con "Actualizado …", los puntos y "X/3 fuentes OK". La lista "Sin datos recientes" va plegada en un `<details>` ("Ver fuentes"). El banner rojo se acorta a "Precios de hace {n} días" con el botón del paso 14.
   - **Objetivos táctiles:** con `pointer: coarse`, todo control mide al menos 44 × 44 px (stepper, chips, "Cerrar", pestañas). Con puntero fino basta el mínimo de WCAG 2.5.8 (24 px).
   - **iPhone y Android con muesca:** `viewport-fit=cover` (export `viewport` del layout). La barra del carrito y las hojas suman `env(safe-area-inset-bottom)` a su padding inferior, y el contenido deja espacio para la barra.
   - **Formularios:** los `input` usan `font-size` ≥ 16 px en móvil para que iOS no haga zoom al enfocarlos. Esto aplica a la búsqueda y a los formularios de los pasos 14 y 16.

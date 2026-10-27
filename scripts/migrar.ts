@@ -5,6 +5,7 @@
 import "./cargar-env";
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { ADAPTADORES } from "@/corrida/orquestador";
 import type { Database, TablesInsert } from "@/lib/supabase/tipos";
 import { unidadBase } from "@/lib/unidades";
 
@@ -116,11 +117,14 @@ async function contar(tabla: Tabla): Promise<number> {
 }
 
 // --- filas ---
+// Manual = sin adaptador en la corrida: el artifact marcaba como automáticas tiendas que hoy van
+// por anotados (Éxito, Carulla, Ara, Ísimo, PriceSmart).
+const automaticas = new Set(ADAPTADORES.map((a) => a.tienda));
 const filasTiendas = tiendas.map((t) => ({
   id: t.id,
   nombre: t.nombre,
   color: t.color,
-  manual: t.manual ?? false,
+  manual: !automaticas.has(t.id),
   nota: t.nota ?? null,
 }));
 
