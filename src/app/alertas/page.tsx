@@ -12,7 +12,10 @@ async function Datos() {
   const u = await usuario();
   if (!u)
     return (
-      <p className="rounded-xl bg-anot-bg px-3.5 py-2.5 text-sm text-anot-ink">
+      <p
+        data-testid="alertas-ingresar"
+        className="rounded-xl bg-anot-bg px-3.5 py-2.5 text-sm text-anot-ink"
+      >
         <Link
           href="/ingresar"
           className="font-semibold underline underline-offset-2"

@@ -44,7 +44,7 @@ La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín
 | Gráficos | recharts **3.10.1** + react-is **19.3.1** |
 | Animación | gsap **3.15.0** (Draggable viene incluido; licencia gratuita) · @gsap/react **2.1.2** |
 | Notificaciones | react-hot-toast **2.6.1** (verificada el 26-oct-2026 en npm; peer `react >=16`). Se instala en el paso 14 |
-| Pruebas | vitest **5.0.5** · @playwright/test **1.64.1** · @axe-core/playwright: **verificar antes de instalar** (no se investigó) |
+| Pruebas | vitest **5.0.5** · @playwright/test **1.64.1** · @axe-core/playwright **4.13.0** (verificada en npm el 27-oct-2026; la 4.14.0 tenía 12 días) |
 | Calidad | @biomejs/biome **2.6.2** · tsx **4.23.15** |
 | Scrapers | cheerio **1.2.0** · exceljs **4.4.0** (sin mantenimiento desde 2023, riesgo aceptado) · unpdf **1.9.1** |
 | Correo | nodemailer **10.2.1** · @types/nodemailer **8.0.2** (compatibilidad no confirmada; la decide `pnpm typecheck` en el paso 9) |
