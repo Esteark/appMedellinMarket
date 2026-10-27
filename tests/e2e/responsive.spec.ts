@@ -72,7 +72,8 @@ for (const v of VISTAS) {
           .filter((el) => el.checkVisibility())
           .map((el) => ({
             texto: el.textContent?.trim() || el.getAttribute("aria-label"),
-            alto: el.getBoundingClientRect().height,
+            // offsetHeight: tamaño de layout, sin la escala de una animación de entrada (toasts).
+            alto: el.offsetHeight,
           }))
           .filter((x) => x.alto > 0 && x.alto < 44),
       );
