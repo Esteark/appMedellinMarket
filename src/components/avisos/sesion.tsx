@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { ordenarAlertas } from "@/lib/alertas/reglas";
 import { datosSesion, frescura, usuario } from "@/lib/datos";
 import { cuando } from "@/lib/fecha";
@@ -6,8 +7,16 @@ import { SincronizarLista } from "./sincronizar-lista";
 
 /** Lo que depende de la sesión y no se ve: sincronizar la lista y el resumen del día. */
 export async function Sesion() {
-  const [u, f] = await Promise.all([usuario(), frescura()]);
-  const datos = u ? await datosSesion() : null;
+  await connection(); // fuera del catch: el prerender lo rechaza a propósito
+  // Nada de esto es imprescindible: si la base falla, no se muestra y la app sigue.
+  const r = await Promise.all([usuario(), frescura()])
+    .then(async ([u, f]) => ({ f, datos: u ? await datosSesion() : null }))
+    .catch((e: unknown) => {
+      console.error("sesion:", e);
+      return null;
+    });
+  if (!r) return null;
+  const { f, datos } = r;
   const vieja = f.horasDesdeCorrida == null || f.horasDesdeCorrida > 26;
   return (
     <>

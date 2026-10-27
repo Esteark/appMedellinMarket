@@ -1,13 +1,40 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { salir } from "@/app/auth/acciones";
 import { ActualizarPrecios } from "@/components/avisos/actualizar-precios";
-import { frescura, usuario } from "@/lib/datos";
+import { frescura, type Usuario, usuario } from "@/lib/datos";
 import { cuando } from "@/lib/fecha";
 import { cn } from "@/lib/utils";
 
 /** Frescura de la corrida: hora, un punto por fuente, X/N OK, fuentes viejas y banner a las 26 h. */
 export async function Encabezado() {
-  const [f, u] = await Promise.all([frescura(), usuario()]);
+  // Fuera del catch: en el prerender connection() se rechaza a propósito y Next debe verlo.
+  await connection();
+  // Si la base no responde, el encabezado lo dice y la app sigue en pie (antes tumbaba todo el layout).
+  const [f, u] = await Promise.all([
+    frescura().catch((e: unknown) => {
+      console.error("encabezado: frescura falló:", e);
+      return null;
+    }),
+    usuario().catch(() => null),
+  ]);
+  if (!f)
+    return (
+      <header className="border-b bg-card">
+        <div
+          role="alert"
+          data-testid="banner-corrida"
+          className="bg-up-bg px-4 py-2 text-center text-sm font-medium text-up-ink"
+        >
+          No se pudo leer el estado de los precios. Intenta recargar en un
+          momento.
+        </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm">
+          <span className="font-semibold">Mercado Medellín</span>
+          <Cuenta u={u} />
+        </div>
+      </header>
+    );
   const vieja = f.horasDesdeCorrida == null || f.horasDesdeCorrida > 26;
   const caidas = f.fuentes.filter((x) => !x.ok).map((x) => x.nombre);
   const dias = Math.max(1, Math.floor((f.horasDesdeCorrida ?? 0) / 24));
@@ -75,34 +102,41 @@ export async function Encabezado() {
             </>
           )}
         </span>
-        <span className="ml-auto flex items-center gap-3">
-          {u ? (
-            <>
-              <span
-                className="max-w-40 truncate text-muted-foreground sm:max-w-48"
-                data-testid="usuario"
-              >
-                {u.email}
-              </span>
-              <form action={salir}>
-                <button
-                  type="submit"
-                  className="font-medium underline underline-offset-2"
-                >
-                  Salir
-                </button>
-              </form>
-            </>
-          ) : (
-            <Link
-              href="/ingresar"
-              className="font-medium underline underline-offset-2"
-            >
-              Ingresar
-            </Link>
-          )}
-        </span>
+        <Cuenta u={u} />
       </div>
     </header>
+  );
+}
+
+/** Correo y "Salir", o el enlace para ingresar. */
+function Cuenta({ u }: { u: Usuario | null }) {
+  return (
+    <span className="ml-auto flex items-center gap-3">
+      {u ? (
+        <>
+          <span
+            className="max-w-40 truncate text-muted-foreground sm:max-w-48"
+            data-testid="usuario"
+          >
+            {u.email}
+          </span>
+          <form action={salir}>
+            <button
+              type="submit"
+              className="font-medium underline underline-offset-2"
+            >
+              Salir
+            </button>
+          </form>
+        </>
+      ) : (
+        <Link
+          href="/ingresar"
+          className="font-medium underline underline-offset-2"
+        >
+          Ingresar
+        </Link>
+      )}
+    </span>
   );
 }
