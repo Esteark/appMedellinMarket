@@ -5,6 +5,7 @@ import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import type { Lista } from "@/lib/precios/lista";
 import { type ModoLista, SIN_PRECIO, seccionar } from "@/lib/precios/secciones";
 import { cn } from "@/lib/utils";
+import { DescargarPdf } from "./descargar-pdf";
 import { ListaSeccion } from "./lista-seccion";
 
 const MODOS: [ModoLista, string][] = [
@@ -92,13 +93,16 @@ export function ListaVista({ lista, productos, tiendas, alVaciar }: Props) {
           />
         ))}
       </div>
-      <button
-        type="button"
-        onClick={alVaciar}
-        className="self-start text-sm font-medium text-up-ink"
-      >
-        Vaciar lista
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <DescargarPdf lista={lista} productos={productos} tiendas={tiendas} />
+        <button
+          type="button"
+          onClick={alVaciar}
+          className="text-sm font-medium text-up-ink"
+        >
+          Vaciar lista
+        </button>
+      </div>
     </div>
   );
 }

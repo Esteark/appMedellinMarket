@@ -45,6 +45,7 @@ La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín
 | Animación | gsap **3.15.0** (Draggable viene incluido; licencia gratuita) · @gsap/react **2.1.2** |
 | Notificaciones | react-hot-toast **2.6.1** (verificada el 26-oct-2026 en npm; peer `react >=16`). Se instala en el paso 14 |
 | Pruebas | vitest **5.0.5** · @playwright/test **1.64.1** · @axe-core/playwright **4.13.0** (verificada en npm el 27-oct-2026; la 4.14.0 tenía 12 días) |
+| PDF | jspdf **4.2.1** · jspdf-autotable **5.0.8** (verificadas en npm el 27-oct-2026; se cargan con `import()` solo al pulsar "Descargar PDF", paso 25) |
 | Calidad | @biomejs/biome **2.6.2** · tsx **4.23.15** |
 | Scrapers | cheerio **1.2.0** · exceljs **4.4.0** (sin mantenimiento desde 2023, riesgo aceptado) · unpdf **1.9.1** |
 | Correo | nodemailer **10.2.1** · @types/nodemailer **8.0.2** (compatibilidad no confirmada; la decide `pnpm typecheck` en el paso 9) |
@@ -515,6 +516,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   | `recuperar_enviado` | Recuperar contraseña | info | "Si el correo está registrado, te enviamos un enlace." |
   | `clave_cambiada` | Nueva contraseña guardada | éxito | "Contraseña actualizada." |
   | `sesion_cerrada` | Salir | info | "Sesión cerrada. Tu lista queda en este dispositivo." |
+  | `pdf_no_generado` | "Descargar PDF" falla (paso 25) | error | "No se pudo crear el PDF. Intenta de nuevo." |
   | `sesion_no_cerrada` | Salir falla (paso 23) | error | "No se pudo cerrar la sesión. Intenta de nuevo." |
   | `sesion_expirada` | Una server action responde sin sesión | aviso | "Tu sesión expiró. Inicia sesión de nuevo." |
   | `lista_fusionada` | Al iniciar sesión con lista local no vacía | éxito | "Unimos la lista de este dispositivo con la guardada ({n} productos)." |
@@ -682,6 +684,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - Contenido: título "Lista de mercado", fecha (`hoyBogota()`) y una tabla por tienda del óptimo dividido con columnas **Producto · Cantidad · Precio unitario · Subtotal**, el subtotal por tienda y el total general al final. Los precios desactualizados o anotados llevan una marca (`*`) y una nota al pie; los productos sin precio van en una tabla aparte "Sin precio". Nunca se inventa un precio (regla 7).
   - Generación 100 % en el navegador con `jspdf` + `jspdf-autotable`, cargados con `import()` dinámico solo al pulsar. **Dependencia nueva:** se agrega a §2 y a la lista permitida de la regla 9, con versión verificada contra npm (usar el `stack-researcher`) antes de instalarla. Las filas se arman en una función pura `src/lib/precios/exportar.ts` (sin React ni jsPDF) con su prueba.
   - Nombre del archivo: `lista-mercado-<aaaa-mm-dd>.pdf`; las tildes, la ñ y el `$` salen bien (formato `pesos()`).
+- **Hecho así (27-oct-2026):** `jspdf` **4.2.1** y `jspdf-autotable` **5.0.8** (exactas; la 5.0.9 tenía 12 días), sin vulnerabilidades en `pnpm audit --prod`. `datosPdf` (`src/lib/precios/exportar.ts`) arma tablas por tienda del óptimo dividido, con `*` en precios anotados o desactualizados y los sin precio aparte; `descargar-pdf.tsx` va dentro de `ListaVista` (aside y hoja). Los colores del PDF son RGB fijos (el PDF no lee `var(--token)`).
 - **Hecho cuando:**
   - `tests/unit/exportar.test.ts`: dada una lista y precios, la función devuelve las filas por tienda con subtotales y total correctos, marca los anotados y desactualizados, y separa los "sin precio".
   - E2E `tests/e2e/pdf.spec.ts`: con 3 productos, pulsar "Descargar PDF" dispara una descarga cuyo nombre cumple `lista-mercado-\d{4}-\d{2}-\d{2}\.pdf` y el archivo empieza con `%PDF`.
