@@ -32,4 +32,10 @@ test("la lista local se une a la cuenta al registrarse y sobrevive sin localStor
         .getByTestId(`tarjeta-${id}`)
         .getByRole("button", { name: /^Quitar/ }),
     ).toBeEnabled();
+
+  // El menú de la cuenta cierra la sesión.
+  await page.getByTestId("usuario").click();
+  await page.getByRole("menuitem", { name: "Cerrar sesión" }).click();
+  await expect(page.getByRole("link", { name: "Ingresar" })).toBeVisible();
+  await expect(page.getByTestId("usuario")).toHaveCount(0);
 });

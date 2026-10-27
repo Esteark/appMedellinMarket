@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { salir } from "@/app/auth/acciones";
 import { ActualizarPrecios } from "@/components/avisos/actualizar-precios";
-import { BotonEnviar, CargandoEnlace } from "@/components/cargando";
+import { CargandoEnlace } from "@/components/cargando";
+import { MenuCuenta } from "@/components/menu-cuenta";
 import { frescura, type Usuario, usuario } from "@/lib/datos";
 import { cuando } from "@/lib/fecha";
 import { cn } from "@/lib/utils";
@@ -109,24 +109,12 @@ export async function Encabezado() {
   );
 }
 
-/** Correo y "Salir", o el enlace para ingresar. */
+/** Menú de la cuenta, o el enlace para ingresar. */
 function Cuenta({ u }: { u: Usuario | null }) {
   return (
     <span className="ml-auto flex items-center gap-3">
       {u ? (
-        <>
-          <span
-            className="max-w-40 truncate text-muted-foreground sm:max-w-48"
-            data-testid="usuario"
-          >
-            {u.email}
-          </span>
-          <form action={salir}>
-            <BotonEnviar className="font-medium underline underline-offset-2">
-              Salir
-            </BotonEnviar>
-          </form>
-        </>
+        <MenuCuenta email={u.email} />
       ) : (
         <Link
           href="/ingresar"
