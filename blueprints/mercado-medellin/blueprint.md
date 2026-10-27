@@ -647,7 +647,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - El gráfico muestra **todas las tiendas** (o solo las elegidas, si hay selección) con su total. Para las incompletas la barra llega hasta lo que sí tienen, tenue y con la etiqueta "faltan N"; las completas llevan el sello "tiene todo". La tienda elegida se resalta.
   - Reactivar la animación (animación 5) con duración 0 bajo `prefers-reduced-motion`; las barras se animan al cambiar los datos, no solo al montar.
   - La lógica va en una función pura de `src/lib/precios/lista.ts` con su prueba; el componente solo dibuja.
-- **Hecho así (27-oct-2026):** `compararTiendas` (en `lista.ts`) devuelve todas las tiendas con precio de algo de la lista, completas primero. Con selección se **resalta** la elegida en vez de filtrar (una sola barra no compara nada). Las barras con productos faltantes y las de precios desactualizados usan la misma opacidad tenue; la etiqueta distingue "faltan N" de "⏱".
+- **Hecho así (27-oct-2026):** `compararTiendas` (en `lista.ts`) devuelve todas las tiendas con precio de algo de la lista, completas primero. Con selección se **resalta** la elegida en vez de filtrar (una sola barra no compara nada). Las tiendas con productos faltantes se dibujan con rayas del color de la tienda; las de precios desactualizados (⏱) con opacidad tenue.
 - **Hecho cuando:**
   - Prueba unitaria: con 3 tiendas (una completa, dos incompletas) la función devuelve las 3 con `faltantes` correctos, y filtrada por selección devuelve solo las elegidas.
   - E2E `tests/e2e/grafico-tiendas.spec.ts`: agregar productos, abrir gráficos y elegir otra tienda en los chips → cambian las barras visibles (se comprueba el `aria-label` y el número de barras).

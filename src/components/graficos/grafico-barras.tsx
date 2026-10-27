@@ -50,6 +50,23 @@ export default function GraficoBarras({
           layout="vertical"
           margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
         >
+          {/* Rayas del color de la tienda: las parciales (les faltan productos) no se confunden con las tenues (precio viejo). */}
+          <defs>
+            {datos.map((d, i) =>
+              d.parcial ? (
+                <pattern
+                  key={d.nombre}
+                  id={`rayas-${i}`}
+                  width="7"
+                  height="7"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)"
+                >
+                  <rect width="3.5" height="7" fill={d.color} />
+                </pattern>
+              ) : null,
+            )}
+          </defs>
           <XAxis type="number" tick={EJE} tickFormatter={milesCortos} />
           <YAxis type="category" dataKey="nombre" width={128} tick={EJE} />
           <Tooltip {...TOOLTIP} cursor={{ fill: "var(--secondary)" }} />
@@ -60,11 +77,11 @@ export default function GraficoBarras({
             isAnimationActive={!sinMovimiento()}
             animationDuration={400}
           >
-            {datos.map((d) => (
+            {datos.map((d, i) => (
               <Cell
                 key={d.nombre}
-                fill={d.color}
-                fillOpacity={d.vieja || d.parcial ? 0.4 : 1}
+                fill={d.parcial ? `url(#rayas-${i})` : d.color}
+                fillOpacity={d.vieja ? 0.55 : 1}
                 stroke={d.elegida ? "var(--foreground)" : "none"}
                 strokeWidth={d.elegida ? 2 : 0}
               />

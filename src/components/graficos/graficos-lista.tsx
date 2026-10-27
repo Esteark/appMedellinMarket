@@ -109,7 +109,7 @@ export function GraficosLista({ lista, productos, tiendas, elegida }: Props) {
               />
               {porTienda.some((t) => t.parcial) && (
                 <p className="text-xs text-muted-foreground">
-                  Las barras tenues son tiendas a las que les faltan productos
+                  Las barras rayadas son tiendas a las que les faltan productos
                   de tu lista: su total es parcial y no sirve para comparar.
                 </p>
               )}
