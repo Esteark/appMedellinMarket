@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import { type ReactNode, useCallback, useLayoutEffect, useRef } from "react";
 import { abrirHoja, arrastrable, cerrarHoja } from "@/lib/animaciones";
 
 type Props = {
@@ -17,16 +17,22 @@ export function Hoja({ titulo, alCerrar, children }: Props) {
   const asa = useRef<HTMLDivElement>(null);
   const botonCerrar = useRef<HTMLButtonElement>(null);
   const cerrando = useRef(false);
+  // El padre pasa un alCerrar nuevo en cada render (p. ej. cuando llegan los datos del
+  // Suspense); si fuera dependencia, la animación de entrada se reiniciaría: el parpadeo.
+  const alCerrarActual = useRef(alCerrar);
+  alCerrarActual.current = alCerrar;
 
   const cerrar = useCallback(() => {
     if (cerrando.current) return;
     cerrando.current = true;
+    const fin = () => alCerrarActual.current();
     if (hoja.current && fondo.current)
-      cerrarHoja(hoja.current, fondo.current, alCerrar);
-    else alCerrar();
-  }, [alCerrar]);
+      cerrarHoja(hoja.current, fondo.current, fin);
+    else fin();
+  }, []);
 
-  useEffect(() => {
+  // Layout effect: la hoja se coloca abajo antes del primer pintado, sin un cuadro visible arriba.
+  useLayoutEffect(() => {
     const previo = document.activeElement as HTMLElement | null;
     if (hoja.current && fondo.current) abrirHoja(hoja.current, fondo.current);
     botonCerrar.current?.focus();
