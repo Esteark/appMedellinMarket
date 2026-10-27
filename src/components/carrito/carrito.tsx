@@ -14,6 +14,8 @@ import {
   optimoDividido,
   totalesPorTienda,
 } from "@/lib/precios/lista";
+import { ListaResumen } from "./lista-resumen";
+import { ListaVista } from "./lista-vista";
 import { reemplazarLista } from "./use-lista";
 
 type Props = {
@@ -33,11 +35,7 @@ export function Carrito({
   icono,
   tiendaElegida,
 }: Props) {
-  const porId = useMemo(
-    () => new Map(productos.map((p) => [p.id, p])),
-    [productos],
-  );
-  const { total, ahorro, nota, items, unidades } = useMemo(() => {
+  const { total, ahorro, nota, unidades } = useMemo(() => {
     const precios = Object.fromEntries(productos.map((p) => [p.id, p.precios]));
     const ids = tiendas.map((t) => t.id);
     const optimo = optimoDividido(lista, precios, ids);
@@ -53,13 +51,6 @@ export function Carrito({
         : mejor
           ? `Todo en ${nombre(mejor.tienda)}, la más barata completa`
           : "Ninguna tienda tiene todo: total dividiendo",
-      items: Object.entries(lista).map(([id, q]) => ({
-        id,
-        q,
-        tienda: optimo.tiendaDe[id]
-          ? nombre(optimo.tiendaDe[id])
-          : "sin precio",
-      })),
       unidades,
     };
   }, [lista, productos, tiendas]);
@@ -79,26 +70,14 @@ export function Carrito({
       },
     );
   };
-  const detalleLista = items.length > 0 && (
-    <>
-      <ul className="flex flex-col gap-1.5 text-sm">
-        {items.map((i) => (
-          <li key={i.id} className="flex justify-between gap-2">
-            <span className="truncate">
-              {porId.get(i.id)?.emoji} {porId.get(i.id)?.nombre ?? i.id} × {i.q}
-            </span>
-            <span className="flex-none text-muted-foreground">{i.tienda}</span>
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={vaciar}
-        className="self-start text-sm font-medium text-up-ink"
-      >
-        Vaciar lista
-      </button>
-    </>
+  const hayLista = unidades > 0;
+  const detalleLista = (
+    <ListaVista
+      lista={lista}
+      productos={productos}
+      tiendas={tiendas}
+      alVaciar={vaciar}
+    />
   );
 
   // 2 · Total y ahorro cuentan hasta el nuevo valor.
@@ -117,9 +96,9 @@ export function Carrito({
   return (
     <aside
       aria-label="Mi lista"
-      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgb(15_23_42/0.14)] lg:sticky lg:top-4 lg:bottom-auto lg:self-start lg:rounded-[14px] lg:border lg:pb-2.5 lg:shadow-none"
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgb(15_23_42/0.14)] lg:sticky lg:top-4 lg:bottom-auto lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto lg:rounded-[14px] lg:border lg:pb-2.5 lg:shadow-none"
     >
-      {items.length > 0 && (
+      {hayLista && (
         <span
           aria-hidden="true"
           className="mx-auto -mt-1 mb-1.5 block h-1 w-10 rounded-full bg-border lg:hidden"
@@ -162,7 +141,7 @@ export function Carrito({
           </b>
         </div>
       </div>
-      {items.length > 0 && (
+      {hayLista && (
         // En móvil y tableta toda la barra abre la hoja de la lista.
         <button
           type="button"
@@ -172,7 +151,7 @@ export function Carrito({
           className="absolute inset-0 z-10 lg:hidden"
         />
       )}
-      {items.length > 0 && (
+      {hayLista && (
         <div className="mt-3 hidden flex-col gap-3 border-t pt-3 lg:flex">
           {detalleLista}
           <button
@@ -198,6 +177,7 @@ export function Carrito({
           <h2 id="lista-titulo" className="text-[19px] font-semibold">
             Mi lista
           </h2>
+          <ListaResumen productos={unidades} total={total} ahorro={ahorro} />
           {detalleLista}
           <GraficosLista
             lista={lista}

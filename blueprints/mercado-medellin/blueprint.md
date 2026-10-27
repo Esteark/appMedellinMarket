@@ -672,6 +672,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - Si hay más de 4 tiendas, el selector de tienda usa el `Deslizador`.
   - **Altura máxima:** en escritorio el aside tiene `max-h` con desplazamiento interno propio. Cada fila ≤ 56 px y stepper de 44 px en táctil.
   - Partir en `lista-resumen.tsx`, `lista-seccion.tsx` y `lista-vista.tsx` para cumplir el límite de 250 líneas.
+- **Hecho así (27-oct-2026):** `seccionar` (`src/lib/precios/secciones.ts`, pura) agrupa la lista; `lista-seccion.tsx` (acordeón con `plegar` de `animaciones.ts`), `lista-vista.tsx` y `lista-resumen.tsx` (solo en la hoja: en escritorio el total y el ahorro ya van fijos arriba del aside). No hay selector de tienda aparte —las secciones por tienda cumplen ese papel—, así que el `Deslizador` no hizo falta. Los nombres ocupan hasta 2 líneas.
 - **Hecho cuando:** pasa el e2e `tests/e2e/lista-vista.spec.ts` con 15 productos de 3 tiendas: (1) "Por tienda" muestra 3 secciones con subtotales cuya suma es el total; (2) plegar una sección oculta sus filas y deja `aria-expanded="false"`; (3) cambiar a "Por grupo" y "Todo" conserva las cantidades; (4) el resumen sigue visible al desplazar la lista; (5) no hay desplazamiento horizontal en 360 px.
 
 **25. Exportar la lista a PDF.**

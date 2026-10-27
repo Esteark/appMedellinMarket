@@ -27,8 +27,11 @@ test("una alerta nueva llega por Realtime a la campana y aparece en /alertas", a
     expect(usuario).not.toBe("");
 
     const mensaje = `Prueba e2e ${Date.now()}`;
-    // Esperar a que el canal esté suscrito evita insertar antes de que alguien escuche.
-    await page.waitForTimeout(1500);
+    // Insertar antes de que el canal esté suscrito perdería la alerta: se espera a que escuche.
+    await expect(page.getByTestId("campana")).toHaveAttribute(
+      "data-escuchando",
+      "true",
+    );
     const { error } = await db.from("alertas").insert({
       user_id: usuario,
       tipo: "mas_barato",

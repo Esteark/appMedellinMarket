@@ -13,6 +13,8 @@ export function Campana({ userId }: { userId: string }) {
   const router = useRouter();
   const ruta = usePathname();
   const [n, setN] = useState(0);
+  // El canal de Realtime ya escucha: antes de eso una alerta nueva no llegaría.
+  const [escuchando, setEscuchando] = useState(false);
   const icono = useRef<HTMLSpanElement>(null);
   // El canal vive toda la sesión: la ruta se lee por ref para no reabrirlo al navegar.
   const rutaRef = useRef(ruta);
@@ -69,7 +71,7 @@ export function Campana({ userId }: { userId: string }) {
           },
           contar,
         )
-        .subscribe();
+        .subscribe((estado) => setEscuchando(estado === "SUBSCRIBED"));
     });
     return () => {
       cancelado = true;
@@ -81,6 +83,7 @@ export function Campana({ userId }: { userId: string }) {
     <Link
       href="/alertas"
       data-testid="campana"
+      data-escuchando={escuchando}
       aria-label={n ? `Alertas, ${n} sin leer` : "Alertas"}
       className="relative grid size-8 place-items-center rounded-full bg-secondary text-foreground hover:bg-border"
     >

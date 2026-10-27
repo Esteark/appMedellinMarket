@@ -164,6 +164,36 @@ export function dibujar(lineas: SVGPathElement[]) {
   }
 }
 
+/** Despliega o pliega una sección (altura + opacidad); al plegar queda `hidden` al terminar. */
+export function plegar(el: HTMLElement, abrir: boolean) {
+  gsap.killTweensOf(el);
+  if (abrir) {
+    el.hidden = false;
+    gsap.fromTo(
+      el,
+      { height: 0, opacity: 0 },
+      {
+        height: "auto",
+        opacity: 1,
+        duration: d(0.22),
+        ease: "power2.out",
+        clearProps: "height,opacity",
+      },
+    );
+  } else {
+    gsap.to(el, {
+      height: 0,
+      opacity: 0,
+      duration: d(0.18),
+      ease: "power2.in",
+      onComplete() {
+        el.hidden = true;
+        gsap.set(el, { clearProps: "height,opacity" });
+      },
+    });
+  }
+}
+
 /** Entrada de una hoja inferior y su fondo. */
 export function abrirHoja(hoja: Element, fondo: Element) {
   gsap.fromTo(fondo, { opacity: 0 }, { opacity: 1, duration: d(0.25) });
