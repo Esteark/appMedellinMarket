@@ -515,6 +515,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   | `recuperar_enviado` | Recuperar contraseña | info | "Si el correo está registrado, te enviamos un enlace." |
   | `clave_cambiada` | Nueva contraseña guardada | éxito | "Contraseña actualizada." |
   | `sesion_cerrada` | Salir | info | "Sesión cerrada. Tu lista queda en este dispositivo." |
+  | `sesion_no_cerrada` | Salir falla (paso 23) | error | "No se pudo cerrar la sesión. Intenta de nuevo." |
   | `sesion_expirada` | Una server action responde sin sesión | aviso | "Tu sesión expiró. Inicia sesión de nuevo." |
   | `lista_fusionada` | Al iniciar sesión con lista local no vacía | éxito | "Unimos la lista de este dispositivo con la guardada ({n} productos)." |
   | `lista_no_guardada` | Falla la server action de `listas` | error | "No se pudo guardar tu lista. Sigue en este dispositivo y se reintenta con el próximo cambio." |

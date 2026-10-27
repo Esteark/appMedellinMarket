@@ -111,8 +111,9 @@ export async function nuevaClave(
   redirect("/?aviso=clave_cambiada");
 }
 
-export async function salir() {
+/** Cierra la sesión. No redirige: el menú de cuenta termina su animación y navega él. */
+export async function salir(): Promise<{ ok: boolean }> {
   const db = await clienteServidor();
-  await db.auth.signOut();
-  redirect("/?aviso=sesion_cerrada");
+  const { error } = await db.auth.signOut();
+  return { ok: !error };
 }

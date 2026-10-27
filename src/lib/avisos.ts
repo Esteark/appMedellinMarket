@@ -31,6 +31,11 @@ export const AVISOS = {
     emoji: "👋",
     texto: "Sesión cerrada. Tu lista queda en este dispositivo.",
   },
+  sesion_no_cerrada: {
+    tipo: "error",
+    emoji: "🔒",
+    texto: "No se pudo cerrar la sesión. Intenta de nuevo.",
+  },
   sesion_expirada: {
     tipo: "aviso",
     emoji: "⏳",
