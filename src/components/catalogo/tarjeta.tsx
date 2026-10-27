@@ -52,7 +52,11 @@ export function Tarjeta({
           <span className="mt-1 text-sm text-muted-foreground">Sin precio</span>
         ) : (
           <span
-            className="mt-1 text-[17px] font-semibold tabular-nums"
+            className={cn(
+              "mt-1 text-[17px] font-semibold tabular-nums",
+              // Un precio anotado a mano va en azul, como en /anotados.
+              esMejor && p.mejor?.estado === "anotado" && "text-anot-ink",
+            )}
             data-origen={esMejor ? p.mejor?.estado : undefined}
             data-minimo={esMejor || undefined}
           >

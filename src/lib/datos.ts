@@ -389,3 +389,54 @@ export async function datosSesion(): Promise<{
     alertas: (alertas.data ?? []).map((a) => ({ ...a, monto: a.monto ?? 0 })),
   };
 }
+
+export type FilaAnotados = {
+  id: string;
+  nombre: string;
+  emoji: string | null;
+  unidad: string;
+  grupo: string;
+  /** Precio efectivo y su origen por tienda (real, anotado, estimado…). */
+  celdas: Record<string, { precio: number | null; estado: string | null }>;
+};
+
+/** Tabla de /anotados: todos los productos × todas las tiendas, incluidas las manuales. */
+export async function tablaAnotados(): Promise<{
+  tiendas: (TiendaCatalogo & { manual: boolean })[];
+  filas: FilaAnotados[];
+}> {
+  await connection();
+  const db = await clienteServidor();
+  const [productos, tiendas, efectivos] = await Promise.all([
+    db
+      .from("productos")
+      .select("id, nombre, emoji, unidad, grupo")
+      .order("nombre"),
+    db.from("tiendas").select("id, nombre, color, manual").order("nombre"),
+    todas(
+      (d, h) =>
+        db
+          .from("precio_efectivo")
+          .select("producto_id, tienda_id, precio, estado")
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "precio_efectivo",
+    ),
+  ]);
+  for (const r of [productos, tiendas])
+    if (r.error) throw new Error(r.error.message);
+  const porProducto = agrupar(efectivos, (e) => e.producto_id);
+  return {
+    tiendas: tiendas.data ?? [],
+    filas: (productos.data ?? []).map((p) => ({
+      ...p,
+      celdas: Object.fromEntries(
+        (porProducto.get(p.id) ?? []).map((e) => [
+          e.tienda_id,
+          { precio: e.precio, estado: e.estado },
+        ]),
+      ),
+    })),
+  };
+}

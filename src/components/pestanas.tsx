@@ -9,10 +9,11 @@ import { Deslizador } from "@/components/deslizador";
 import { deslizar } from "@/lib/animaciones";
 import { cn } from "@/lib/utils";
 
-/** Solo las vistas que ya existen; los pasos siguientes agregan Hogar, Dieta y Anotados. */
+/** Solo las vistas que ya existen; los pasos siguientes agregan Hogar y Dieta. */
 const PESTANAS = [
   { href: "/", texto: "Canasta familiar" },
   { href: "/antojos", texto: "Antojos y gourmet" },
+  { href: "/anotados", texto: "Anotados" },
 ];
 
 export function Pestanas() {
