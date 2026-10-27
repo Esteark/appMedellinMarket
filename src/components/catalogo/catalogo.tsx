@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { useMemo, useRef, useState } from "react";
 import { Carrito } from "@/components/carrito/carrito";
 import { useLista } from "@/components/carrito/use-lista";
+import { Deslizador } from "@/components/deslizador";
 import { cascada, pulso, volar } from "@/lib/animaciones";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { cn } from "@/lib/utils";
@@ -90,7 +91,7 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
   );
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 pt-4 pb-28 min-[900px]:grid-cols-[minmax(0,1fr)_340px] min-[900px]:pb-8">
+    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 pt-4 pb-[calc(8rem+env(safe-area-inset-bottom))] lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-8">
       <div className="flex min-w-0 flex-col gap-3">
         <input
           type="search"
@@ -98,38 +99,43 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Buscar producto"
           aria-label="Buscar producto"
-          className="h-10 rounded-[10px] border border-input bg-card px-3 text-sm"
+          className="h-10 rounded-[10px] border border-input bg-card px-3 text-base sm:text-sm"
         />
-        <fieldset className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
+        <fieldset className="min-w-0">
           <legend className="sr-only">Grupos</legend>
-          <Chip activo={!grupo} onClick={() => setGrupo(null)}>
-            Todos
-          </Chip>
-          {grupos.map((g) => (
-            <Chip key={g} activo={grupo === g} onClick={() => setGrupo(g)}>
-              {g}
+          <Deslizador className="gap-1.5 pb-0.5" data-testid="chips-grupos">
+            <Chip activo={!grupo} onClick={() => setGrupo(null)}>
+              Todos
             </Chip>
-          ))}
+            {grupos.map((g) => (
+              <Chip key={g} activo={grupo === g} onClick={() => setGrupo(g)}>
+                {g}
+              </Chip>
+            ))}
+          </Deslizador>
         </fieldset>
-        <fieldset className="flex min-w-0 gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
+        <fieldset className="min-w-0">
           <legend className="sr-only">Tiendas</legend>
-          <Chip activo={!tienda} onClick={() => setTienda(null)}>
-            Más barato
-          </Chip>
-          {tiendas.map((t) => (
-            <Chip
-              key={t.id}
-              activo={tienda === t.id}
-              onClick={() => setTienda(t.id)}
-            >
-              {t.nombre}
+          <Deslizador className="gap-1.5 pb-0.5" data-testid="chips-tiendas">
+            <Chip activo={!tienda} onClick={() => setTienda(null)}>
+              Más barato
             </Chip>
-          ))}
+            {tiendas.map((t) => (
+              <Chip
+                key={t.id}
+                activo={tienda === t.id}
+                onClick={() => setTienda(t.id)}
+              >
+                {t.nombre}
+              </Chip>
+            ))}
+          </Deslizador>
         </fieldset>
         <section
           ref={rejilla}
           aria-label="Catálogo"
-          className="grid grid-cols-2 gap-2.5 min-[900px]:grid-cols-3 min-[1140px]:grid-cols-4"
+          data-testid="rejilla"
+          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3"
         >
           {visibles.map((p) => {
             const id = tienda ?? p.mejor?.tienda;

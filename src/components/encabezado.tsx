@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 export async function Encabezado() {
   const [f, u] = await Promise.all([frescura(), usuario()]);
   const vieja = f.horasDesdeCorrida == null || f.horasDesdeCorrida > 26;
-  const caidas = f.fuentes.filter((x) => !x.ok);
+  const caidas = f.fuentes.filter((x) => !x.ok).map((x) => x.nombre);
+  const dias = Math.max(1, Math.floor((f.horasDesdeCorrida ?? 0) / 24));
 
   return (
     <header className="border-b bg-card">
@@ -17,50 +18,68 @@ export async function Encabezado() {
         <div
           role="alert"
           data-testid="banner-corrida"
-          className="bg-up-bg px-4 py-2 text-center text-sm font-medium text-up-ink"
+          className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-up-bg px-4 py-2 text-center text-sm font-medium text-up-ink"
         >
-          {f.ultimaCorrida
-            ? `La última corrida tiene más de 26 h (${cuando(f.ultimaCorrida)}). Los precios pueden estar desactualizados.`
-            : "Todavía no hay ninguna corrida de precios."}{" "}
+          <span className="sm:hidden">
+            {f.ultimaCorrida
+              ? `Precios de hace ${dias} ${dias === 1 ? "día" : "días"}.`
+              : "Todavía no hay precios."}
+          </span>
+          <span className="hidden sm:inline">
+            {f.ultimaCorrida
+              ? `La última corrida tiene más de 26 h (${cuando(f.ultimaCorrida)}). Los precios pueden estar desactualizados.`
+              : "Todavía no hay ninguna corrida de precios."}
+          </span>
           <ActualizarPrecios conSesion={!!u} />
         </div>
       )}
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm">
         <span className="font-semibold">Mercado Medellín</span>
-        <span className="text-muted-foreground" data-testid="actualizado">
-          Actualizado: {f.ultimaCorrida ? cuando(f.ultimaCorrida) : "nunca"}
-        </span>
-        <span className="flex items-center gap-2">
-          <ul className="flex gap-1" aria-label="Estado por fuente">
-            {f.fuentes.map((x) => (
-              <li
-                key={x.id}
-                title={`${x.nombre}: ${x.ok ? "OK" : "caída"}`}
-                className={cn(
-                  "size-2.5 rounded-full",
-                  x.ok ? "bg-save" : "bg-up",
-                )}
-              >
-                <span className="sr-only">
-                  {x.nombre}: {x.ok ? "OK" : "caída"}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <span className="tabular-nums" data-testid="fuentes-ok">
-            {f.fuentesOk}/{f.fuentes.length} fuentes OK
+        {/* En móvil el estado baja a su propia línea, compacta. */}
+        <span className="order-last flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:order-none sm:basis-auto sm:text-sm">
+          <span className="text-muted-foreground" data-testid="actualizado">
+            Actualizado: {f.ultimaCorrida ? cuando(f.ultimaCorrida) : "nunca"}
           </span>
-        </span>
-        {caidas.length > 0 && (
-          <span className="text-warn-ink">
-            Sin datos recientes: {caidas.map((x) => x.nombre).join(", ")}
+          <span className="flex items-center gap-2">
+            <ul className="flex gap-1" aria-label="Estado por fuente">
+              {f.fuentes.map((x) => (
+                <li
+                  key={x.id}
+                  title={`${x.nombre}: ${x.ok ? "OK" : "caída"}`}
+                  className={cn(
+                    "size-2 rounded-full sm:size-2.5",
+                    x.ok ? "bg-save" : "bg-up",
+                  )}
+                >
+                  <span className="sr-only">
+                    {x.nombre}: {x.ok ? "OK" : "caída"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <span className="tabular-nums" data-testid="fuentes-ok">
+              {f.fuentesOk}/{f.fuentes.length} fuentes OK
+            </span>
           </span>
-        )}
+          {caidas.length > 0 && (
+            <>
+              <span className="hidden text-warn-ink sm:inline">
+                Sin datos recientes: {caidas.join(", ")}
+              </span>
+              <details className="text-warn-ink sm:hidden">
+                <summary className="cursor-pointer font-medium">
+                  Ver fuentes
+                </summary>
+                Sin datos recientes: {caidas.join(", ")}
+              </details>
+            </>
+          )}
+        </span>
         <span className="ml-auto flex items-center gap-3">
           {u ? (
             <>
               <span
-                className="max-w-48 truncate text-muted-foreground"
+                className="max-w-40 truncate text-muted-foreground sm:max-w-48"
                 data-testid="usuario"
               >
                 {u.email}

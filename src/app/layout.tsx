@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { AvisoDeUrl } from "@/components/avisos/aviso-de-url";
@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Mercado Medellín",
   description: "Compara precios de mercado en las tiendas de Medellín.",
 };
+
+/** cover: la página llega bajo la muesca; la barra del carrito y las hojas suman safe-area-inset. */
+export const viewport: Viewport = { viewportFit: "cover" };
 
 export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (

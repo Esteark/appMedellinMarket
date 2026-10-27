@@ -9,7 +9,7 @@ async function Datos({ grupos }: { grupos: string[] }) {
 
 function Esqueleto() {
   return (
-    <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-2.5 px-4 pt-4 min-[900px]:grid-cols-3 min-[1140px]:grid-cols-4">
+    <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-2.5 px-4 pt-4 sm:grid-cols-3">
       {Array.from({ length: 8 }, (_, i) => `marcador-${i}`).map((clave) => (
         <div
           key={clave}

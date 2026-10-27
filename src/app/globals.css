@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* Ratón o trackpad: las flechas del deslizador solo se ven aquí. */
+@custom-variant raton (@media (hover: hover) and (pointer: fine));
 
 @theme inline {
   --color-background: var(--background);
@@ -222,6 +224,25 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Pantallas táctiles: todo control mide al menos 44 × 44 px. Las utilidades de display ganan a esta capa. */
+  @media (pointer: coarse) {
+    button,
+    a,
+    summary,
+    input {
+      min-height: 44px;
+    }
+    button,
+    a,
+    summary {
+      min-width: 44px;
+    }
+    a,
+    summary {
+      display: inline-flex;
+      align-items: center;
+    }
   }
 }
 

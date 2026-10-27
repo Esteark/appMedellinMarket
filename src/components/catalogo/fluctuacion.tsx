@@ -3,6 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import { useRef } from "react";
+import { Deslizador } from "@/components/deslizador";
 import { dibujar } from "@/lib/animaciones";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { Etiqueta } from "./etiqueta";
@@ -47,60 +48,61 @@ export function Fluctuacion({ productos }: { productos: ProductoCatalogo[] }) {
           ±15 % en 7 días o mucha variación en 30, precio más bajo del día
         </span>
       </div>
-      <div
-        ref={fila}
-        className="flex snap-x gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none]"
-      >
-        {productos.map((p) => {
-          const sube = p.serie[p.serie.length - 1] >= p.serie[0];
-          return (
-            <Link
-              key={p.id}
-              href={`/producto/${p.id}`}
-              scroll={false}
-              className="flex w-[230px] flex-none snap-start flex-col gap-1.5 rounded-[14px] border bg-card p-3"
-            >
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                <span aria-hidden="true" className="text-xl">
-                  {p.emoji}
-                </span>
-                {p.nombre}
-              </span>
-              <span className="flex min-h-5 flex-wrap gap-1">
-                {p.etiquetas
-                  .filter((e) => e === "sube" || e === "baja" || e === "clima")
-                  .map((e) => (
-                    <Etiqueta
-                      key={e}
-                      tipo={e}
-                      cambio={p.cambio}
-                      deHoy={p.deHoy}
-                    />
-                  ))}
-              </span>
-              <svg
-                viewBox="0 0 200 44"
-                className="block h-auto w-full"
-                aria-hidden="true"
+      <div ref={fila}>
+        <Deslizador className="gap-2.5 pb-1">
+          {productos.map((p) => {
+            const sube = p.serie[p.serie.length - 1] >= p.serie[0];
+            return (
+              <Link
+                key={p.id}
+                href={`/producto/${p.id}`}
+                scroll={false}
+                className="flex w-[230px] flex-none flex-col gap-1.5 rounded-[14px] border bg-card p-3"
               >
-                <path
-                  className="linea"
-                  d={trazo(p.serie, 200, 44)}
-                  fill="none"
-                  stroke={sube ? "var(--up)" : "var(--save)"}
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="line-clamp-2 text-xs text-muted-foreground">
-                {p.causa
-                  ? `Causa según SIPSA (DANE): ${p.causa}`
-                  : "Causa no reportada"}
-              </span>
-            </Link>
-          );
-        })}
+                <span className="flex items-center gap-2 text-sm font-semibold">
+                  <span aria-hidden="true" className="text-xl">
+                    {p.emoji}
+                  </span>
+                  {p.nombre}
+                </span>
+                <span className="flex min-h-5 flex-wrap gap-1">
+                  {p.etiquetas
+                    .filter(
+                      (e) => e === "sube" || e === "baja" || e === "clima",
+                    )
+                    .map((e) => (
+                      <Etiqueta
+                        key={e}
+                        tipo={e}
+                        cambio={p.cambio}
+                        deHoy={p.deHoy}
+                      />
+                    ))}
+                </span>
+                <svg
+                  viewBox="0 0 200 44"
+                  className="block h-auto w-full"
+                  aria-hidden="true"
+                >
+                  <path
+                    className="linea"
+                    d={trazo(p.serie, 200, 44)}
+                    fill="none"
+                    stroke={sube ? "var(--up)" : "var(--save)"}
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="line-clamp-2 text-xs text-muted-foreground">
+                  {p.causa
+                    ? `Causa según SIPSA (DANE): ${p.causa}`
+                    : "Causa no reportada"}
+                </span>
+              </Link>
+            );
+          })}
+        </Deslizador>
       </div>
     </section>
   );

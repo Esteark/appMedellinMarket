@@ -91,7 +91,7 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 | `--clima` / `-ink` / `-bg` | `#0EA5E9` `#0369A1` `#E0F2FE` | `#38BDF8` `#7DD3FC` `#0C2A3A` | causa climática             |
 - **Tipo:** Inter (`next/font/google`) 400/500/600/700; números con `tabular-nums`.
 - **Radio:** tarjetas 14 px, controles 10–12 px, chips 999 px.
-- **Grilla catálogo:** 2 col < 760 px, 3 col ≥ 900 px, 4 col ≥ 1140 px; carrito lateral sticky 340 px ≥ 900 px, barra inferior + hoja en móvil.
+- **Grilla catálogo:** puntos de quiebre `sm` 640 / `lg` 1024. 2 col < 640 px, 3 col ≥ 640 px; carrito lateral sticky 340 px ≥ 1024 px; debajo, barra inferior (toda la barra abre la hoja). Filas horizontales con `src/components/deslizador.tsx`; con `pointer: coarse` todo control mide ≥ 44 px (`globals.css`).
 - **Movimiento:** GSAP, solo `transform`/`opacity`, 150–400 ms, todo dentro de `gsap.matchMedia()`; con `prefers-reduced-motion: reduce` la duración es 0. Helpers en `src/lib/animaciones.ts`.
 
 ## Entorno

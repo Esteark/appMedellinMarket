@@ -23,7 +23,7 @@ type Props = {
   icono: Ref<HTMLDivElement>;
 };
 
-/** Barra inferior en móvil; columna lateral sticky de 340 px desde 900 px. */
+/** Barra inferior en móvil; columna lateral sticky de 340 px desde 1024 px. */
 export function Carrito({ lista, productos, tiendas, icono }: Props) {
   const porId = useMemo(
     () => new Map(productos.map((p) => [p.id, p])),
@@ -109,8 +109,14 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
   return (
     <aside
       aria-label="Mi lista"
-      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 py-2.5 shadow-[0_-10px_30px_rgb(15_23_42/0.14)] min-[900px]:sticky min-[900px]:top-4 min-[900px]:bottom-auto min-[900px]:self-start min-[900px]:rounded-[14px] min-[900px]:border min-[900px]:shadow-none"
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgb(15_23_42/0.14)] lg:sticky lg:top-4 lg:bottom-auto lg:self-start lg:rounded-[14px] lg:border lg:pb-2.5 lg:shadow-none"
     >
+      {items.length > 0 && (
+        <span
+          aria-hidden="true"
+          className="mx-auto -mt-1 mb-1.5 block h-1 w-10 rounded-full bg-border lg:hidden"
+        />
+      )}
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div
@@ -149,16 +155,17 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
         </div>
       </div>
       {items.length > 0 && (
+        // En móvil y tableta toda la barra abre la hoja de la lista.
         <button
           type="button"
           onClick={() => setHojaAbierta(true)}
-          className="mt-2 w-full rounded-[10px] border py-1.5 text-sm font-medium min-[900px]:hidden"
-        >
-          Ver mi lista y gráficos
-        </button>
+          aria-label="Ver mi lista y gráficos"
+          data-testid="abrir-lista"
+          className="absolute inset-0 z-10 lg:hidden"
+        />
       )}
       {items.length > 0 && (
-        <div className="mt-3 hidden flex-col gap-3 border-t pt-3 min-[900px]:flex">
+        <div className="mt-3 hidden flex-col gap-3 border-t pt-3 lg:flex">
           {detalleLista}
           <button
             type="button"

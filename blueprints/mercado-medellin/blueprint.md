@@ -576,7 +576,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 **15. Responsive móvil y tableta, con deslizadores.**
 - **Hacer:**
   - **Puntos de quiebre:** móvil < 640 px, tableta 640–1023 px y escritorio ≥ 1024 px.
-    - Rejilla del catálogo: 2 columnas en móvil, 3 en tableta, 3 en escritorio con el carrito lateral y 4 desde 1280 px.
+    - Rejilla del catálogo: 2 columnas en móvil, 3 en tableta y 3 en escritorio. Con el carrito lateral la columna del catálogo mide como máximo 756 px, así que no hay 4 columnas.
     - El carrito lateral sticky de 340 px empieza en 1024 px. En tableta y móvil va la barra inferior con su hoja.
     - Actualizar la fila **Grilla catálogo** de `CLAUDE.md` con estos valores.
   - **Deslizador** `src/components/deslizador.tsx` (`"use client"`), una fila horizontal reutilizable:

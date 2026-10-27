@@ -64,7 +64,7 @@ export function Hoja({ titulo, alCerrar, children }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titulo}
-        className="fixed inset-x-0 bottom-0 z-[51] mx-auto flex max-h-[88vh] max-w-[560px] flex-col gap-3.5 overflow-auto rounded-t-[18px] bg-card px-4 pt-2 pb-5 text-foreground"
+        className="fixed inset-x-0 bottom-0 z-[51] mx-auto flex max-h-[88vh] max-w-[560px] flex-col gap-3.5 overflow-auto rounded-t-[18px] bg-card px-4 pt-2 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-foreground [@media(max-height:500px)]:max-h-[96vh]"
       >
         <div
           ref={asa}
