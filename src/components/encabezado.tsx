@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { salir } from "@/app/auth/acciones";
 import { ActualizarPrecios } from "@/components/avisos/actualizar-precios";
+import { BotonEnviar, CargandoEnlace } from "@/components/cargando";
 import { frescura, type Usuario, usuario } from "@/lib/datos";
 import { cuando } from "@/lib/fecha";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ export async function Encabezado() {
           No se pudo leer el estado de los precios. Intenta recargar en un
           momento.
         </div>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1.5 px-4 pt-2.5 pb-3.5 text-sm">
           <span className="font-semibold">Mercado Medellín</span>
           <Cuenta u={u} />
         </div>
@@ -60,7 +61,7 @@ export async function Encabezado() {
           <ActualizarPrecios conSesion={!!u} />
         </div>
       )}
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1.5 px-4 pt-2.5 pb-3.5 text-sm">
         <span className="font-semibold">Mercado Medellín</span>
         {/* En móvil el estado baja a su propia línea, compacta. */}
         <span className="order-last flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:order-none sm:basis-auto sm:text-sm">
@@ -121,12 +122,9 @@ function Cuenta({ u }: { u: Usuario | null }) {
             {u.email}
           </span>
           <form action={salir}>
-            <button
-              type="submit"
-              className="font-medium underline underline-offset-2"
-            >
+            <BotonEnviar className="font-medium underline underline-offset-2">
               Salir
-            </button>
+            </BotonEnviar>
           </form>
         </>
       ) : (
@@ -135,6 +133,7 @@ function Cuenta({ u }: { u: Usuario | null }) {
           className="font-medium underline underline-offset-2"
         >
           Ingresar
+          <CargandoEnlace className="ml-1.5" />
         </Link>
       )}
     </span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CargandoEnlace } from "@/components/cargando";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,9 @@ export function Tarjeta({
       <Link
         href={`/producto/${p.id}`}
         scroll={false}
-        className="flex flex-col gap-0.5 rounded-t-[14px] px-3 pt-3 pb-1.5"
+        className="relative flex flex-col gap-0.5 rounded-t-[14px] px-3 pt-3 pb-1.5"
       >
+        <CargandoEnlace className="absolute top-3 right-3 text-muted-foreground" />
         <span
           data-emoji
           className="w-max text-3xl leading-tight"

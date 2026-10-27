@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { actualizarPrecios } from "@/app/acciones";
+import { Spinner } from "@/components/cargando";
 import { avisar, siguienteEstado } from "@/lib/avisos";
 
 const CLAVE = "mercado-medellin:actualizando";
@@ -126,12 +127,7 @@ export function ActualizarPrecios({ conSesion }: { conSesion: boolean }) {
       data-testid="actualizar-precios"
       className="inline-flex min-h-8 items-center gap-2 rounded-[10px] border border-up-ink px-3 font-semibold disabled:opacity-70"
     >
-      {ocupado && (
-        <span
-          aria-hidden="true"
-          className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent motion-reduce:animate-none"
-        />
-      )}
+      {ocupado && <Spinner />}
       {ocupado
         ? "Actualizando… puede tardar unos minutos"
         : "Actualizar precios"}

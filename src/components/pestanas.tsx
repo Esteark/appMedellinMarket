@@ -4,6 +4,7 @@ import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
+import { CargandoEnlace } from "@/components/cargando";
 import { Deslizador } from "@/components/deslizador";
 import { deslizar } from "@/lib/animaciones";
 import { cn } from "@/lib/utils";
@@ -51,11 +52,12 @@ export function Pestanas() {
             href={p.href}
             aria-current={ruta === p.href ? "page" : undefined}
             className={cn(
-              "flex-none px-3 py-2.5 text-sm font-semibold",
+              "inline-flex flex-none items-center gap-1.5 px-3 py-2.5 text-sm font-semibold",
               ruta === p.href ? "text-foreground" : "text-muted-foreground",
             )}
           >
             {p.texto}
+            <CargandoEnlace />
           </Link>
         ))}
         <span

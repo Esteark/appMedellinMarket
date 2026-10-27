@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import type { EstadoAuth } from "@/app/auth/acciones";
+import { Spinner } from "@/components/cargando";
 import { avisar } from "@/lib/avisos";
 
 type Campo = "email" | "clave" | "clave-nueva";
@@ -77,8 +78,9 @@ export function FormularioAuth({
           type="submit"
           disabled={enviando}
           aria-busy={enviando}
-          className="h-11 rounded-[10px] bg-primary font-semibold text-primary-foreground disabled:opacity-60"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-primary-foreground disabled:opacity-60"
         >
+          {enviando && <Spinner />}
           {enviando ? "Un momento…" : boton}
         </button>
         {(estado?.mensaje ?? nota) && (

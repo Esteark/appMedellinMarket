@@ -3,6 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import { useRef } from "react";
+import { CargandoEnlace } from "@/components/cargando";
 import { Deslizador } from "@/components/deslizador";
 import { dibujar } from "@/lib/animaciones";
 import type { ProductoCatalogo } from "@/lib/datos";
@@ -64,6 +65,7 @@ export function Fluctuacion({ productos }: { productos: ProductoCatalogo[] }) {
                     {p.emoji}
                   </span>
                   {p.nombre}
+                  <CargandoEnlace className="ml-auto text-muted-foreground" />
                 </span>
                 <span className="flex min-h-5 flex-wrap gap-1">
                   {p.etiquetas
