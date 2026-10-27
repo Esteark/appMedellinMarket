@@ -12,7 +12,7 @@
 
 ## 1. Qué es y qué no es
 
-La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín: Éxito, Carulla, D1, Euro, La Minorista (SIPSA), Ara, Ísimo y PriceSmart. Tiene además 1 tienda manual: Tienda/Carnicería de barrio. Pendiente (paso 21): evaluar La Vaquita Mercados y La Mayorista Medellín. Solofruver se descartó el 27-oct-2026 (paso 20). Con eso arma la lista de la familia, calcula cuál es la mejor tienda y el óptimo dividido, genera alertas y muestra el historial. También marca ↑/↓ cuando un precio sube o baja, muestra la causa climática según el DANE/SIPSA e incluye una sección de productos en fluctuación.
+La app compara los precios de 144 productos de mercado en 8 tiendas de Medellín: Éxito, Carulla, D1, Euro, La Minorista (SIPSA), Ara, Ísimo y PriceSmart. Tiene además 1 tienda manual: Tienda/Carnicería de barrio. Desde el paso 21 suma La Vaquita (automática); La Mayorista Medellín quedó pendiente de decisión. Solofruver se descartó el 27-oct-2026 (paso 20). Con eso arma la lista de la familia, calcula cuál es la mejor tienda y el óptimo dividido, genera alertas y muestra el historial. También marca ↑/↓ cuando un precio sube o baja, muestra la causa climática según el DANE/SIPSA e incluye una sección de productos en fluctuación.
 
 - La lectura es pública, sin sesión.
 - El registro es abierto, con email y contraseña.
@@ -633,6 +633,9 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - **Permite consulta y trae el precio:** adaptador `src/corrida/adaptadores/<id>.ts` (si es VTEX, reutilizar `vtex.ts` con el host; si no, uno nuevo con cheerio), fixtures reales con `pnpm capturar <id>`, entrada en `ADAPTADORES`, en el seed de `tiendas` (id, nombre, color nuevo con contraste ≥3:1 en claro y oscuro) y mapeo de `producto_fuente` solo para los productos que realmente encuentre. Respeta el innegociable 3 (≥1 s entre peticiones, User-Agent propio, sin saltar captchas).
   - **Lo prohíbe o la tienda no tiene precios públicos:** queda como tienda `manual` (solo anotados), igual que Éxito y Carulla, y el motivo se escribe en `decisiones.md`.
   - En ambos casos: migración que inserta la tienda; el contador del encabezado "X/N fuentes OK" cuenta solo las automáticas.
+- **Resultado (27-oct-2026):**
+  - **La Vaquita: automática.** Magento; el `robots.txt` solo prohíbe la búsqueda, el carrito y los parámetros, no las páginas de producto. Adaptador `vaquita.ts` (ld+json, como Euro), 40 productos mapeados a mano en `data/fuentes/vaquita.json` (sembrados por `pnpm migrar`; la tienda entra por la migración `20261027150000_tienda_vaquita.sql`). Frutas, verduras y cortes por kilo con presentación ambigua quedan sin mapear. Comprobación contra el sitio real: 40/40 con precio.
+  - **La Mayorista Medellín: pendiente de decisión del usuario.** `lamayorista.com.co` es el sitio institucional de la Central Mayorista (WordPress), sin tienda ni precios. Los precios están en `precios.lamayorista.com.co`, un panel (SPA) que lee de una API interna (`lm-analytics.netstat.tech`) con un `access_token`; no hay API ni documentación pública y su `robots.txt` no existe. No se consulta sin permiso expreso de la Central. Opciones: pedirles acceso/permiso, o dejarla como tienda manual (anotados).
 - **Hecho cuando:**
   - CUANDO se sirven los fixtures reales, el adaptador devuelve precio y url, y `null` si no hay stock o la unidad no es convertible; la prueba comprueba con el `fetch` espía que no toca rutas prohibidas por robots. (Para una tienda manual: aparece como columna en `/anotados` y como chip de tienda.)
   - `pnpm migrar` imprime el nuevo conteo de tiendas y el gate pasa.

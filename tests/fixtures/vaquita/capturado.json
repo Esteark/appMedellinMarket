@@ -1,0 +1,10 @@
+{
+  "fecha": "2026-10-27",
+  "userAgent": "MercadoMedellinBot/1.0 (+uso familiar; contacto en README)",
+  "urls": {
+    "robots.txt": "https://vaquitaexpress.com.co/robots.txt",
+    "aceite.html": "https://vaquitaexpress.com.co/productos-marca-vaquita/aceite-de-girasol-la-vaquita-x-900ml.html",
+    "molida.html": "https://vaquitaexpress.com.co/productos-marca-vaquita/carne-molida-especial-de-res-x-1000gr.html",
+    "banano.html": "https://vaquitaexpress.com.co/productos-marca-vaquita/banano-murrapo.html"
+  }
+}

@@ -166,6 +166,19 @@ for (const [producto_id, porTienda] of Object.entries(precios)) {
   }
 }
 
+// La Vaquita no viene del artifact: sus URLs de producto, elegidas a mano, están en data/fuentes.
+// La tienda misma entra por la migración 20261027150000_tienda_vaquita.sql.
+const urlsVaquita = JSON.parse(
+  readFileSync("data/fuentes/vaquita.json", "utf8"),
+) as Record<string, string>;
+for (const [producto_id, url] of Object.entries(urlsVaquita)) {
+  if (!filasProductos.some((p) => p.id === producto_id))
+    throw new Error(
+      `data/fuentes/vaquita.json: producto desconocido ${producto_id}`,
+    );
+  filasFuente.push({ producto_id, tienda_id: "vaquita", url });
+}
+
 const filasHistorial: TablesInsert<"precios_historial">[] = [];
 for (const [producto_id, { serie }] of Object.entries(historial)) {
   for (const { fecha, estado, ...porTienda } of serie) {
@@ -230,12 +243,13 @@ if (!previa) {
 }
 
 // --- verificación contra el origen ---
-// historial, producto_fuente y corridas crecen con la corrida diaria: ahí basta con ≥.
+// historial, producto_fuente y corridas crecen con la corrida diaria, y las tiendas nuevas (La Vaquita)
+// entran por migración SQL y no vienen del origen: ahí basta con ≥.
 const esperado: [Tabla, number, "=" | "≥"][] = [
-  ["tiendas", filasTiendas.length, "="],
+  ["tiendas", filasTiendas.length, "≥"],
   ["productos", filasProductos.length, "="],
-  ["precios_actuales", filasPrecios.length, "="],
-  ["tienda_estado", filasEstado.length, "="],
+  ["precios_actuales", filasPrecios.length, "≥"],
+  ["tienda_estado", filasEstado.length, "≥"],
   ["anotados", filasAnotados.length, "≥"],
   ["producto_fuente", filasFuente.length, "≥"],
   ["precios_historial", filasHistorial.length, "≥"],

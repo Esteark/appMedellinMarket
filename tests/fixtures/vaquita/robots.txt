@@ -1,0 +1,73 @@
+User-agent: *
+# Default instructions:
+Disallow: /lib/
+Disallow: /*.php$
+Disallow: /pkginfo/
+Disallow: /report/
+Disallow: /var/
+Disallow: /catalog/
+Disallow: /customer/
+Disallow: /sendfriend/
+Disallow: /review/
+Disallow: /*SID=
+# Disallow common Magento files in the root directory:
+Disallow: /cron.php
+Disallow: /cron.sh
+Disallow: /error_log
+Disallow: /install.php
+Disallow: /LICENSE.html
+Disallow: /LICENSE.txt
+Disallow: /LICENSE_AFL.txt
+Disallow: /STATUS.txt
+# Disallow User Account &amp; Checkout Pages:
+Disallow: /checkout/
+Disallow: /onestepcheckout/
+Disallow: /customer/
+Disallow: /customer/account/
+Disallow: /customer/account/login/
+# Disallow Catalog Search Pages:
+Disallow: /catalogsearch/
+Disallow: /catalog/product_compare/
+Disallow: /catalog/category/view/
+Disallow: /catalog/product/view/
+# Disallow URL Filter Searches
+Disallow: /*?dir*
+Disallow: /*?dir=desc
+Disallow: /*?dir=asc
+Disallow: /*?limit=all
+Disallow: /*?mode*
+# Disallow CMS Directories:
+Disallow: /app/
+Disallow: /bin/
+Disallow: /dev/
+Disallow: /lib/
+Disallow: /phpserver/
+Disallow: /pub/
+# Disallow Duplicate Content:
+Disallow: /tag/
+Disallow: /review/
+Disallow: /*?*product_list_mode=
+Disallow: /*?*product_list_order=
+Disallow: /*?*product_list_limit=
+Disallow: /*?*product_list_dir=
+# Server Settings
+# Disallow general technical directories and files on a server
+Disallow: /cgi-bin/
+Disallow: /cleanup.php
+Disallow: /apc.php
+Disallow: /memcache.php
+Disallow: /phpinfo.php
+# Disallow version control folders and others
+Disallow: /*.git
+Disallow: /*.CVS
+Disallow: /*.Zip$
+Disallow: /*.Svn$
+Disallow: /*.Idea$
+Disallow: /*.Sql$
+Disallow: /*.Tgz$
+# Pages
+Disallow: /terminos-condiciones
+Disallow: /politica-de-privacidad
+Disallow: /trabaja-con-nosotros
+Disallow: /politica-de-devolucion
+Sitemap: https://vaquitaexpress.com.co/sitemap/sitemap.xml

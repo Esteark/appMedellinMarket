@@ -1,7 +1,7 @@
 // Captura respuestas reales para las pruebas de los adaptadores en tests/fixtures/<grupo>/.
 // Respeta robots.txt, User-Agent propio y pausa de 1 s. Si algo falla, sale 1 sin tocar
 // los fixtures anteriores (escribe solo cuando todo se capturó).
-// Uso: pnpm capturar <vtex|euro|sipsa>
+// Uso: pnpm capturar <vtex|euro|vaquita|sipsa>
 import "./cargar-env";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fechasCandidatas, urlsBoletin } from "@/corrida/adaptadores/sipsa";
@@ -77,6 +77,22 @@ try {
       "croissant.html",
       `${euro}/pan-croissant-x6und--300gr-esponjados-072/p`,
     );
+  } else if (grupo === "vaquita") {
+    const vaquita = "https://vaquitaexpress.com.co";
+    await capturar("robots.txt", `${vaquita}/robots.txt`);
+    // ml, gramos (carne por kilo) y uno sin medida convertible (banano, sin gramaje en el nombre).
+    await capturar(
+      "aceite.html",
+      `${vaquita}/productos-marca-vaquita/aceite-de-girasol-la-vaquita-x-900ml.html`,
+    );
+    await capturar(
+      "molida.html",
+      `${vaquita}/productos-marca-vaquita/carne-molida-especial-de-res-x-1000gr.html`,
+    );
+    await capturar(
+      "banano.html",
+      `${vaquita}/productos-marca-vaquita/banano-murrapo.html`,
+    );
   } else if (grupo === "sipsa") {
     await capturar("robots.txt", "https://www.dane.gov.co/robots.txt");
     // El boletín más nuevo publicado entre hoy y 3 días atrás.
@@ -95,7 +111,7 @@ try {
     await capturar("boletin.pdf", urlsBoletin(fecha).boletin);
   } else {
     throw new Error(
-      `Grupo no soportado: ${grupo ?? "(ninguno)"}. Use vtex, euro o sipsa.`,
+      `Grupo no soportado: ${grupo ?? "(ninguno)"}. Use vtex, euro, vaquita o sipsa.`,
     );
   }
 } catch (e) {

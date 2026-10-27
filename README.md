@@ -81,6 +81,7 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 | **D1**                                     | API pública de catálogo VTEX, por SKU                                                                  |
 | **Euro**                                   | Páginas de producto públicas (`ld+json`)                                                               |
 | **La Minorista**                           | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
+| **La Vaquita**                             | Páginas de producto públicas (`ld+json`, Magento), 40 productos elegidos a mano                        |
 | **Éxito, Carulla, Ara, Ísimo, PriceSmart** | Precios anotados a mano: sus sitios lo prohíben en `robots.txt` o bloquean bots                        |
 | **Tienda/Carnicería de barrio**            | Solo anotados                                                                                          |
 

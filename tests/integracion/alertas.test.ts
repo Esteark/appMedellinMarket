@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { clienteAdmin } from "@/corrida/admin";
 import { crearAviso } from "@/corrida/correo";
-import { correr } from "@/corrida/orquestador";
+import { ADAPTADORES, correr } from "@/corrida/orquestador";
 import { contextoPrueba } from "../helpers/fetch-falso";
 
 // Contra Supabase local con los datos de `pnpm migrar`. Crea su propio usuario y lo borra.
@@ -74,7 +74,10 @@ describe("alertas y correo en la corrida", () => {
     const aviso = crearAviso(transporte, "admin@ejemplo.test");
 
     const primera = await correr(db, ctx, { productos: ["aceite"], aviso });
-    expect(primera.caidas.sort()).toEqual(["d1", "euro", "minorista"]);
+    // Ningún sitio responde: caen todas las tiendas automáticas, sean las que sean.
+    expect(primera.caidas.sort()).toEqual(
+      ADAPTADORES.map((a) => a.tienda).sort(),
+    );
     expect(enviar).toHaveBeenCalledTimes(1);
 
     await correr(db, ctx, { productos: ["aceite"], aviso });
