@@ -21,10 +21,18 @@ type Props = {
   productos: ProductoCatalogo[];
   tiendas: TiendaCatalogo[];
   icono: Ref<HTMLDivElement>;
+  /** Tienda elegida en los chips del catálogo. */
+  tiendaElegida?: string | null;
 };
 
 /** Barra inferior en móvil; columna lateral sticky de 340 px desde 1024 px. */
-export function Carrito({ lista, productos, tiendas, icono }: Props) {
+export function Carrito({
+  lista,
+  productos,
+  tiendas,
+  icono,
+  tiendaElegida,
+}: Props) {
   const porId = useMemo(
     () => new Map(productos.map((p) => [p.id, p])),
     [productos],
@@ -180,6 +188,7 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
               lista={lista}
               productos={productos}
               tiendas={tiendas}
+              elegida={tiendaElegida}
             />
           )}
         </div>
@@ -194,6 +203,7 @@ export function Carrito({ lista, productos, tiendas, icono }: Props) {
             lista={lista}
             productos={productos}
             tiendas={tiendas}
+            elegida={tiendaElegida}
           />
         </Hoja>
       )}

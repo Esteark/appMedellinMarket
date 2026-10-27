@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ahorro,
+  compararTiendas,
   mejorTiendaCompleta,
   optimoDividido,
   totalesPorTienda,
@@ -51,5 +52,14 @@ describe("lista", () => {
 
   it("ahorro = mejor tienda completa − óptimo dividido", () => {
     expect(ahorro(lista, precios, tiendas)).toBe(26900 - 25400);
+  });
+
+  it("compara todas las tiendas con algo de la lista: completas primero, luego incompletas", () => {
+    const filas = compararTiendas(lista, precios, [...tiendas, "ara"]);
+    // "ara" no tiene precio de nada de la lista: se omite.
+    expect(filas.map((f) => f.tienda)).toEqual(["euro", "exito", "d1"]);
+    expect(filas.map((f) => f.completa)).toEqual([true, true, false]);
+    // El total de la incompleta es parcial: solo suma lo que tiene.
+    expect(filas[2]).toMatchObject({ total: 18500, faltantes: ["queso"] });
   });
 });

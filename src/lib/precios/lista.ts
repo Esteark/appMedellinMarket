@@ -26,6 +26,31 @@ export function totalesPorTienda(
   });
 }
 
+export type FilaTienda = TotalTienda & { completa: boolean };
+
+/**
+ * Todas las tiendas que tienen precio para algo de la lista, para compararlas en un gráfico.
+ * Primero las completas (de la más barata); luego las incompletas, con menos faltantes primero.
+ * El total de una incompleta es parcial: solo suma lo que sí tiene. Las que no tienen precio
+ * para ningún producto de la lista se omiten.
+ */
+export function compararTiendas(
+  lista: Lista,
+  precios: Precios,
+  tiendas: string[],
+): FilaTienda[] {
+  const cantidad = Object.keys(lista).length;
+  return totalesPorTienda(lista, precios, tiendas)
+    .filter((t) => t.faltantes.length < cantidad)
+    .map((t) => ({ ...t, completa: t.faltantes.length === 0 }))
+    .sort(
+      (a, b) =>
+        Number(b.completa) - Number(a.completa) ||
+        a.faltantes.length - b.faltantes.length ||
+        a.total - b.total,
+    );
+}
+
 /** La más barata entre las tiendas que tienen todos los productos; `null` si ninguna. */
 export function mejorTiendaCompleta(
   totales: TotalTienda[],

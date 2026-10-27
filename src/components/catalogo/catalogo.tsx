@@ -169,6 +169,7 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
         productos={productos}
         tiendas={tiendas}
         icono={icono}
+        tiendaElegida={tienda}
       />
     </div>
   );
