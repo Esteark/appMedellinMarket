@@ -185,3 +185,4 @@ La máquina donde se genera NO tiene Docker → `supabase start` no puede correr
 - Lista agrupada por tienda/grupo con resumen fijo y secciones plegables, en lugar de un carrusel (paso 24).
 - Exportar la lista a PDF con tabla en el navegador; dependencia nueva jspdf + jspdf-autotable (paso 25).
 - Paso 21: La Vaquita (vaquitaexpress.com.co) entra como tienda automática con 40 productos elegidos a mano. La Mayorista Medellín (precios.lamayorista.com.co) solo tiene un panel con API interna con token: no se consulta sin permiso de la Central; decisión pendiente del usuario.
+- Paso 26 (nuevo, 27-oct-2026): los correos de confirmación y de recuperar contraseña traen un enlace a `localhost` y la página no carga. Causas probables y plan en el blueprint; primero se reproduce para saber si la cuenta se creó en local o en producción.

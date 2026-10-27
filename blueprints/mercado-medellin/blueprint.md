@@ -689,10 +689,30 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - `tests/unit/exportar.test.ts`: dada una lista y precios, la función devuelve las filas por tienda con subtotales y total correctos, marca los anotados y desactualizados, y separa los "sin precio".
   - E2E `tests/e2e/pdf.spec.ts`: con 3 productos, pulsar "Descargar PDF" dispara una descarga cuyo nombre cumple `lista-mercado-\d{4}-\d{2}-\d{2}\.pdf` y el archivo empieza con `%PDF`.
 
+**26. Correos de confirmación y de recuperar contraseña: enlaces a localhost y página rota.** *(reportado el 27-oct-2026)*
+- **Síntoma:** Supabase pide confirmar el correo y el correo llega, pero su enlace abre `localhost` y la página no carga. Se espera lo mismo en "olvidé mi contraseña". El código de la app ya existe (`registrar`, `recuperar`, `nuevaClave` en `src/app/auth/acciones.ts`, `src/app/auth/confirmar/route.ts`, `/nueva-clave`), así que el fallo está en la configuración, en cómo se arma el enlace o en el flujo entre navegadores.
+- **Causas probables (confirmar en este orden antes de tocar código):**
+  1. **Site URL sin configurar** en el proyecto de Supabase en la nube: por defecto es `http://localhost:3000`, y Supabase la usa cuando el `emailRedirectTo` / `redirectTo` que manda la app no está en la lista de Redirect URLs. El §11.2 lo pide, pero es un paso manual.
+  2. **Cuenta creada desde `localhost`:** `origen()` arma el enlace con la cabecera `Origin`/`Host` de la petición; si se registró desde `pnpm dev`, el enlace apunta a localhost aunque el proyecto sea el de la nube.
+  3. **PKCE:** el enlace con `?code=` solo sirve en el mismo navegador donde se pidió. Abierto desde el celular o desde otro navegador, `exchangeCodeForSession` falla y la ruta manda a `/ingresar?error=enlace`.
+  4. **Nunca se probó de punta a punta:** en local `enable_confirmations = false`, y ningún e2e cubre confirmar ni recuperar.
+- **Hacer:**
+  - **Reproducir primero:** ¿la cuenta se creó en local o en producción? ¿Qué trae el enlace del correo (el parámetro `redirect_to=`)? Anotar el resultado en `decisiones.md`.
+  - **Configurar Auth del proyecto:** *Site URL* = dominio de Vercel; *Redirect URLs* = `https://<dominio>/**` y `http://localhost:3000/**`.
+  - **Plantillas de correo propias** (Confirm signup y Reset password) que enlacen directo a la app con `token_hash`, en vez del enlace de Supabase: `{{ .SiteURL }}/auth/confirmar?token_hash={{ .TokenHash }}&type=signup` y `...&type=recovery&siguiente=/nueva-clave`. Eso usa `verifyOtp` (ya soportado en `route.ts`), no depende de PKCE y funciona abierto desde otro navegador o dispositivo. Versionarlas en `supabase/templates/` y registrarlas en `config.toml` (`[auth.email.template.*]`); en producción se pegan en el panel de Auth.
+  - **De dónde sale el dominio del enlace:** decidir entre (a) `{{ .SiteURL }}` en la plantilla y quitar la dependencia de las cabeceras, o (b) una variable `NEXT_PUBLIC_SITE_URL` (si se elige, documentarla en `CLAUDE.md` y en `.env.example`).
+  - **Mensajes de error útiles:** distinguir enlace vencido, enlace ya usado y "ábrelo en el mismo navegador"; botón "Reenviar correo" en `/ingresar`. `/nueva-clave` sin sesión explica qué pasó y lleva a `/recuperar`. Al confirmar el registro, abrir la sesión y avisar (aviso nuevo `correo_confirmado` en el catálogo del paso 14).
+  - **Probar en local de punta a punta** con el buzón de Supabase local (Mailpit, http://127.0.0.1:54324, vía su API). No se activa `enable_confirmations` global, porque los e2e actuales asumen que el registro entra directo.
+- **Hecho cuando:**
+  - Pasa un e2e de recuperación: registrarse → cerrar sesión → pedir recuperar → leer el correo en Mailpit → abrir el enlace → escribir la nueva contraseña → ingresar con ella. El enlace del correo empieza por la Site URL configurada y trae `token_hash`.
+  - Pasa un e2e de confirmación sobre `/auth/confirmar`: un `token_hash` válido (generado con `auth.admin.generateLink`) deja sesión abierta; uno inválido o ya usado va a `/ingresar?error=enlace` con su mensaje.
+  - **Comprobación manual en producción** (se agrega al §11): registrarse con un correo real, abrir el enlace **desde el celular** y entrar; repetir con "olvidé mi contraseña".
+- **Dependencias nuevas:** ninguna.
+
 ## 11. Lanzamiento (manual, con tus cuentas)
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
-2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa. En Auth → URL Configuration, poner como *Site URL* el dominio de Vercel y agregar `https://<dominio>/**` (y `http://localhost:3000/**`) a las *Redirect URLs*; sin esto, los enlaces de confirmación y de recuperación del paso 14 llevan a localhost.
+2. **Correo:** en Supabase Auth → SMTP, poner smtp.gmail.com:465 con la contraseña de aplicación y dejar la confirmación por correo activa. En Auth → URL Configuration, poner como *Site URL* el dominio de Vercel y agregar `https://<dominio>/**` (y `http://localhost:3000/**`) a las *Redirect URLs*; sin esto, los enlaces de confirmación y de recuperación del paso 14 llevan a localhost. **Si el enlace del correo abre `localhost`, ver el paso 26.** Comprobar en producción: registrarse con un correo real y abrir el enlace desde el celular.
 3. **Vercel:** importar el repo y configurar las dos variables `NEXT_PUBLIC_*` y `ENABLE_EXPERIMENTAL_COREPACK=1`, más `GITHUB_REPO` y `GITHUB_DISPATCH_TOKEN`. El token se crea en GitHub → Settings → Developer settings → Fine-grained tokens: solo este repositorio, permiso **Actions: Read and write** y vencimiento de 1 año (anotar la fecha para renovarlo).
 4. **GitHub:** usar un repo **privado**, cargar los secrets de la sección 6 y lanzar `workflow_dispatch` una vez. Comprobar que aparece una fila nueva en `corridas` y que llega el correo si alguna tienda falla.
 5. **Seguimiento:** a la semana, revisar en el panel de Supabase que el proyecto no se pausó.
@@ -711,4 +731,5 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 | Abuso del botón "Actualizar precios" | Exige sesión, el servidor vuelve a comprobar que los datos estén viejos (> 26 h), no dispara si hay una corrida en cola o en curso, y el workflow tiene `concurrency`. A lo sumo, una corrida extra por día |
 | Fuga o vencimiento del token de GitHub | *Fine-grained*, de un solo repo y solo Actions; vive solo en el servidor de Vercel. Si vence, el botón muestra `actualizacion_fallo` y la corrida diaria sigue igual (usa el token propio del workflow) |
 | Exceso de toasts | Catálogo cerrado, máximo 3 visibles, ninguno por agregar o quitar productos y resumen una vez al día |
+| Enlaces de confirmación y recuperación que abren `localhost` o fallan en otro navegador | Site URL y Redirect URLs bien puestas, plantillas con `token_hash` (no PKCE), pruebas e2e con Mailpit y comprobación manual desde el celular (paso 26) |
 | Términos de uso de las tiendas | 1 consulta por producto al día, pausa de 1 s, User-Agent propio, robots.txt respetado |
