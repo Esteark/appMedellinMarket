@@ -1,7 +1,11 @@
-import type { PresupuestoRubro } from "@/lib/presupuesto/tipos";
+import type {
+  PresupuestoCierreSnapshot,
+  PresupuestoRubro,
+} from "@/lib/presupuesto/tipos";
 
 const CLAVE_HOGAR = "mercado-medellin:presupuesto:hogar";
 const CLAVE_DIETA = "mercado-medellin:presupuesto:dieta";
+const CLAVE_CIERRES = "mercado-medellin:presupuesto:cierres";
 
 type Datos = {
   rubros: PresupuestoRubro[];
@@ -45,4 +49,33 @@ export function leerPresupuestoDieta(): PresupuestoRubro[] | null {
 
 export function guardarPresupuestoDieta(rubros: PresupuestoRubro[]) {
   guardar(CLAVE_DIETA, rubros);
+}
+
+export function leerCierresLocal(): PresupuestoCierreSnapshot[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const crudo = localStorage.getItem(CLAVE_CIERRES);
+    if (!crudo) return [];
+    const p = JSON.parse(crudo) as PresupuestoCierreSnapshot[];
+    return Array.isArray(p) ? p : [];
+  } catch {
+    return [];
+  }
+}
+
+export function guardarCierresLocal(cierres: PresupuestoCierreSnapshot[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CLAVE_CIERRES, JSON.stringify(cierres));
+  } catch {
+    // ignorar
+  }
+}
+
+export function agregarCierreLocal(cierre: PresupuestoCierreSnapshot) {
+  const actuales = leerCierresLocal();
+  const filtrados = actuales.filter((c) => c.mes !== cierre.mes);
+  guardarCierresLocal(
+    [...filtrados, cierre].sort((a, b) => a.mes.localeCompare(b.mes)),
+  );
 }
