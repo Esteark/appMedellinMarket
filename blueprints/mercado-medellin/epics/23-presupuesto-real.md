@@ -58,9 +58,7 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [ ] 23.8.4 Refinar gráficas de evolución con Recharts si se requiere (opcional)
 
 ### 23.9 Animaciones en notificaciones al aparecer
-- [ ] Animar entradas/salidas del `Toaster` al aparecer (slide/fade) con GSAP o CSS, respetando `prefers-reduced-motion`
-- [ ] Pulir animación del panel de notificaciones al abrir/cerrar
-- [ ] Ajustes en `.aviso` de `globals.css` sin romper layout móvil
+- [x] 23.9.0 Animar entradas/salidas del `Toaster` al aparecer (slide/fade) con CSS, pulir panel de notificaciones y ajustar `.aviso` en `globals.css`. Respeta `prefers-reduced-motion`.
 
 ### 23.10 Notificaciones laterales no invasivas con retardo
 - [ ] Añadir segundo `Toaster` en `bottom-right` o stack propio para "tips/sugerencias"
