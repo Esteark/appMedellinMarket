@@ -6,6 +6,7 @@ import { Sesion } from "@/components/avisos/sesion";
 import { Toaster } from "@/components/avisos/toaster";
 import { Encabezado } from "@/components/encabezado";
 import { Pestanas } from "@/components/pestanas";
+import { SincronizarPresupuesto } from "@/components/presupuesto/sincronizar-presupuesto";
 import { SITIO } from "@/lib/sitio";
 import "./globals.css";
 
@@ -68,6 +69,9 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         </Suspense>
         <Suspense fallback={null}>
           <AvisoDeUrl />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SincronizarPresupuesto />
         </Suspense>
       </body>
     </html>

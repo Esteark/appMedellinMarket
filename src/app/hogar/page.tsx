@@ -5,6 +5,7 @@ import { BotonesPlan } from "@/components/planes/botones-plan";
 import { ComparaPresupuesto } from "@/components/planes/compara-presupuesto";
 import { HogarTablas } from "@/components/planes/hogar-tablas";
 import { PlanItems } from "@/components/planes/plan-items";
+import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
 import { catalogo } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Hogar · Mercado Medellín" };
@@ -75,6 +76,9 @@ export default function Hogar() {
           </div>
         ))}
       </dl>
+      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+        <PresupuestoEditable tipo="hogar" />
+      </section>
       <Suspense
         fallback={
           <p

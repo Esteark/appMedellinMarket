@@ -4,6 +4,7 @@ import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
 import { DietaTablas } from "@/components/planes/dieta-tablas";
 import { PlanItems } from "@/components/planes/plan-items";
+import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
 import { PLANES } from "@/data/planes";
 import { catalogo } from "@/lib/datos";
 
@@ -66,6 +67,9 @@ export default function Dieta() {
         propios artículos: la lista de verduras de cada semana suma $79.000, o
         sea $316.000 al mes y no $234.000.
       </p>
+      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+        <PresupuestoEditable tipo="dieta" />
+      </section>
       <Suspense
         fallback={
           <p

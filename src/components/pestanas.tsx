@@ -14,6 +14,7 @@ const PESTANAS = [
   { href: "/antojos", texto: "Antojos y gourmet" },
   { href: "/hogar", texto: "Hogar" },
   { href: "/dieta", texto: "Dieta" },
+  { href: "/presupuesto", texto: "Presupuesto" },
   { href: "/anotados", texto: "Anotados" },
 ];
 

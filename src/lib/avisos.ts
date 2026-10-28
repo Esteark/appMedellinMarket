@@ -158,6 +158,31 @@ export const AVISOS = {
     emoji: "📶",
     texto: "Sin conexión. Revisa tu internet e intenta de nuevo.",
   },
+  presupuesto_guardado: {
+    tipo: "exito",
+    emoji: "💾",
+    texto: "Presupuesto guardado.",
+  },
+  presupuesto_restaurado: {
+    tipo: "info",
+    emoji: "↩️",
+    texto: "Presupuesto restaurado al sugerido.",
+  },
+  gasto_agregado: {
+    tipo: "exito",
+    emoji: "🧾",
+    texto: "Gasto agregado: ${monto} en {rubro}.",
+  },
+  gasto_eliminado: {
+    tipo: "info",
+    emoji: "🗑️",
+    texto: "Gasto eliminado.",
+  },
+  presupuesto_fusionado: {
+    tipo: "exito",
+    emoji: "🔄",
+    texto: "Unimos tu presupuesto y gastos de este dispositivo con tu cuenta.",
+  },
 } as const satisfies Record<
   string,
   { tipo: TipoAviso; emoji: string; texto: string }

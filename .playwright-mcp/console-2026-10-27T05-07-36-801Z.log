@@ -1,0 +1,7 @@
+[37085868ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/anotados?_rsc=PcYf8db5QoQ0J3vC:0
+[37085935ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/?_rsc=PcYf8db5QoQ0J3vC:0
+[37087702ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/ingresar?_rsc=PcYf8db5QoQ0J3vC:0
+[37094579ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/antojos?_rsc=PcYf8db5QoQ0J3vC:0
+[37098076ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/?_rsc=PcYf8db5QoQ0J3vC:0
+[37098077ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/anotados?_rsc=PcYf8db5QoQ0J3vC:0
+[37098091ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3100/ingresar?_rsc=PcYf8db5QoQ0J3vC:0
