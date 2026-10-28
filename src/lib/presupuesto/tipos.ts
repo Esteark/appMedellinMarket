@@ -72,3 +72,32 @@ export type Aprendizaje = {
   titulo: string;
   descripcion: string;
 };
+
+export type PresupuestoCierre = {
+  id: string;
+  user_id: string;
+  mes: string;
+  total_presupuestado: number;
+  total_gastado: number;
+  ahorro: number;
+  por_rubro: Array<{
+    rubro: Rubro | string;
+    presupuestado: number;
+    gastado: number;
+    porcentajeUsado: number;
+  }>;
+  created_at: string;
+};
+
+export type PresupuestoCierreSnapshot = {
+  mes: string;
+  total_presupuestado: number;
+  total_gastado: number;
+  ahorro: number;
+  por_rubro: Array<{
+    rubro: Rubro | string;
+    presupuestado: number;
+    gastado: number;
+    porcentajeUsado: number;
+  }>;
+};

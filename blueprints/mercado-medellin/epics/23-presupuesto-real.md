@@ -44,11 +44,31 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] Tests unitarios
 - [x] Gate completo
 
-### 23.7 Mejoras pendientes (siguiente iteración)
+### 23.7 Mejoras implementadas
 - [x] 23.7.0 Animación al abrir panel de notificaciones (actualizar-precios)
 - [x] 23.7.1 Animaciones en secciones de Hogar/Dieta al cargar/editar
 - [x] 23.7.2 Mejorar "Agregar gasto" en `/presupuesto`: permitir anotar por producto con buscador + agregar producto nuevo, cantidad, precio por unidad/total, agrupar por grupo, autocompletar desde catálogo
 - [x] 23.7.3 Asociar gastos con productos del catálogo cuando sea posible
+
+### 23.8 Histórico de presupuesto + gráficas de evolución
+- [x] 23.8.0 Crear migración `presupuestos_cierres` (`user_id`, `mes`, `total_presupuestado`, `total_gastado`, `ahorro`, `por_rubro` jsonb, `created_at`) con RLS por usuario + tipos
+- [x] 23.8.1 Lógica pura `generarSnapshotCierre` (solo datos reales) + tests
+- [ ] 23.8.2 Almacenamiento local + fusión al iniciar sesión
+- [ ] 23.8.3 Pestaña "Histórico" en `/presupuesto` con comparativa mes a mes
+- [ ] 23.8.4 Gráficas de evolución con Recharts (barras/línea) por mes y rubro
+
+### 23.9 Animaciones en notificaciones al aparecer
+- [ ] Animar entradas/salidas del `Toaster` al aparecer (slide/fade) con GSAP o CSS, respetando `prefers-reduced-motion`
+- [ ] Pulir animación del panel de notificaciones al abrir/cerrar
+- [ ] Ajustes en `.aviso` de `globals.css` sin romper layout móvil
+
+### 23.10 Notificaciones laterales no invasivas con retardo
+- [ ] Añadir segundo `Toaster` en `bottom-right` o stack propio para "tips/sugerencias"
+- [ ] Catálogo cerrado de tips en `src/lib/avisos.ts` (sin inventar mensajes)
+- [ ] Reglas de aparición con retardo prudencial (tiempo en app / cambio de ruta) y máximo 1 activo
+- [ ] Cooldown con `localStorage` + opcional `preferencias_notif` para silenciar
+- [ ] Animación slide-in desde derecha, dismissible, respeta `prefers-reduced-motion`
+- [ ] Comprobar no solapamiento con carrito/barra móvil
 
 ## Criterio de hecho
 
@@ -57,4 +77,7 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] Hay gráficas de desfase y proyección
 - [x] Aparece sección "Aprendizajes / Situaciones del mes" con insights generados
 - [x] Funciona sin sesión (localStorage) y con sesión (Supabase)
-- [x] Gate verde: `pnpm typecheck && pnpm lint && pnpm test` (build OK)
+- [ ] Se puede ver histórico mensual con gráficas de evolución y comparativa
+- [ ] Notificaciones/toasts aparecen con animación fluida al mostrarse
+- [ ] Pueden aparecer sugerencias laterales no invasivas tras retardo con cooldown
+- [ ] Gate verde: `pnpm typecheck && pnpm lint && pnpm test` (build OK)

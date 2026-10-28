@@ -201,3 +201,76 @@ export async function eliminarGasto(id: string): Promise<Resultado> {
     .eq("user_id", u.id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }
+
+const esquemaCierre = z.object({
+  mes: z.string().regex(/^\d{4}-\d{2}$/),
+  total_presupuestado: z.number().int().min(0),
+  total_gastado: z.number().int().min(0),
+  ahorro: z.number().int(),
+  por_rubro: z.array(
+    z.object({
+      rubro: z.string().min(1),
+      presupuestado: z.number().int().min(0),
+      gastado: z.number().int().min(0),
+      porcentajeUsado: z.number().int().min(0),
+    }),
+  ),
+});
+
+export async function guardarCierrePresupuesto(
+  snapshot: unknown,
+): Promise<Resultado> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const parsed = esquemaCierre.safeParse(snapshot);
+  if (!parsed.success) return { ok: false, error: "Datos inválidos" };
+  const db = await clienteServidor();
+  const { error } = await (
+    db as unknown as {
+      from: (t: string) => {
+        upsert: (
+          rows: unknown,
+          opts: { onConflict: string },
+        ) => Promise<{ error: { message: string } | null }>;
+      };
+    }
+  )
+    .from("presupuestos_cierres")
+    .upsert({ user_id: u.id, ...parsed.data }, { onConflict: "user_id,mes" });
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+export async function listarCierresPresupuesto(): Promise<
+  | { ok: true; cierres: Record<string, unknown>[] }
+  | { ok: false; error: string }
+> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const db = await clienteServidor();
+  const { data, error } = await (
+    db as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => {
+            order: (
+              col: string,
+              opts: { ascending: boolean },
+            ) => Promise<{
+              data: Record<string, unknown>[] | null;
+              error: { message: string } | null;
+            }>;
+          };
+        };
+      };
+    }
+  )
+    .from("presupuestos_cierres")
+    .select("*")
+    .eq("user_id", u.id)
+    .order("mes", { ascending: true });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, cierres: data ?? [] };
+}
