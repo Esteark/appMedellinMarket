@@ -69,14 +69,17 @@ export default function Hogar() {
       </div>
       <dl className="grid gap-2.5 sm:grid-cols-3">
         {KPIS.map(([titulo, valor, nota]) => (
-          <div key={titulo} className="rounded-[14px] border bg-card p-3.5">
+          <div
+            key={titulo}
+            className="rounded-[14px] border bg-card p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
+          >
             <dt className="text-xs text-muted-foreground">{titulo}</dt>
             <dd className="text-xl font-bold tabular-nums">{valor}</dd>
             <dd className="text-xs text-muted-foreground">{nota}</dd>
           </div>
         ))}
       </dl>
-      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
         <PresupuestoEditable tipo="hogar" />
       </section>
       <Suspense

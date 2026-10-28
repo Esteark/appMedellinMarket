@@ -62,12 +62,12 @@ export default function Dieta() {
           comparador.
         </p>
       </div>
-      <p className="rounded-xl bg-warn-bg px-3.5 py-2.5 text-sm text-warn-ink">
+      <p className="rounded-xl bg-warn-bg px-3.5 py-2.5 text-sm text-warn-ink transition-all duration-200 motion-reduce:transition-none">
         Los totales semanales del PDF están por debajo de lo que suman sus
         propios artículos: la lista de verduras de cada semana suma $79.000, o
         sea $316.000 al mes y no $234.000.
       </p>
-      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
         <PresupuestoEditable tipo="dieta" />
       </section>
       <Suspense

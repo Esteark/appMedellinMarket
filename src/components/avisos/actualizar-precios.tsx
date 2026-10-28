@@ -1,8 +1,10 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { actualizarPrecios } from "@/app/acciones";
 import { Spinner } from "@/components/cargando";
 import { avisar, siguienteEstado } from "@/lib/avisos";
@@ -31,8 +33,44 @@ export function ActualizarPrecios({ conSesion }: { conSesion: boolean }) {
   const router = useRouter();
   const [seg, setSeg] = useState<Seguimiento | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const abiertoRef = useRef(false);
 
   useEffect(() => setSeg(leer()), []);
+
+  useGSAP(
+    () => {
+      const el = panelRef.current;
+      if (!el) return;
+      let reducir = false;
+      if (typeof window !== "undefined") {
+        reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      }
+      const toggle = () => {
+        if (el.hidden) {
+          abiertoRef.current = false;
+          return;
+        }
+        if (!abiertoRef.current) {
+          abiertoRef.current = true;
+          if (reducir) return;
+          gsap.fromTo(
+            el,
+            { y: -6, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" },
+          );
+        }
+      };
+      const obs = new MutationObserver(toggle);
+      obs.observe(el, {
+        attributes: true,
+        attributeFilter: ["hidden", "class"],
+      });
+      toggle();
+      return () => obs.disconnect();
+    },
+    { scope: panelRef },
+  );
 
   useEffect(() => {
     if (!seg) return;
@@ -119,18 +157,20 @@ export function ActualizarPrecios({ conSesion }: { conSesion: boolean }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={pulsar}
-      disabled={ocupado}
-      aria-busy={ocupado}
-      data-testid="actualizar-precios"
-      className="inline-flex min-h-8 items-center gap-2 rounded-[10px] border border-up-ink px-3 font-semibold disabled:opacity-70"
-    >
-      {ocupado && <Spinner />}
-      {ocupado
-        ? "Actualizando… puede tardar unos minutos"
-        : "Actualizar precios"}
-    </button>
+    <div ref={panelRef} className="inline-flex">
+      <button
+        type="button"
+        onClick={pulsar}
+        disabled={ocupado}
+        aria-busy={ocupado}
+        data-testid="actualizar-precios"
+        className="inline-flex min-h-8 items-center gap-2 rounded-[10px] border border-up-ink px-3 font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+      >
+        {ocupado && <Spinner />}
+        {ocupado
+          ? "Actualizando… puede tardar unos minutos"
+          : "Actualizar precios"}
+      </button>
+    </div>
   );
 }

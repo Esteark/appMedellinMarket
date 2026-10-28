@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { agregarGasto, eliminarGasto } from "@/app/presupuesto/acciones";
 import { avisar } from "@/lib/avisos";
+import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import {
   guardarPresupuestoDieta,
@@ -38,7 +39,26 @@ function inicializarRubros(): PresupuestoRubro[] {
   return RUBROS_SUGERIDOS.map((r, i) => ({ rubro: r, monto: 0, orden: i }));
 }
 
-export function PresupuestoCliente() {
+type Props = {
+  productos?: ProductoCatalogo[];
+};
+
+function grupoARubro(grupo: string): string {
+  const g = grupo.toLowerCase();
+  if (g.includes("carne")) return "Carnes";
+  if (g.includes("grano")) return "Granos";
+  if (g.includes("verdura")) return "Verduras";
+  if (g.includes("fruta")) return "Frutas";
+  if (g.includes("lácteo") || g.includes("leche")) return "Lácteos";
+  if (g.includes("pan")) return "Panadería";
+  if (g.includes("despensa")) return "Despensa";
+  if (g.includes("aseo")) return "Aseo";
+  if (g.includes("bebida")) return "Bebidas";
+  if (g.includes("mecato") || g.includes("snack")) return "Mecato";
+  return "Otros";
+}
+
+export function PresupuestoCliente({ productos = [] }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
   const [mes, setMes] = useState("");
   const [hoy, setHoy] = useState("");
@@ -47,8 +67,16 @@ export function PresupuestoCliente() {
   const [form, setForm] = useState({
     fecha: "",
     rubro: "Carnes",
-    monto: "",
+    productoId: "",
+    productoNombre: "",
+    modo: "catalogo" as "catalogo" | "nuevo",
+    cantidad: "",
+    unidad: "",
+    precioUnitario: "",
+    precioTotal: "",
+    usarTotal: false,
     nota: "",
+    monto: "",
   });
 
   useEffect(() => {
@@ -58,6 +86,24 @@ export function PresupuestoCliente() {
     setMes(m);
     setForm((f) => ({ ...f, fecha: h }));
   }, []);
+
+  const catalogoFiltrado = useMemo(() => {
+    const q = form.productoNombre.trim().toLowerCase();
+    if (!q) return productos.slice(0, 20);
+    return productos
+      .filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(q) ||
+          p.grupo.toLowerCase().includes(q),
+      )
+      .slice(0, 30);
+  }, [productos, form.productoNombre]);
+
+  const prodMap = useMemo(() => {
+    const m = new Map<string, ProductoCatalogo>();
+    for (const p of productos) m.set(p.id, p);
+    return m;
+  }, [productos]);
 
   useEffect(() => {
     setRubros(inicializarRubros());
@@ -107,9 +153,45 @@ export function PresupuestoCliente() {
     [resumen, filasDesfase],
   );
 
+  useEffect(() => {
+    if (form.usarTotal) return;
+    const cant = Number(form.cantidad);
+    const pu = Number(form.precioUnitario);
+    if (!cant || cant <= 0 || !pu || pu <= 0) return;
+    const total = Math.floor(cant * pu);
+    setForm((f) =>
+      f.monto === String(total) ? f : { ...f, monto: String(total) },
+    );
+  }, [form.cantidad, form.precioUnitario, form.usarTotal]);
+
+  useEffect(() => {
+    if (!form.usarTotal) return;
+    const pt = Number(form.precioTotal);
+    if (!pt || pt <= 0) return;
+    setForm((f) =>
+      f.monto === String(Math.floor(pt))
+        ? f
+        : { ...f, monto: String(Math.floor(pt)) },
+    );
+  }, [form.precioTotal, form.usarTotal]);
+
   const agregar = async () => {
     const monto = Number(form.monto);
     if (!monto || monto <= 0) return;
+    const cant = form.cantidad ? Number(form.cantidad) : null;
+    const pu = form.precioUnitario ? Number(form.precioUnitario) : null;
+    const partesNota: string[] = [];
+    if (form.modo === "catalogo" && form.productoNombre)
+      partesNota.push(form.productoNombre);
+    if (form.modo === "nuevo" && form.productoNombre)
+      partesNota.push(form.productoNombre);
+    if (cant && cant > 0)
+      partesNota.push(`Cant: ${cant}${form.unidad ? ` ${form.unidad}` : ""}`);
+    if (pu && pu > 0 && !form.usarTotal)
+      partesNota.push(`PU: ${pesos(Math.floor(pu))}`);
+    if (form.nota.trim()) partesNota.push(form.nota.trim());
+    const notaFinal = partesNota.length ? partesNota.join(" · ") : null;
+
     const gasto: GastoReal = {
       id: `local-${Date.now()}`,
       user_id: "local",
@@ -118,14 +200,26 @@ export function PresupuestoCliente() {
       rubro: form.rubro,
       monto: Math.floor(monto),
       tienda_id: null,
-      producto_id: null,
+      producto_id:
+        form.modo === "catalogo" && form.productoId ? form.productoId : null,
       origen: "manual",
-      nota: form.nota.trim() || null,
+      nota: notaFinal,
       created_at: new Date().toISOString(),
     };
     const nuevos = [gasto, ...gastos];
     guardarGastosLocal(nuevos);
-    setForm((f) => ({ ...f, monto: "", nota: "" }));
+    setForm((f) => ({
+      ...f,
+      monto: "",
+      nota: "",
+      productoNombre: "",
+      productoId: "",
+      cantidad: "",
+      precioUnitario: "",
+      precioTotal: "",
+      usarTotal: false,
+      modo: "catalogo",
+    }));
     avisar("gasto_agregado", { monto: gasto.monto, rubro: gasto.rubro });
     try {
       await agregarGasto({
@@ -134,7 +228,8 @@ export function PresupuestoCliente() {
         rubro: gasto.rubro,
         monto: gasto.monto,
         origen: "manual",
-        nota: gasto.nota,
+        nota: notaFinal,
+        producto_id: gasto.producto_id,
       });
     } catch {
       // ignorar si no hay sesión
@@ -241,7 +336,7 @@ export function PresupuestoCliente() {
       )}
       {tab === "agregar" && (
         <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
-          <h2 className="text-lg font-bold">Agregar gasto manual</h2>
+          <h2 className="text-lg font-bold">Agregar gasto</h2>
           <div className="grid gap-2.5 sm:grid-cols-2">
             <label className="text-sm">
               Fecha
@@ -255,7 +350,76 @@ export function PresupuestoCliente() {
               />
             </label>
             <label className="text-sm">
-              Rubro
+              Tipo
+              <select
+                value={form.modo}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    modo: e.target.value as "catalogo" | "nuevo",
+                    productoId: "",
+                  }))
+                }
+                className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+              >
+                <option value="catalogo">Producto del catálogo</option>
+                <option value="nuevo">Agregar producto nuevo</option>
+              </select>
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Producto
+              <input
+                value={form.productoNombre}
+                placeholder={
+                  form.modo === "catalogo"
+                    ? "Buscar producto..."
+                    : "Nombre del producto"
+                }
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    productoNombre: e.target.value,
+                    productoId: "",
+                  }))
+                }
+                className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+              />
+            </label>
+            {form.modo === "catalogo" && form.productoNombre && (
+              <div className="sm:col-span-2 -mt-1 flex max-h-40 flex-col overflow-auto rounded-[10px] border">
+                {catalogoFiltrado.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        productoId: p.id,
+                        productoNombre: p.nombre,
+                        rubro: grupoARubro(p.grupo),
+                        unidad: p.unidad || f.unidad,
+                      }))
+                    }
+                    className="flex items-center justify-between px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  >
+                    <span>
+                      {p.nombre}{" "}
+                      <span className="text-muted-foreground">· {p.grupo}</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {p.unidad}
+                    </span>
+                  </button>
+                ))}
+                {catalogoFiltrado.length === 0 && (
+                  <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Sin resultados. Puedes usar "Agregar producto nuevo".
+                  </p>
+                )}
+              </div>
+            )}
+            <label className="text-sm">
+              Rubro / Grupo
               <select
                 value={form.rubro}
                 onChange={(e) =>
@@ -271,7 +435,68 @@ export function PresupuestoCliente() {
               </select>
             </label>
             <label className="text-sm">
-              Monto
+              Unidad (opcional)
+              <input
+                value={form.unidad}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, unidad: e.target.value }))
+                }
+                placeholder="kg, lb, und, panal..."
+                className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+              />
+            </label>
+            <label className="text-sm">
+              Cantidad
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={form.cantidad}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, cantidad: e.target.value }))
+                }
+                className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="flex items-center justify-between">
+                <span>
+                  {form.usarTotal ? "Precio total" : "Precio por unidad"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((f) => ({ ...f, usarTotal: !f.usarTotal }))
+                  }
+                  className="text-xs text-muted-foreground"
+                >
+                  {form.usarTotal ? "Cambiar a por unidad" : "Cambiar a total"}
+                </button>
+              </span>
+              {form.usarTotal ? (
+                <input
+                  type="number"
+                  min={0}
+                  value={form.precioTotal}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, precioTotal: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+                />
+              ) : (
+                <input
+                  type="number"
+                  min={0}
+                  value={form.precioUnitario}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, precioUnitario: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+                />
+              )}
+            </label>
+            <label className="text-sm">
+              Monto total
               <input
                 type="number"
                 min={0}
@@ -283,9 +508,10 @@ export function PresupuestoCliente() {
               />
             </label>
             <label className="text-sm">
-              Nota
+              Nota / detalle
               <input
                 value={form.nota}
+                placeholder="Ej: 3 canastas de huevos, oferta..."
                 onChange={(e) =>
                   setForm((f) => ({ ...f, nota: e.target.value }))
                 }
@@ -296,7 +522,7 @@ export function PresupuestoCliente() {
           <button
             type="button"
             onClick={agregar}
-            className="self-start rounded-[10px] bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+            className="self-start rounded-[10px] bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
           >
             Agregar gasto
           </button>
@@ -305,32 +531,48 @@ export function PresupuestoCliente() {
               <thead>
                 <tr className="text-left text-xs text-muted-foreground">
                   <th className="py-1.5 pr-2 font-medium">Fecha</th>
+                  <th className="px-2 font-medium">Producto</th>
                   <th className="px-2 font-medium">Rubro</th>
                   <th className="px-2 text-right font-medium">Monto</th>
-                  <th className="px-2 font-medium">Nota</th>
+                  <th className="px-2 font-medium">Detalle</th>
                   <th className="pl-2" />
                 </tr>
               </thead>
               <tbody className="tabular-nums">
-                {gastos.map((g) => (
-                  <tr key={g.id} className="border-t">
-                    <td className="py-1.5 pr-2">{g.fecha}</td>
-                    <td className="px-2">{g.rubro}</td>
-                    <td className="px-2 text-right">{pesos(g.monto)}</td>
-                    <td className="px-2 text-muted-foreground">
-                      {g.nota ?? ""}
-                    </td>
-                    <td className="pl-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => eliminar(g.id)}
-                        className="text-xs text-muted-foreground"
-                      >
-                        Eliminar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {gastos.map((g) => {
+                  const prod = g.producto_id
+                    ? prodMap.get(g.producto_id)
+                    : null;
+                  return (
+                    <tr key={g.id} className="border-t">
+                      <td className="py-1.5 pr-2">{g.fecha}</td>
+                      <td className="px-2">
+                        {prod ? (
+                          <span className="flex items-center gap-1.5">
+                            {prod.emoji && <span>{prod.emoji}</span>}
+                            <span>{prod.nombre}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Manual</span>
+                        )}
+                      </td>
+                      <td className="px-2">{g.rubro}</td>
+                      <td className="px-2 text-right">{pesos(g.monto)}</td>
+                      <td className="px-2 text-muted-foreground">
+                        {g.nota ?? ""}
+                      </td>
+                      <td className="pl-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() => eliminar(g.id)}
+                          className="text-xs text-muted-foreground"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

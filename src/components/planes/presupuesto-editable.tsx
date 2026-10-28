@@ -60,7 +60,7 @@ export function PresupuestoEditable({ tipo }: Props) {
         <button
           type="button"
           onClick={() => setAbierto(true)}
-          className="rounded-[10px] border bg-background px-3 py-1.5 text-sm font-medium"
+          className="rounded-[10px] border bg-background px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
         >
           Cuadrar presupuesto
         </button>
@@ -76,8 +76,12 @@ export function PresupuestoEditable({ tipo }: Props) {
           <tbody className="tabular-nums">
             {rubros
               .filter((r) => r.monto > 0 || rubros.length <= 12)
-              .map((r) => (
-                <tr key={`${r.rubro}-${r.orden}`} className="border-t">
+              .map((r, idx) => (
+                <tr
+                  key={`${r.rubro}-${r.orden}`}
+                  className="border-t transition-colors duration-150 hover:bg-muted/40 motion-reduce:transition-none"
+                  style={{ animationDelay: `${idx * 20}ms` }}
+                >
                   <td className="py-1.5 pr-3">{r.rubro}</td>
                   <td className="px-3 text-right">
                     ${r.monto.toLocaleString("es-CO")}

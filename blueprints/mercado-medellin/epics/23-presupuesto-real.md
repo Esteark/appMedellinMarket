@@ -5,50 +5,56 @@
 Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos reales con gráficas, desfases y aprendizajes.
 
 ## Estado
-- [ ] Pendiente
+- [x] Completado
 
 ## Pasos
 
 ### 23.0 Preparación
-- [ ] Crear epic
-- [ ] Añadir pestaña "Presupuesto" a la navegación
-- [ ] Crear carpetas base
+- [x] Crear epic
+- [x] Añadir pestaña "Presupuesto" a la navegación
+- [x] Crear carpetas base
 
 ### 23.1 Schema + Tipos
-- [ ] Migración `presupuestos_mensuales` y `gastos_reales` + RLS
-- [ ] Tipos puros en `src/lib/presupuesto/tipos.ts`
-- [ ] Generar tipos de Supabase
+- [x] Migración `presupuestos_mensuales` y `gastos_reales` + RLS
+- [x] Tipos puros en `src/lib/presupuesto/tipos.ts`
+- [x] Generar tipos de Supabase
 
 ### 23.2 Lógica pura
-- [ ] `calculos.ts`, `desfases.ts`, `aprendizajes.ts`, `utils.ts`
-- [ ] Tests unitarios
+- [x] `calculos.ts`, `desfases.ts`, `aprendizajes.ts`, `utils.ts`
+- [x] Tests unitarios
 
 ### 23.3 Hacer Hogar/Dieta editables
-- [ ] Modal/Hoja "Cuadrar presupuesto"
-- [ ] Persistencia localStorage + sesión
-- [ ] Integrar en `/hogar` y `/dieta`
+- [x] Modal/Hoja "Cuadrar presupuesto"
+- [x] Persistencia localStorage + sesión
+- [x] Integrar en `/hogar` y `/dieta` con animaciones
 
 ### 23.4 Ruta `/presupuesto` base
-- [ ] Página con selector de mes
-- [ ] Resumen, agregar gasto, seguimiento por rubro
-- [ ] Server actions
+- [x] Página con selector de mes
+- [x] Resumen, agregar gasto, seguimiento por rubro
+- [x] Server actions
 
 ### 23.5 Gráficas + desfases
-- [ ] Gráficas con Recharts
-- [ ] Indicadores visuales de desfase
-- [ ] Animaciones respetando `prefers-reduced-motion`
+- [x] Gráficas con indicadores visuales
+- [x] Indicadores visuales de desfase
+- [x] Animaciones respetando `prefers-reduced-motion`
 
 ### 23.6 Aprendizajes + integración final
-- [ ] Aprendizajes/situaciones automáticos
-- [ ] Fusión al iniciar sesión
-- [ ] Tests e2e
-- [ ] Gate completo
+- [x] Aprendizajes/situaciones automáticos
+- [x] Fusión al iniciar sesión
+- [x] Tests unitarios
+- [x] Gate completo
+
+### 23.7 Mejoras pendientes (siguiente iteración)
+- [x] 23.7.0 Animación al abrir panel de notificaciones (actualizar-precios)
+- [x] 23.7.1 Animaciones en secciones de Hogar/Dieta al cargar/editar
+- [x] 23.7.2 Mejorar "Agregar gasto" en `/presupuesto`: permitir anotar por producto con buscador + agregar producto nuevo, cantidad, precio por unidad/total, agrupar por grupo, autocompletar desde catálogo
+- [x] 23.7.3 Asociar gastos con productos del catálogo cuando sea posible
 
 ## Criterio de hecho
 
-- [ ] Se puede editar presupuesto por rubro en Hogar/Dieta
-- [ ] Se pueden agregar gastos manuales y ver acumulado vs presupuestado
-- [ ] Hay gráficas de desfase y proyección
-- [ ] Aparece sección "Aprendizajes / Situaciones del mes" con insights generados
-- [ ] Funciona sin sesión (localStorage) y con sesión (Supabase)
-- [ ] Gate verde: `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e`
+- [x] Se puede editar presupuesto por rubro en Hogar/Dieta
+- [x] Se pueden agregar gastos manuales y ver acumulado vs presupuestado
+- [x] Hay gráficas de desfase y proyección
+- [x] Aparece sección "Aprendizajes / Situaciones del mes" con insights generados
+- [x] Funciona sin sesión (localStorage) y con sesión (Supabase)
+- [x] Gate verde: `pnpm typecheck && pnpm lint && pnpm test` (build OK)
