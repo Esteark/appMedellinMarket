@@ -188,6 +188,30 @@ export const AVISOS = {
   { tipo: TipoAviso; emoji: string; texto: string }
 >;
 
+export const TIPS = {
+  presupuesto_cuadrar: {
+    tipo: "info" as const,
+    emoji: "💡",
+    texto: "Cuadra tu presupuesto por rubro para ver desfases al instante.",
+  },
+  presupuesto_agregar_producto: {
+    tipo: "info" as const,
+    emoji: "🛒",
+    texto:
+      "Agrega gastos por producto con cantidad y precio para mayor detalle.",
+  },
+  presupuesto_historico: {
+    tipo: "info" as const,
+    emoji: "📊",
+    texto: "Guarda el cierre de mes para ver la evolución año tras año.",
+  },
+} as const satisfies Record<
+  string,
+  { tipo: TipoAviso; emoji: string; texto: string }
+>;
+
+export type ClaveTip = keyof typeof TIPS;
+
 export type ClaveAviso = keyof typeof AVISOS;
 
 /** Avisos que una redirección del servidor puede pedir con `?aviso=` (lista cerrada). */

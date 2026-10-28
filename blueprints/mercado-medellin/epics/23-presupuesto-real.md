@@ -61,12 +61,16 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] 23.9.0 Animar entradas/salidas del `Toaster` al aparecer (slide/fade) con CSS, pulir panel de notificaciones y ajustar `.aviso` en `globals.css`. Respeta `prefers-reduced-motion`.
 
 ### 23.10 Notificaciones laterales no invasivas con retardo
-- [ ] Añadir segundo `Toaster` en `bottom-right` o stack propio para "tips/sugerencias"
-- [ ] Catálogo cerrado de tips en `src/lib/avisos.ts` (sin inventar mensajes)
-- [ ] Reglas de aparición con retardo prudencial (tiempo en app / cambio de ruta) y máximo 1 activo
-- [ ] Cooldown con `localStorage` + opcional `preferencias_notif` para silenciar
-- [ ] Animación slide-in desde derecha, dismissible, respeta `prefers-reduced-motion`
-- [ ] Comprobar no solapamiento con carrito/barra móvil
+- [x] 23.10.0 Infraestructura: stack propio en `bottom-right` (portal), catálogo `TIPS` en `src/lib/avisos.ts`, integrado en `layout.tsx`. Animación slide-in/slide-out con GSAP, respeta `prefers-reduced-motion`
+- [x] 23.10.1 Reglas + cooldown: retardo prudencial (90s) por cambio de ruta, máximo 1 activo, `localStorage` cooldown 12h + max 1/día, botón "No mostrar más sugerencias" para silenciar
+- [x] 23.10.2 Pulir móvil: evitar solapamiento con barra/carrito (bottom + safe-area), z-index 65, animaciones con GSAP y `prefers-reduced-motion`, sin bloquear interacción
+
+### 23.11 Hogar/Dieta: reparto interactivo entre personas
+- [ ] Hacer los gráficos/reparto de Hogar/Dieta dinámicos (no estáticos). Añadir campo editable "¿Entre cuántas personas?" 
+- [ ] El texto "entre X personas toca dividir..." / "a cada uno le corresponde..." debe recalcularse en tiempo real al cambiar presupuesto o nº de personas
+- [ ] Debe reaccionar en toda la pestaña Hogar/Dieta; si se modifica el presupuesto/rubro o el número de personas se actualiza el reparto al instante
+- [ ] Partir de los valores actuales como base. Persistir configuración en `localStorage` y, si hay sesión, guardar/sobrescribir en DB (sin inventar valores)
+- [ ] Mantener coherencia con los montos del presupuesto Hogar/Dieta
 
 ## Criterio de hecho
 

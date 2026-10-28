@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { AvisoDeUrl } from "@/components/avisos/aviso-de-url";
 import { Sesion } from "@/components/avisos/sesion";
+import { TipsNoInvasivos } from "@/components/avisos/tips-no-invasivos";
 import { Toaster } from "@/components/avisos/toaster";
 import { Encabezado } from "@/components/encabezado";
 import { Pestanas } from "@/components/pestanas";
@@ -72,6 +73,9 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         </Suspense>
         <Suspense fallback={null}>
           <SincronizarPresupuesto />
+        </Suspense>
+        <Suspense fallback={null}>
+          <TipsNoInvasivos />
         </Suspense>
       </body>
     </html>
