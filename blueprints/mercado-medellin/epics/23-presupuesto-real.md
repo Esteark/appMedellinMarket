@@ -54,8 +54,8 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] 23.8.0 Crear migración `presupuestos_cierres` (`user_id`, `mes`, `total_presupuestado`, `total_gastado`, `ahorro`, `por_rubro` jsonb, `created_at`) con RLS por usuario + tipos
 - [x] 23.8.1 Lógica pura `generarSnapshotCierre` (solo datos reales) + tests
 - [x] 23.8.2 Almacenamiento local + acciones DB para cierres
-- [ ] 23.8.3 Pestaña "Histórico" en `/presupuesto` con comparativa mes a mes
-- [ ] 23.8.4 Gráficas de evolución con Recharts (barras/línea) por mes y rubro
+- [x] 23.8.3 Pestaña "Histórico" en `/presupuesto` con comparativa mes a mes + gráficas básicas
+- [ ] 23.8.4 Refinar gráficas de evolución con Recharts si se requiere (opcional)
 
 ### 23.9 Animaciones en notificaciones al aparecer
 - [ ] Animar entradas/salidas del `Toaster` al aparecer (slide/fade) con GSAP o CSS, respetando `prefers-reduced-motion`

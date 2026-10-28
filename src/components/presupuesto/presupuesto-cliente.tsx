@@ -6,18 +6,31 @@ import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import {
+  agregarCierreLocal,
   guardarPresupuestoDieta,
   guardarPresupuestoHogar,
+  leerCierresLocal,
   leerPresupuestoDieta,
   leerPresupuestoHogar,
 } from "@/lib/presupuesto/almacenamiento";
 import { generarAprendizajes } from "@/lib/presupuesto/aprendizajes";
 import { compararPresupuestadoVsGastado } from "@/lib/presupuesto/calculos";
+import { generarSnapshotCierre } from "@/lib/presupuesto/cierres";
 import { RUBROS_SUGERIDOS } from "@/lib/presupuesto/defaults";
 import { calcularDesfases, mensajeDesfase } from "@/lib/presupuesto/desfases";
-import type { GastoReal, PresupuestoRubro } from "@/lib/presupuesto/tipos";
+import type {
+  GastoReal,
+  PresupuestoCierreSnapshot,
+  PresupuestoRubro,
+} from "@/lib/presupuesto/tipos";
 
-type Tab = "resumen" | "agregar" | "seguimiento" | "graficas" | "aprendizajes";
+type Tab =
+  | "resumen"
+  | "agregar"
+  | "seguimiento"
+  | "graficas"
+  | "aprendizajes"
+  | "historico";
 
 function hoyBogota(): string {
   const now = new Date();
@@ -64,6 +77,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
   const [hoy, setHoy] = useState("");
   const [rubros, setRubros] = useState<PresupuestoRubro[]>([]);
   const [gastos, setGastos] = useState<GastoReal[]>([]);
+  const [cierres, setCierres] = useState<PresupuestoCierreSnapshot[]>([]);
   const [form, setForm] = useState({
     fecha: "",
     rubro: "Carnes",
@@ -107,6 +121,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
 
   useEffect(() => {
     setRubros(inicializarRubros());
+    setCierres(leerCierresLocal());
     if (!mes) return;
     try {
       const crudo = localStorage.getItem(`mercado-medellin:gastos:${mes}`);
@@ -253,12 +268,21 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     guardarPresupuestoDieta(nuevos);
   };
 
+  const guardarCierre = () => {
+    if (!mes) return;
+    const snap = generarSnapshotCierre(mes, rubros, gastos);
+    agregarCierreLocal(snap);
+    setCierres(leerCierresLocal());
+    avisar("presupuesto_guardado");
+  };
+
   const tabs: { id: Tab; texto: string }[] = [
     { id: "resumen", texto: "Resumen" },
     { id: "agregar", texto: "Agregar gasto" },
     { id: "seguimiento", texto: "Seguimiento por rubro" },
     { id: "graficas", texto: "Gráficas" },
     { id: "aprendizajes", texto: "Aprendizajes" },
+    { id: "historico", texto: "Histórico" } as { id: Tab; texto: string },
   ];
 
   return (
@@ -279,6 +303,13 @@ export function PresupuestoCliente({ productos = [] }: Props) {
           className="rounded-[10px] border px-3 py-1.5 text-sm"
         >
           Guardar presupuesto en dispositivo
+        </button>
+        <button
+          type="button"
+          onClick={guardarCierre}
+          className="rounded-[10px] border px-3 py-1.5 text-sm"
+        >
+          Guardar cierre de mes
         </button>
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -706,6 +737,104 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                   </p>
                 </article>
               ))}
+            </div>
+          )}
+        </section>
+      )}
+      {tab === "historico" && (
+        <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+          <h2 className="text-lg font-bold">Histórico mensual</h2>
+          {cierres.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aún no hay cierres guardados. Usa "Guardar cierre de mes" para
+              guardar un snapshot con datos reales.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground">
+                    <th className="py-1.5 pr-2 font-medium">Mes</th>
+                    <th className="px-2 text-right font-medium">
+                      Presupuestado
+                    </th>
+                    <th className="px-2 text-right font-medium">Gastado</th>
+                    <th className="px-2 text-right font-medium">Ahorro</th>
+                    <th className="pl-2 text-right font-medium">% usado</th>
+                  </tr>
+                </thead>
+                <tbody className="tabular-nums">
+                  {cierres.map((c) => {
+                    const usado =
+                      c.total_presupuestado > 0
+                        ? Math.round(
+                            (c.total_gastado / c.total_presupuestado) * 100,
+                          )
+                        : c.total_gastado > 0
+                          ? 100
+                          : 0;
+                    return (
+                      <tr key={c.mes} className="border-t">
+                        <td className="py-1.5 pr-2">{c.mes}</td>
+                        <td className="px-2 text-right">
+                          {pesos(c.total_presupuestado)}
+                        </td>
+                        <td className="px-2 text-right">
+                          {pesos(c.total_gastado)}
+                        </td>
+                        <td className="px-2 text-right">{pesos(c.ahorro)}</td>
+                        <td className="pl-2 text-right">{usado}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {cierres.length > 0 && (
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {cierres.slice(-6).map((c) => {
+                const max = Math.max(c.total_presupuestado, c.total_gastado, 1);
+                const pW = Math.min(
+                  100,
+                  Math.round((c.total_presupuestado / max) * 100),
+                );
+                const gW = Math.min(
+                  100,
+                  Math.round((c.total_gastado / max) * 100),
+                );
+                return (
+                  <div
+                    key={`g-${c.mes}`}
+                    className="flex flex-col gap-1.5 rounded-[12px] border p-2.5"
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{c.mes}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {pesos(c.ahorro)} ahorrado
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <div className="h-2 rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-primary/70"
+                          style={{ width: `${pW}%` }}
+                        />
+                      </div>
+                      <div className="h-2 rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-up-ink"
+                          style={{ width: `${gW}%` }}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Presupuestado {pesos(c.total_presupuestado)} · Gastado{" "}
+                      {pesos(c.total_gastado)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
