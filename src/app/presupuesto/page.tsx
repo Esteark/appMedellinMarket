@@ -3,6 +3,7 @@ import { PresupuestoCliente } from "@/components/presupuesto/presupuesto-cliente
 import { catalogo } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Presupuesto · Mercado Medellín" };
+export const dynamic = "force-dynamic";
 
 export default async function PresupuestoPage() {
   const { productos } = await catalogo();
