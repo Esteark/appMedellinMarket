@@ -5,6 +5,7 @@ import { BotonesPlan } from "@/components/planes/botones-plan";
 import { DietaTablas } from "@/components/planes/dieta-tablas";
 import { PlanItems } from "@/components/planes/plan-items";
 import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
+import { RepartoInteractivo } from "@/components/planes/reparto-interactivo";
 import { PLANES } from "@/data/planes";
 import { catalogo } from "@/lib/datos";
 
@@ -52,16 +53,7 @@ async function Datos() {
 export default function Dieta() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 pt-4 pb-10">
-      <div>
-        <h1 className="text-xl font-bold">
-          Plan de mercado · dieta familia de 5
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Ensaladas diarias, cenas, desayunos y proteínas. Tope objetivo
-          $800.000 – $1.000.000 al mes. Los costos con precios de hoy salen del
-          comparador.
-        </p>
-      </div>
+      <RepartoInteractivo tipo="dieta" />
       <p className="rounded-xl bg-warn-bg px-3.5 py-2.5 text-sm text-warn-ink transition-all duration-200 motion-reduce:transition-none">
         Los totales semanales del PDF están por debajo de lo que suman sus
         propios artículos: la lista de verduras de cada semana suma $79.000, o

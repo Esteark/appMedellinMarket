@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 const DESCRIPCION =
-  "Compara precios de 144 productos de mercado en D1, Euro, La Minorista y más tiendas de Medellín, y arma la lista de tu familia.";
+  "Compara precios de 144 productos de mercado en D1, La Minorista, La Vaquita, PriceSmart y la tienda de barrio de Medellín, y arma la lista de tu familia.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITIO),
@@ -29,8 +29,9 @@ export const metadata: Metadata = {
     "precios mercado Medellín",
     "comparar precios supermercado",
     "D1",
-    "Euro",
     "La Minorista",
+    "La Vaquita",
+    "PriceSmart",
     "lista de mercado",
   ],
   openGraph: {
