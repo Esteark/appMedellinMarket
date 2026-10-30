@@ -1,7 +1,7 @@
 // Captura respuestas reales para las pruebas de los adaptadores en tests/fixtures/<grupo>/.
 // Respeta robots.txt, User-Agent propio y pausa de 1 s. Si algo falla, sale 1 sin tocar
 // los fixtures anteriores (escribe solo cuando todo se capturó).
-// Uso: pnpm capturar <vtex|euro|vaquita|sipsa>
+// Uso: pnpm capturar <vtex|vaquita|sipsa>
 import "./cargar-env";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fechasCandidatas, urlsBoletin } from "@/corrida/adaptadores/sipsa";
@@ -60,23 +60,6 @@ try {
         url: "https://www.d1.com.co/aceite-girasol-don-olio-12004357/p",
       }) as string,
     );
-  } else if (grupo === "euro") {
-    const euro = "https://www.eurosupermercados.com.co";
-    await capturar("robots.txt", `${euro}/robots.txt`);
-    // ml, kg a granel, g, y uno no convertible ("x6und 300gr" contra "unidad").
-    await capturar(
-      "aceite.html",
-      `${euro}/aceite-girasol-100---euromax--x-900ml-444/p`,
-    );
-    await capturar("aguacate.html", `${euro}/aguacate-hass-c4a/p`);
-    await capturar(
-      "atun.html",
-      `${euro}/atun-lomitos-en-agua--euromax--x-160gr-892/p`,
-    );
-    await capturar(
-      "croissant.html",
-      `${euro}/pan-croissant-x6und--300gr-esponjados-072/p`,
-    );
   } else if (grupo === "vaquita") {
     const vaquita = "https://vaquitaexpress.com.co";
     await capturar("robots.txt", `${vaquita}/robots.txt`);
@@ -111,7 +94,7 @@ try {
     await capturar("boletin.pdf", urlsBoletin(fecha).boletin);
   } else {
     throw new Error(
-      `Grupo no soportado: ${grupo ?? "(ninguno)"}. Use vtex, euro, vaquita o sipsa.`,
+      `Grupo no soportado: ${grupo ?? "(ninguno)"}. Use vtex, vaquita o sipsa.`,
     );
   }
 } catch (e) {

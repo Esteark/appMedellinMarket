@@ -6,7 +6,7 @@ import { contextoPrueba, fetchFalso } from "../helpers/fetch-falso";
 // Corre contra Supabase local (pnpm exec supabase start && pnpm env:local && pnpm migrar)
 // con fixtures reales. Toca solo estos productos y lo deja todo como estaba al final.
 const PRODUCTOS = ["aceite", "banano"];
-const TIENDAS = ["d1", "euro", "minorista"];
+const TIENDAS = ["d1", "vaquita", "minorista"];
 const HOY = "2026-10-26"; // fecha de los fixtures capturados
 
 const db = clienteAdmin();
@@ -87,21 +87,21 @@ afterAll(async () => {
 
 describe("orquestador contra la base local", () => {
   it("correr dos veces el mismo día deja idénticos precios_actuales e historial", async () => {
-    const f = fetchFalso(["vtex", "euro", "sipsa"]);
+    const f = fetchFalso(["vtex", "vaquita", "sipsa"]);
     const primera = await correr(db, ctx(f.fetch), { productos: PRODUCTOS });
     const despuesDeUna = await foto();
     const segunda = await correr(db, ctx(f.fetch), { productos: PRODUCTOS });
     expect(await foto()).toEqual(despuesDeUna);
 
-    // Hubo hallazgos reales: aceite en D1 (RefId) y en Euro, banano en SIPSA.
+    // Hubo hallazgos reales: aceite en D1 (RefId) y en La Vaquita, banano en SIPSA.
     expect(primera.escritos).toBeGreaterThanOrEqual(3);
     expect(segunda.tiendas).toEqual(primera.tiendas);
     const fila = (p: string, t: string) =>
       despuesDeUna.actuales.find(
         (a) => a.producto_id === p && a.tienda_id === t,
       );
-    expect(fila("aceite", "euro")).toMatchObject({
-      precio: 10000,
+    expect(fila("aceite", "vaquita")).toMatchObject({
+      precio: 13700,
       fecha: HOY,
       estado: "real",
     });
@@ -125,10 +125,11 @@ describe("orquestador contra la base local", () => {
     expect(
       actuales.find((a) => a.producto_id === "aceite" && a.tienda_id === "d1"),
     ).toMatchObject({ precio: 8900, revisar: true });
-    // Aceite en Euro: $10.000 contra $10.000 del export → sin marca.
+    // Aceite en La Vaquita: primer precio de la tienda → sin marca.
     expect(
-      actuales.find((a) => a.producto_id === "aceite" && a.tienda_id === "euro")
-        ?.revisar,
+      actuales.find(
+        (a) => a.producto_id === "aceite" && a.tienda_id === "vaquita",
+      )?.revisar,
     ).toBe(false);
   });
 
@@ -138,16 +139,16 @@ describe("orquestador contra la base local", () => {
     const previo = await db
       .from("tienda_estado")
       .select("ultimo_ok")
-      .eq("tienda_id", "euro")
+      .eq("tienda_id", "vaquita")
       .single();
     const resumen = await correr(db, ctx(sinNada), { productos: PRODUCTOS });
     for (const t of TIENDAS) expect(resumen.tiendas[t].estado).toBe("fallo");
-    const euro = await db
+    const vq = await db
       .from("tienda_estado")
       .select("estado, ultimo_ok")
-      .eq("tienda_id", "euro")
+      .eq("tienda_id", "vaquita")
       .single();
-    expect(euro.data).toEqual({
+    expect(vq.data).toEqual({
       estado: "fallo",
       ultimo_ok: previo.data?.ultimo_ok,
     });

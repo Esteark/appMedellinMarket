@@ -17,7 +17,7 @@ const { values } = parseArgs({
 
 if (values.ayuda) {
   console.log(`pnpm corrida [--todo]
-  Consulta D1, Euro y SIPSA y actualiza precios_actuales, historial, clima_causas y tienda_estado.
+  Consulta D1, La Minorista (SIPSA) y La Vaquita y actualiza precios_actuales, historial, clima_causas y tienda_estado.
   Los diarios todos los días; los semanales los lunes o con --todo.`);
   process.exit(0);
 }

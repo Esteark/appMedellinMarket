@@ -20,8 +20,8 @@ test("el gráfico de total por tienda reacciona a la tienda elegida en los chips
   await expect(grafico).not.toHaveAttribute("aria-label", /resaltada/);
 
   const chips = page.getByTestId("chips-tiendas");
-  await chips.getByRole("button", { name: "Euro" }).click();
-  await expect(grafico).toHaveAttribute("aria-label", /resaltada: Euro/);
+  await chips.getByRole("button", { name: "La Vaquita" }).click();
+  await expect(grafico).toHaveAttribute("aria-label", /resaltada: La Vaquita/);
   await chips.getByRole("button", { name: "D1" }).click();
   await expect(grafico).toHaveAttribute("aria-label", /resaltada: D1/);
   await chips.getByRole("button", { name: "Más barato" }).click();

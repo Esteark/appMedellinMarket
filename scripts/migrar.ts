@@ -35,6 +35,11 @@ type Tienda = {
   nota?: string;
 };
 
+// 30-oct-2026: la familia no merca en estas tiendas; ninguna carga las trae de vuelta.
+const TIENDAS_RETIRADAS = new Set(["exito", "carulla", "euro", "ara", "isimo"]);
+const vigente = ([tienda_id]: [string, ...unknown[]]) =>
+  !TIENDAS_RETIRADAS.has(tienda_id);
+
 const leer = <T>(archivo: string): T =>
   JSON.parse(readFileSync(`data/export/${archivo}`, "utf8")) as T;
 
@@ -64,7 +69,9 @@ const anotados =
 const origen = readFileSync("data/origen/constantes-artifact.js", "utf8");
 const literal = origen.match(/const TIENDAS=(\[[\s\S]*?\]);/)?.[1];
 if (!literal) throw new Error("No encontré TIENDAS en constantes-artifact.js");
-const tiendas = new Function(`return ${literal}`)() as Tienda[];
+const tiendas = (new Function(`return ${literal}`)() as Tienda[]).filter(
+  (t) => !TIENDAS_RETIRADAS.has(t.id),
+);
 
 const FRECUENCIA: Record<string, "diaria" | "semanal"> = {
   Frutas: "diaria",
@@ -118,7 +125,7 @@ async function contar(tabla: Tabla): Promise<number> {
 
 // --- filas ---
 // Manual = sin adaptador en la corrida: el artifact marcaba como automáticas tiendas que hoy van
-// por anotados (Éxito, Carulla, Ara, Ísimo, PriceSmart).
+// por anotados (PriceSmart).
 const automaticas = new Set(ADAPTADORES.map((a) => a.tienda));
 const filasTiendas = tiendas.map((t) => ({
   id: t.id,
@@ -146,7 +153,7 @@ const filasProductos = Object.values(productos).map((p) => {
 const filasPrecios: TablesInsert<"precios_actuales">[] = [];
 const filasFuente: TablesInsert<"producto_fuente">[] = [];
 for (const [producto_id, porTienda] of Object.entries(precios)) {
-  for (const [tienda_id, p] of Object.entries(porTienda)) {
+  for (const [tienda_id, p] of Object.entries(porTienda).filter(vigente)) {
     filasPrecios.push({
       producto_id,
       tienda_id,
@@ -182,7 +189,9 @@ for (const [producto_id, url] of Object.entries(urlsVaquita)) {
 const filasHistorial: TablesInsert<"precios_historial">[] = [];
 for (const [producto_id, { serie }] of Object.entries(historial)) {
   for (const { fecha, estado, ...porTienda } of serie) {
-    for (const [tienda_id, precio] of Object.entries(porTienda)) {
+    for (const [tienda_id, precio] of Object.entries(porTienda).filter(
+      vigente,
+    )) {
       if (typeof precio !== "number") continue;
       filasHistorial.push({
         producto_id,
@@ -197,21 +206,25 @@ for (const [producto_id, { serie }] of Object.entries(historial)) {
 
 const filasAnotados = Object.entries(anotados).flatMap(
   ([producto_id, porTienda]) =>
-    Object.entries(porTienda).map(([tienda_id, a]) => ({
-      producto_id,
-      tienda_id,
-      precio: a.precio,
-      fecha: a.fecha,
-      autor: null,
-    })),
+    Object.entries(porTienda)
+      .filter(vigente)
+      .map(([tienda_id, a]) => ({
+        producto_id,
+        tienda_id,
+        precio: a.precio,
+        fecha: a.fecha,
+        autor: null,
+      })),
 );
 
 const { estado } = meta;
-const filasEstado = Object.entries(estado.fuentes).map(([tienda_id, e]) => ({
-  tienda_id,
-  estado: e,
-  ultimo_ok: estado.ultimoOk[tienda_id] ?? null,
-}));
+const filasEstado = Object.entries(estado.fuentes)
+  .filter(vigente)
+  .map(([tienda_id, e]) => ({
+    tienda_id,
+    estado: e,
+    ultimo_ok: estado.ultimoOk[tienda_id] ?? null,
+  }));
 
 // --- carga (en orden de llaves foráneas) ---
 await upsert("tiendas", filasTiendas, "id");

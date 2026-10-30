@@ -109,7 +109,7 @@ export async function alertasUsuarios(db: Admin, hoy: string): Promise<number> {
   const filas: TablesInsert<"alertas">[] = [];
   for (const l of listas) {
     const lista = items.get(l.user_id) ?? {};
-    const preferida = l.tienda_preferida ?? "exito";
+    const preferida = l.tienda_preferida ?? "d1";
     const nuevas: AlertaNueva[] = [
       ...alertasMasBarato(
         lista,

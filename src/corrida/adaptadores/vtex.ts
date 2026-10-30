@@ -4,7 +4,7 @@ import { permitido } from "@/corrida/robots";
 import type { Adaptador, Consulta, Contexto, Hallazgo } from "@/corrida/tipos";
 import { unidadBase } from "@/lib/unidades";
 
-// Solo D1: Éxito y Carulla prohíben /api/ en robots.txt (blueprint §1).
+// Solo D1 usa VTEX (blueprint §1).
 const HOST = "https://www.d1.com.co";
 // En las páginas /p de D1 el número final es el RefId del producto.
 const REF_ID = /-(\d+)\/p$/;

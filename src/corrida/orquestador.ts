@@ -1,4 +1,3 @@
-import { euro } from "@/corrida/adaptadores/euro";
 import { leerBoletin, minorista } from "@/corrida/adaptadores/sipsa";
 import { vaquita } from "@/corrida/adaptadores/vaquita";
 import { d1 } from "@/corrida/adaptadores/vtex";
@@ -10,8 +9,8 @@ import { alertasFuenteCaida } from "@/lib/alertas/reglas";
 import type { TablesInsert } from "@/lib/supabase/tipos";
 import type { UnidadBase } from "@/lib/unidades";
 
-/** Tiendas automáticas. Éxito, Carulla, Ara, Ísimo y PriceSmart van por anotados (blueprint §1). */
-export const ADAPTADORES: Adaptador[] = [d1, euro, minorista, vaquita];
+/** Tiendas automáticas. PriceSmart y Tienda/Carnicería de barrio van por anotados (blueprint §1). */
+export const ADAPTADORES: Adaptador[] = [d1, minorista, vaquita];
 
 const PRIORIDAD = [
   ["Frutas", "Verduras", "Tubérculos"],
