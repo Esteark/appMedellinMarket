@@ -1,54 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CuadrarPresupuesto } from "@/components/presupuesto/cuadrar-presupuesto";
-import {
-  guardarPresupuestoDieta,
-  guardarPresupuestoHogar,
-  leerPresupuestoDieta,
-  leerPresupuestoHogar,
-} from "@/lib/presupuesto/almacenamiento";
 import {
   PRESUPUESTO_SUGERIDO_DIETA,
   PRESUPUESTO_SUGERIDO_HOGAR,
   RUBROS_SUGERIDOS,
 } from "@/lib/presupuesto/defaults";
 import type { PresupuestoRubro } from "@/lib/presupuesto/tipos";
+import { usePlan } from "./plan-provider";
 
-type Props = {
-  tipo: "hogar" | "dieta";
-};
-
-function inicializar(tipo: "hogar" | "dieta"): PresupuestoRubro[] {
-  const sugeridos =
-    tipo === "hogar" ? PRESUPUESTO_SUGERIDO_HOGAR : PRESUPUESTO_SUGERIDO_DIETA;
-  const guardado =
-    typeof window !== "undefined"
-      ? tipo === "hogar"
-        ? leerPresupuestoHogar()
-        : leerPresupuestoDieta()
-      : null;
-  if (guardado && guardado.length > 0) return guardado;
-  return RUBROS_SUGERIDOS.map((r, i) => ({
-    rubro: r,
-    monto: sugeridos[r] ?? 0,
-    orden: i,
-  }));
+/** Rubros del plan en el orden sugerido; los que agregó la persona van al final. */
+function comoLista(rubros: Record<string, number>): PresupuestoRubro[] {
+  const orden = (r: string) => {
+    const i = (RUBROS_SUGERIDOS as readonly string[]).indexOf(r);
+    return i < 0 ? RUBROS_SUGERIDOS.length : i;
+  };
+  return Object.entries(rubros)
+    .sort(([x], [y]) => orden(x) - orden(y))
+    .map(([rubro, monto], i) => ({ rubro, monto, orden: i }));
 }
 
-export function PresupuestoEditable({ tipo }: Props) {
+export function PresupuestoEditable() {
+  const { tipo, config, cambiar } = usePlan();
   const [abierto, setAbierto] = useState(false);
-  const [rubros, setRubros] = useState<PresupuestoRubro[]>([]);
+  const rubros = comoLista(config.rubros);
 
-  useEffect(() => {
-    setRubros(inicializar(tipo));
-  }, [tipo]);
-
-  const guardar = (nuevos: PresupuestoRubro[]) => {
-    setRubros(nuevos);
-    if (tipo === "hogar") guardarPresupuestoHogar(nuevos);
-    else guardarPresupuestoDieta(nuevos);
-  };
+  const guardar = (nuevos: PresupuestoRubro[]) =>
+    cambiar({
+      rubros: Object.fromEntries(nuevos.map((r) => [r.rubro, r.monto])),
+    });
 
   const sugeridos =
     tipo === "hogar" ? PRESUPUESTO_SUGERIDO_HOGAR : PRESUPUESTO_SUGERIDO_DIETA;
@@ -56,7 +37,13 @@ export function PresupuestoEditable({ tipo }: Props) {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold">Presupuesto</h2>
+        <div>
+          <h2 className="text-lg font-bold">Presupuesto del plan</h2>
+          <p className="text-xs text-muted-foreground">
+            Es el plan que quieres gastar; no se mezcla con lo que registras en
+            Presupuesto.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setAbierto(true)}

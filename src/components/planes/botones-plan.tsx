@@ -5,6 +5,7 @@ import { type IdPlan, PLANES } from "@/data/planes";
 import { avisar } from "@/lib/avisos";
 import { aplicarPlan } from "@/lib/precios/planes";
 import { cn } from "@/lib/utils";
+import { usePlanOpcional } from "./plan-provider";
 
 export type AccionPlan = {
   plan: IdPlan;
@@ -22,9 +23,16 @@ export function BotonesPlan({
   /** Ids del catálogo: lo que no esté ahí no se agrega. */
   ids: string[];
 }) {
+  const editable = usePlanOpcional();
   function pulsar({ plan, modo }: AccionPlan) {
     const previa = leerLista();
-    const nueva = aplicarPlan(previa, PLANES[plan].items, modo, new Set(ids));
+    // El plan base de Hogar y el de la semana de Dieta salen de lo que la persona editó.
+    const propio =
+      (plan === "hogar" && editable?.tipo === "hogar") ||
+      (plan === "semana" && editable?.tipo === "dieta");
+    const items =
+      propio && editable ? editable.config.items : PLANES[plan].items;
+    const nueva = aplicarPlan(previa, items, modo, new Set(ids));
     reemplazarLista(nueva);
     const datos = { plan: PLANES[plan].nombre };
     if (modo === "sumar")

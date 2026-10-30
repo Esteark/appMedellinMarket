@@ -5,16 +5,7 @@ import type {
 
 const CLAVE_HOGAR = "mercado-medellin:presupuesto:hogar";
 const CLAVE_DIETA = "mercado-medellin:presupuesto:dieta";
-export const EVENTO_PRESUPUESTO = "mercado-medellin:presupuesto-cambio";
 const CLAVE_CIERRES = "mercado-medellin:presupuesto:cierres";
-const CLAVE_REPARTO_HOGAR = "mercado-medellin:reparto:hogar";
-const CLAVE_REPARTO_DIETA = "mercado-medellin:reparto:dieta";
-
-export type ConfigReparto = {
-  personas: number;
-  aportantes?: number;
-  actualizado: string;
-};
 
 type Datos = {
   rubros: PresupuestoRubro[];
@@ -39,7 +30,6 @@ function guardar(clave: string, rubros: PresupuestoRubro[]) {
   try {
     const datos: Datos = { rubros, actualizado: new Date().toISOString() };
     localStorage.setItem(clave, JSON.stringify(datos));
-    window.dispatchEvent(new Event(EVENTO_PRESUPUESTO));
   } catch {
     // ignorar
   }
@@ -88,30 +78,4 @@ export function agregarCierreLocal(cierre: PresupuestoCierreSnapshot) {
   guardarCierresLocal(
     [...filtrados, cierre].sort((a, b) => a.mes.localeCompare(b.mes)),
   );
-}
-
-export function leerReparto(tipo: "hogar" | "dieta"): ConfigReparto | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const crudo = localStorage.getItem(
-      tipo === "hogar" ? CLAVE_REPARTO_HOGAR : CLAVE_REPARTO_DIETA,
-    );
-    if (!crudo) return null;
-    const p = JSON.parse(crudo) as ConfigReparto;
-    return typeof p.personas === "number" ? p : null;
-  } catch {
-    return null;
-  }
-}
-
-export function guardarReparto(tipo: "hogar" | "dieta", cfg: ConfigReparto) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(
-      tipo === "hogar" ? CLAVE_REPARTO_HOGAR : CLAVE_REPARTO_DIETA,
-      JSON.stringify(cfg),
-    );
-  } catch {
-    // ignorar
-  }
 }

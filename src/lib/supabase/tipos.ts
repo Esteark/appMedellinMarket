@@ -163,6 +163,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"planes_usuario": {
+                  Row: {
+                    "actualizada": string,"config": NonNullable<Json>,"tipo": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizada"?: string,"config": NonNullable<Json>,"tipo": string,"user_id": string
+                  }
+                  Update: {
+                    "actualizada"?: string,"config"?: NonNullable<Json>,"tipo"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"precios_actuales": {
                   Row: {
                     "estado": Database["public"]['Enums']["estado_precio"],"fecha": string,"fuente": string | null,"nota": string | null,"precio": number | null,"producto_id": string,"revisar": boolean,"tienda_id": string,"updated_at": string

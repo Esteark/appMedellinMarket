@@ -69,6 +69,22 @@ export const AVISOS = {
     texto:
       "Este navegador no deja guardar la lista. Inicia sesión para no perderla.",
   },
+  plan_no_guardado: {
+    tipo: "error",
+    emoji: "☁️",
+    texto:
+      "No se pudo guardar el plan. Sigue en este dispositivo y se reintenta.",
+  },
+  plan_fusionado: {
+    tipo: "exito",
+    emoji: "📋",
+    texto: "Unimos tu plan {plan} de este dispositivo con tu cuenta.",
+  },
+  plan_restaurado: {
+    tipo: "info",
+    emoji: "↩️",
+    texto: "Restauramos el plan {plan} que tenías en este dispositivo.",
+  },
   lista_guardada: {
     tipo: "exito",
     emoji: "💾",

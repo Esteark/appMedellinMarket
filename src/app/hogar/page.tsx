@@ -4,7 +4,8 @@ import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
 import { ComparaPresupuesto } from "@/components/planes/compara-presupuesto";
 import { HogarTablas } from "@/components/planes/hogar-tablas";
-import { PlanItems } from "@/components/planes/plan-items";
+import { PlanConDatos } from "@/components/planes/plan-con-datos";
+import { PlanEditable } from "@/components/planes/plan-editable";
 import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
 import { RepartoInteractivo } from "@/components/planes/reparto-interactivo";
 import { catalogo } from "@/lib/datos";
@@ -31,7 +32,7 @@ async function Datos() {
             cargarlas.
           </p>
         </div>
-        <PlanItems plan="hogar" productos={productos} />
+        <PlanEditable productos={productos} />
         <BotonesPlan
           ids={productos.map((p) => p.id)}
           acciones={[
@@ -52,10 +53,6 @@ async function Datos() {
 export default function Hogar() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 pt-4 pb-10">
-      <RepartoInteractivo tipo="hogar" />
-      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
-        <PresupuestoEditable tipo="hogar" />
-      </section>
       <Suspense
         fallback={
           <p
@@ -63,13 +60,31 @@ export default function Hogar() {
             className="flex items-center gap-2 text-sm text-muted-foreground"
           >
             <Spinner />
-            Cargando precios…
+            Cargando tu plan…
           </p>
         }
       >
-        <Datos />
+        <PlanConDatos tipo="hogar">
+          <RepartoInteractivo />
+          <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
+            <PresupuestoEditable />
+          </section>
+          <Suspense
+            fallback={
+              <p
+                role="status"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <Spinner />
+                Cargando precios…
+              </p>
+            }
+          >
+            <Datos />
+          </Suspense>
+          <HogarTablas />
+        </PlanConDatos>
       </Suspense>
-      <HogarTablas />
     </main>
   );
 }
