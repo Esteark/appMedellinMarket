@@ -1,5 +1,6 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { esperarContenido, expect, test } from "./ayuda";
 
 // Buzón de Supabase local (Mailpit, puerto de [local_smtp] en supabase/config.toml).
 const BUZON = "http://127.0.0.1:54324";
@@ -76,6 +77,7 @@ test("recuperar contraseña: el correo trae un enlace con token_hash y la clave 
 
     await page.goto(enlace);
     await expect(page).toHaveURL(/\/nueva-clave$/);
+    await esperarContenido(page);
     await page.getByLabel(/^Contraseña/).fill("otra-clave-segura-2");
     await page.getByRole("button", { name: "Guardar contraseña" }).click();
     await expect(page.getByTestId("usuario")).toBeVisible();
@@ -127,6 +129,7 @@ test("confirmar registro: un token_hash válido abre la sesión y avisa; uno inv
       `/auth/confirmar?token_hash=${hash}&type=signup&siguiente=/`,
     );
     await expect(page).toHaveURL(/\/ingresar\?error=enlace$/);
+    await esperarContenido(page);
     await expect(page.getByText("ya se usó o expiró")).toBeVisible();
   } finally {
     if (usuario) await db.auth.admin.deleteUser(usuario);

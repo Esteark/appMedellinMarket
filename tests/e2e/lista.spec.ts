@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 const PRODUCTOS = ["aceite", "aguacate"];
 
@@ -24,7 +24,7 @@ test("la lista local se une a la cuenta al registrarse y sobrevive sin localStor
   ).toBeVisible();
 
   // Sin la copia local, la lista tiene que volver desde la base.
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => localStorage.removeItem("mercado-medellin:lista"));
   await page.reload();
   for (const id of PRODUCTOS)
     await expect(

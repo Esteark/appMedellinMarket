@@ -1,9 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { esperarContenido, expect, test } from "./ayuda";
 
 test("sin sesión, la tienda de barrio empieza sin precios y el lápiz invita a ingresar", async ({
   page,
 }) => {
   await page.goto("/anotados/barrio");
+  await esperarContenido(page);
   await expect(page.getByTestId("barrio-progreso")).toContainText(
     "0/41 con precio",
   );

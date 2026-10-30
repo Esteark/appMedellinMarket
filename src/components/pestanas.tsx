@@ -45,6 +45,7 @@ export function Pestanas() {
 
   return (
     <nav
+      data-tour="pestanas"
       ref={nav}
       aria-label="Secciones"
       className="mx-auto w-full max-w-6xl border-b px-4"

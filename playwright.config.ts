@@ -16,6 +16,37 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: `http://127.0.0.1:${PUERTO}`,
+    // El tutorial se abre solo la primera vez y bloquea la página: en las demás pruebas ya está visto.
+    // tutorial.spec.ts parte de un estado limpio.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://127.0.0.1:${PUERTO}`,
+          localStorage: [
+            {
+              name: "mercado-medellin:tutorial:v1",
+              value: JSON.stringify({
+                version: 1,
+                general: true,
+                pantallas: [
+                  "/",
+                  "/antojos",
+                  "/listas",
+                  "/hogar",
+                  "/dieta",
+                  "/presupuesto",
+                  "/anotados",
+                  "/anotados/barrio",
+                  "/alertas",
+                  "/producto/[id]",
+                ],
+              }),
+            },
+          ],
+        },
+      ],
+    },
     trace: "retain-on-failure",
   },
   webServer: {

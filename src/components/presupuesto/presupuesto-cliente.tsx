@@ -329,7 +329,10 @@ export function PresupuestoCliente({ productos = [] }: Props) {
         ))}
       </div>
       {tab === "resumen" && (
-        <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+        <section
+          data-tour="presupuesto-total"
+          className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5"
+        >
           <h2 className="text-lg font-bold">Resumen {mes}</h2>
           <div className="grid gap-2.5 sm:grid-cols-4">
             <div className="rounded-[12px] border p-2.5">

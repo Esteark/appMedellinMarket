@@ -104,13 +104,14 @@ export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
       <div className="flex min-w-0 flex-col gap-3">
         <input
           type="search"
+          data-tour="busqueda"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Buscar producto"
           aria-label="Buscar producto"
           className="h-10 rounded-[10px] border border-input bg-card px-3 text-base sm:text-sm"
         />
-        <fieldset className="min-w-0">
+        <fieldset data-tour="chips-grupo" className="min-w-0">
           <legend className="sr-only">Grupos</legend>
           <Deslizador className="gap-1.5 pb-0.5" data-testid="chips-grupos">
             <Chip activo={!grupo} onClick={() => setGrupo(null)}>
@@ -123,7 +124,7 @@ export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
             ))}
           </Deslizador>
         </fieldset>
-        <fieldset className="min-w-0">
+        <fieldset data-tour="chips-tienda" className="min-w-0">
           <legend className="sr-only">Tiendas</legend>
           <Deslizador className="gap-1.5 pb-0.5" data-testid="chips-tiendas">
             <Chip activo={!tienda} onClick={() => setTienda(null)}>
@@ -142,6 +143,7 @@ export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
         </fieldset>
         <section
           ref={rejilla}
+          data-tour="rejilla"
           aria-label="Catálogo"
           data-testid="rejilla"
           className="grid grid-cols-2 gap-2.5 sm:grid-cols-3"

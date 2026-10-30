@@ -33,7 +33,11 @@ export function PlanEditable({ productos }: { productos: Producto[] }) {
   };
 
   return (
-    <div className="flex flex-col gap-3" data-testid="plan-editable">
+    <div
+      className="flex flex-col gap-3"
+      data-testid="plan-editable"
+      data-tour={tipo === "dieta" ? "dieta-plan" : undefined}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p
           role="status"

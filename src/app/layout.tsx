@@ -8,6 +8,9 @@ import { Toaster } from "@/components/avisos/toaster";
 import { Encabezado } from "@/components/encabezado";
 import { Pestanas } from "@/components/pestanas";
 import { SincronizarPresupuesto } from "@/components/presupuesto/sincronizar-presupuesto";
+import { Bombilla } from "@/components/tutorial/bombilla";
+import { ProveedorTutorial } from "@/components/tutorial/proveedor";
+import { Tutorial } from "@/components/tutorial/tutorial";
 import { SITIO } from "@/lib/sitio";
 import "./globals.css";
 
@@ -57,27 +60,31 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <Suspense fallback={<div className="h-10 border-b bg-card" />}>
-          <Encabezado />
-        </Suspense>
-        <Suspense fallback={<div className="h-11 border-b" />}>
-          <Pestanas />
-        </Suspense>
-        {children}
-        {modal}
-        <Toaster />
-        <Suspense fallback={null}>
-          <Sesion />
-        </Suspense>
-        <Suspense fallback={null}>
-          <AvisoDeUrl />
-        </Suspense>
-        <Suspense fallback={null}>
-          <SincronizarPresupuesto />
-        </Suspense>
-        <Suspense fallback={null}>
-          <TipsNoInvasivos />
-        </Suspense>
+        <ProveedorTutorial>
+          <Suspense fallback={<div className="h-10 border-b bg-card" />}>
+            <Encabezado />
+          </Suspense>
+          <Suspense fallback={<div className="h-11 border-b" />}>
+            <Pestanas />
+          </Suspense>
+          {children}
+          {modal}
+          <Toaster />
+          <Suspense fallback={null}>
+            <Sesion />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AvisoDeUrl />
+          </Suspense>
+          <Suspense fallback={null}>
+            <SincronizarPresupuesto />
+          </Suspense>
+          <Suspense fallback={null}>
+            <TipsNoInvasivos />
+          </Suspense>
+          <Tutorial />
+          <Bombilla />
+        </ProveedorTutorial>
       </body>
     </html>
   );

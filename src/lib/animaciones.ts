@@ -241,3 +241,46 @@ export async function arrastrable(
   });
   return () => arrastre.kill();
 }
+
+/** 11 · El foco del tutorial se abre desde el centro del objetivo. */
+export function abrirFoco(foco: Element) {
+  gsap.fromTo(
+    foco,
+    { scale: 0.94, opacity: 0 },
+    { scale: 1, opacity: 1, duration: d(0.32), ease: "power2.out" },
+  );
+}
+
+/** 11 · Al cambiar de paso, el foco se desliza a la nueva posición. */
+export function moverFoco(foco: Element, x: number, y: number) {
+  gsap.to(foco, { x, y, duration: d(0.4), ease: "power2.inOut" });
+}
+
+/** 11 · La tarjeta entra desde el lado más cercano al objetivo (dx, dy en px). */
+export function entrarTarjeta(tarjeta: Element, dx: number, dy: number) {
+  gsap.fromTo(
+    tarjeta,
+    { x: dx, y: dy, opacity: 0 },
+    { x: 0, y: 0, opacity: 1, duration: d(0.24), ease: "power2.out" },
+  );
+}
+
+/** 12 · La bombilla se enciende una vez al terminar el tutorial. */
+export function encenderBombilla(bombilla: Element, brillo: Element | null) {
+  gsap.fromTo(
+    bombilla,
+    { rotation: -8 },
+    {
+      rotation: 0,
+      duration: d(0.5),
+      ease: "back.out(2)",
+      clearProps: "transform",
+    },
+  );
+  if (brillo)
+    gsap.fromTo(
+      brillo,
+      { opacity: 0 },
+      { opacity: 1, duration: d(0.25), yoyo: true, repeat: 1 },
+    );
+}

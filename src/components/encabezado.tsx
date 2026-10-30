@@ -42,7 +42,7 @@ export async function Encabezado() {
   const dias = Math.max(1, Math.floor((f.horasDesdeCorrida ?? 0) / 24));
 
   return (
-    <header className="border-b bg-card">
+    <header data-tour="encabezado" className="border-b bg-card">
       {vieja && (
         <div
           role="alert"

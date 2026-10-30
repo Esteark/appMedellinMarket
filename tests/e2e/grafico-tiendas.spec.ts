@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 test("el gráfico de total por tienda reacciona a la tienda elegida en los chips", async ({
   page,

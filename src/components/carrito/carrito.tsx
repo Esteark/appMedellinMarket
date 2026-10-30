@@ -95,6 +95,7 @@ export function Carrito({
 
   return (
     <aside
+      data-tour="carrito"
       aria-label="Mi lista"
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-card px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgb(15_23_42/0.14)] lg:sticky lg:top-4 lg:bottom-auto lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto lg:rounded-[14px] lg:border lg:pb-2.5 lg:shadow-none"
     >

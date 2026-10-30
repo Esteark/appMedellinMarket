@@ -86,6 +86,11 @@ export const AVISOS = {
     texto:
       "Quitamos {producto} del catálogo de barrio. Sus precios se conservan.",
   },
+  tutorial_reiniciado: {
+    tipo: "info",
+    emoji: "💡",
+    texto: "Tutorial reiniciado. Volverá a aparecer cuando entres.",
+  },
   plan_no_guardado: {
     tipo: "error",
     emoji: "☁️",

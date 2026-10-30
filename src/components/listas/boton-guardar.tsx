@@ -46,6 +46,7 @@ export function BotonGuardar({ lista }: { lista: Lista }) {
     return (
       <button
         type="button"
+        data-tour="boton-guardar"
         data-testid="guardar-lista"
         onClick={() => setAbierto(true)}
         className="rounded-[10px] border bg-background px-3 py-1.5 text-sm font-medium"

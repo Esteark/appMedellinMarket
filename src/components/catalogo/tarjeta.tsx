@@ -29,6 +29,7 @@ export function Tarjeta({
 }: Props) {
   return (
     <article
+      data-tour="tarjeta"
       data-testid={`tarjeta-${p.id}`}
       className={cn(
         "tarjeta relative flex min-w-0 flex-col rounded-[14px] border bg-card",

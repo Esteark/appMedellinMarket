@@ -56,7 +56,7 @@ export function ListaVista({ lista, productos, tiendas, alVaciar }: Props) {
     manual[`${modo}:${clave}`] ?? (!muchos || i === 0);
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div data-tour="lista" className="flex flex-col gap-2.5">
       <fieldset className="grid grid-cols-3 gap-0.5 rounded-[10px] bg-secondary p-0.5 text-xs font-semibold">
         <legend className="sr-only">Cómo ver la lista</legend>
         {MODOS.map(([id, texto]) => (

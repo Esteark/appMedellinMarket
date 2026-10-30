@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 test("Descargar PDF baja lista-mercado-<fecha>.pdf con un PDF de verdad", async ({
   page,

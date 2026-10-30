@@ -62,7 +62,11 @@ export function Barrio({ filas, disponibles, conSesion }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <section aria-label="Progreso" className="flex flex-col gap-1.5">
+      <section
+        data-tour="barrio-progreso"
+        aria-label="Progreso"
+        className="flex flex-col gap-1.5"
+      >
         <p data-testid="barrio-progreso" className="text-sm font-semibold">
           {conPrecio}/{filas.length} con precio · {vencidos} por actualizar
         </p>

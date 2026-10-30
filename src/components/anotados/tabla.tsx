@@ -24,7 +24,7 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
   }, [filas, busqueda]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div data-tour="anotados-tabla" className="flex flex-col gap-3">
       {!conSesion && (
         <p className="rounded-xl bg-anot-bg px-3.5 py-2.5 text-sm text-anot-ink">
           Cualquiera puede ver estos precios.{" "}

@@ -82,6 +82,7 @@ export function Campana({ userId }: { userId: string }) {
   return (
     <Link
       href="/alertas"
+      data-tour="alertas-campana"
       data-testid="campana"
       data-escuchando={escuchando}
       aria-label={n ? `Alertas, ${n} sin leer` : "Alertas"}

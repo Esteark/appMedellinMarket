@@ -66,7 +66,10 @@ export default function Hogar() {
       >
         <PlanConDatos tipo="hogar">
           <RepartoInteractivo />
-          <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
+          <section
+            data-tour="hogar-presupuesto"
+            className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none"
+          >
             <PresupuestoEditable />
           </section>
           <Suspense

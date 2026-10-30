@@ -14,7 +14,9 @@ export default function Listas() {
           cuenta.
         </p>
       </div>
-      <ListasGuardadas />
+      <div data-tour="listas">
+        <ListasGuardadas />
+      </div>
     </main>
   );
 }

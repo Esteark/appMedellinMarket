@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 const CELDA = "celda-aceite-d1";
 const ANOTADO = 8500; // menor que el automático de D1 (8.900) y de hoy

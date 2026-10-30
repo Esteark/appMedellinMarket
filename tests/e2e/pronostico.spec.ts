@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 test("una fruta muestra el chip del pronóstico y un producto de despensa no", async ({
   page,

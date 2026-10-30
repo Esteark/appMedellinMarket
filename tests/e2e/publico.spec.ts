@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./ayuda";
 
 test("sin sesión se ven los precios", async ({ page }) => {
   await page.goto("/");

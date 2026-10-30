@@ -10,7 +10,7 @@ export function Detalle({ datos }: { datos: Datos }) {
   const { producto: p, tiendas } = datos;
   const mejor = tiendas.find((t) => t.id === p.mejor?.tienda);
   return (
-    <div className="flex flex-col gap-4">
+    <div data-tour="producto-detalle" className="flex flex-col gap-4">
       <div className="flex items-start gap-3 pr-20">
         <span className="text-4xl leading-none" aria-hidden="true">
           {p.emoji ?? "🛒"}

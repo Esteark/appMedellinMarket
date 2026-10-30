@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTutorial } from "@/components/tutorial/proveedor";
 import { type ClaveTip, TIPS } from "@/lib/avisos";
 
 const CLAVE_ULTIMO = "mercado-medellin:tips:last-shown";
@@ -66,6 +67,9 @@ function marcarMostrado() {
 
 export function TipsNoInvasivos() {
   const pathname = usePathname();
+  // Mientras el tutorial está abierto o ya se completó, no se repite la ayuda con tips.
+  const { activo, completado } = useTutorial();
+  const sinTips = activo || completado;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mostradoRef = useRef(false);
   const [tip, setTip] = useState<ClaveTip | null>(null);
@@ -89,7 +93,7 @@ export function TipsNoInvasivos() {
   );
 
   useEffect(() => {
-    if (mostradoRef.current) return;
+    if (sinTips || mostradoRef.current) return;
     let reducir = false;
     if (typeof window !== "undefined") {
       reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -123,9 +127,9 @@ export function TipsNoInvasivos() {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [pathname]);
+  }, [pathname, sinTips]);
 
-  if (!tip || typeof document === "undefined") return null;
+  if (!tip || sinTips || typeof document === "undefined") return null;
   const t = TIPS[tip];
   const silenciar = () => {
     try {

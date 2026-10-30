@@ -1,4 +1,5 @@
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { esperarContenido, expect, test } from "./ayuda";
 
 const PERSONAS = "¿Entre cuántas personas?";
 
@@ -12,12 +13,15 @@ async function registrar(page: Page) {
 
 test("sin sesión, cambiar el plan y recargar lo conserva", async ({ page }) => {
   await page.goto("/hogar");
+  await esperarContenido(page);
   await page.waitForLoadState("networkidle");
   await page.getByLabel(PERSONAS).fill("3");
   await expect(page.getByTestId("estado-guardado")).toHaveText(
     "Guardado en este dispositivo",
   );
   await page.reload();
+  await esperarContenido(page);
+  await esperarContenido(page);
   await page.waitForLoadState("networkidle");
   await expect(page.getByLabel(PERSONAS)).toHaveValue("3");
 
@@ -32,6 +36,7 @@ test("con sesión, el plan se guarda en la cuenta y vuelve aunque se borre el di
 }) => {
   await registrar(page);
   await page.goto("/dieta");
+  await esperarContenido(page);
   await page.waitForLoadState("networkidle");
   await page.getByLabel(PERSONAS).fill("4");
   await expect(page.getByTestId("estado-guardado")).toHaveText(
@@ -41,6 +46,7 @@ test("con sesión, el plan se guarda en la cuenta y vuelve aunque se borre el di
     localStorage.removeItem("mercado-medellin:plan:dieta"),
   );
   await page.reload();
+  await esperarContenido(page);
   await expect(page.getByLabel(PERSONAS)).toHaveValue("4");
 });
 
@@ -49,6 +55,7 @@ test("un plan local más nuevo que el de la cuenta aparece como restaurado y se 
 }) => {
   await registrar(page);
   await page.goto("/hogar");
+  await esperarContenido(page);
   await page.waitForLoadState("networkidle");
   await page.getByLabel(PERSONAS).fill("4");
   await expect(page.getByTestId("estado-guardado")).toHaveText(
@@ -63,6 +70,7 @@ test("un plan local más nuevo que el de la cuenta aparece como restaurado y se 
     localStorage.setItem(k, JSON.stringify(plan));
   });
   await page.reload();
+  await esperarContenido(page);
   await expect(
     page.getByRole("status").filter({ hasText: "Restauramos el plan Hogar" }),
   ).toBeVisible();
