@@ -9,6 +9,7 @@ import {
   enFluctuacion,
   etiquetas,
   type Frecuencia,
+  porActualizar,
 } from "@/lib/precios/etiquetas";
 import { type Pronostico, pronosticar } from "@/lib/precios/pronostico";
 import { todas } from "@/lib/supabase/paginar";
@@ -148,6 +149,7 @@ function resumir(
     const e = efectivo.get(`${p.id}|${t}`);
     precios[t] = e?.precio ?? null;
     if (
+      t !== "barrio" &&
       e?.precio != null &&
       e.fecha &&
       desactualizado(e.fecha, hoy, p.frecuencia as Frecuencia)
@@ -192,6 +194,7 @@ function resumir(
       hoy,
       previos: antes,
       causas,
+      tienda: mejor.tienda,
     }),
     cambio: antes.length
       ? Math.round(((mejor.precio * antes.length) / suma - 1) * 100)
@@ -456,7 +459,12 @@ export const usuario = cache(async (): Promise<Usuario | null> => {
   return { id: data.claims.sub, email: String(data.claims.email ?? "") };
 });
 
-export type AlertaHoy = { id: number; mensaje: string; monto: number };
+export type AlertaHoy = {
+  id: number;
+  tipo: string;
+  mensaje: string;
+  monto: number;
+};
 
 /** Lista guardada y alertas no leídas de hoy del usuario con sesión. RLS filtra por usuario. */
 export async function datosSesion(): Promise<{
@@ -470,7 +478,7 @@ export async function datosSesion(): Promise<{
     db.from("listas").select("items").maybeSingle(),
     db
       .from("alertas")
-      .select("id, mensaje, monto")
+      .select("id, tipo, mensaje, monto")
       .eq("leida", false)
       .gte("creada", `${hoyBogota()}T00:00:00-05:00`),
     db
@@ -591,4 +599,73 @@ export async function planGuardado(
   // Si la base falla, el plan sigue funcionando en el dispositivo.
   if (error) console.error("planGuardado:", error.message);
   return { conSesion: true, config: data?.config ?? null };
+}
+
+export type FilaBarrio = {
+  id: string;
+  nombre: string;
+  emoji: string | null;
+  unidad: string;
+  grupo: string;
+  frecuencia: Frecuencia;
+  orden: number;
+  /** Último precio anotado a mano; null = «sin dato». Nunca un estimado. */
+  precio: number | null;
+  fecha: string | null;
+  /** Pasó el plazo (14 días diaria / 30 semanal) sin precio manual nuevo. */
+  porActualizar: boolean;
+};
+
+/** Catálogo activo de Tienda/Carnicería de barrio con su último precio manual, y lo que se puede agregar. */
+export async function catalogoBarrio(): Promise<{
+  filas: FilaBarrio[];
+  disponibles: { id: string; nombre: string; grupo: string }[];
+}> {
+  await connection();
+  const hoy = hoyBogota();
+  const db = await clienteServidor();
+  const [productos, catalogo, anotados] = await Promise.all([
+    db
+      .from("productos")
+      .select("id, nombre, emoji, unidad, grupo, frecuencia")
+      .order("nombre"),
+    db.from("catalogo_tienda").select("producto_id, activo, orden"),
+    db
+      .from("anotados")
+      .select("producto_id, precio, fecha")
+      .eq("tienda_id", "barrio"),
+  ]);
+  for (const r of [productos, catalogo, anotados])
+    if (r.error) throw new Error(r.error.message);
+  const activos = new Map(
+    (catalogo.data ?? [])
+      .filter((c) => c.activo)
+      .map((c) => [c.producto_id, c.orden]),
+  );
+  const anotado = new Map((anotados.data ?? []).map((a) => [a.producto_id, a]));
+  const lista = productos.data ?? [];
+  return {
+    filas: lista
+      .filter((p) => activos.has(p.id))
+      .map((p) => {
+        const a = anotado.get(p.id);
+        const frecuencia = p.frecuencia as Frecuencia;
+        return {
+          id: p.id,
+          nombre: p.nombre,
+          emoji: p.emoji,
+          unidad: p.unidad,
+          grupo: p.grupo,
+          frecuencia,
+          orden: activos.get(p.id) ?? 0,
+          precio: a?.precio ?? null,
+          fecha: a?.fecha ?? null,
+          porActualizar: !!a && porActualizar(a.fecha, hoy, frecuencia),
+        };
+      })
+      .sort((x, y) => x.orden - y.orden),
+    disponibles: lista
+      .filter((p) => !activos.has(p.id))
+      .map(({ id, nombre, grupo }) => ({ id, nombre, grupo })),
+  };
 }

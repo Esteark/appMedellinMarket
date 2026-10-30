@@ -10,6 +10,7 @@ const ESTILO: Record<Tipo, string> = {
   mayorista: "bg-secondary text-muted-foreground",
   revisar: "bg-warn-bg text-warn-ink",
   desactualizado: "bg-warn-bg text-warn-ink",
+  actualizar: "bg-warn-bg text-warn-ink",
   sin_dato: "bg-secondary text-muted-foreground",
 };
 
@@ -19,6 +20,7 @@ function texto(tipo: Tipo, cambio: number | null) {
   if (tipo === "clima") return "🌧️ clima";
   if (tipo === "sin_dato") return "sin dato";
   if (tipo === "desactualizado") return "⏱ desactualizado";
+  if (tipo === "actualizar") return "✎ actualizar";
   return tipo;
 }
 
@@ -37,7 +39,9 @@ export function Etiqueta({
       title={
         tipo === "desactualizado"
           ? "Este precio no se ha visto hace días: puede haber cambiado"
-          : undefined
+          : tipo === "actualizar"
+            ? "Tienda de barrio: este precio anotado ya tiene días. Actualízalo en Anotados → barrio"
+            : undefined
       }
       className={cn(
         "inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums",

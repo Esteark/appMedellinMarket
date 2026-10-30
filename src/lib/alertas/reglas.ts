@@ -1,5 +1,10 @@
 import { diasEntre } from "@/lib/fecha";
-import { climaReciente, tendencia } from "@/lib/precios/etiquetas";
+import {
+  climaReciente,
+  type Frecuencia,
+  porActualizar,
+  tendencia,
+} from "@/lib/precios/etiquetas";
 import {
   type Lista,
   mejorTiendaCompleta,
@@ -12,7 +17,8 @@ export type TipoAlerta =
   | "mercado_completo"
   | "subida"
   | "caro_por_clima"
-  | "fuente_caida";
+  | "fuente_caida"
+  | "precio_manual_vencido";
 
 export type AlertaNueva = {
   tipo: TipoAlerta;
@@ -21,6 +27,36 @@ export type AlertaNueva = {
   monto: number;
   mensaje: string;
 };
+
+/**
+ * precio_manual_vencido: un ítem de la lista que está en el catálogo activo de barrio no tiene precio
+ * manual o su fecha pasó de 14 días (diaria) / 30 (semanal). Los del catálogo que no están en la lista no cuentan.
+ */
+export function alertasBarrioVencido(
+  lista: Lista,
+  catalogo: Set<string>,
+  ultimaFecha: Map<string, string>,
+  frecuencia: Map<string, Frecuencia>,
+  hoy: string,
+): AlertaNueva[] {
+  const alertas: AlertaNueva[] = [];
+  for (const id of Object.keys(lista)) {
+    if (!catalogo.has(id)) continue;
+    const fecha = ultimaFecha.get(id);
+    if (fecha && !porActualizar(fecha, hoy, frecuencia.get(id) ?? "diaria"))
+      continue;
+    alertas.push({
+      tipo: "precio_manual_vencido",
+      producto_id: id,
+      tienda_id: "barrio",
+      monto: 0,
+      mensaje: fecha
+        ? `${id} lleva días sin actualizarse en la tienda de barrio`
+        : `${id} no tiene precio en la tienda de barrio`,
+    });
+  }
+  return alertas;
+}
 
 /**
  * mas_barato: otra tienda es ≥10 % más barata que la preferida y el ahorro

@@ -1,3 +1,4 @@
+import { DIAS_ACTUALIZAR } from "@/data/barrio";
 import { diasEntre } from "@/lib/fecha";
 
 export type Frecuencia = "diaria" | "semanal";
@@ -10,7 +11,8 @@ export type Etiqueta =
   | "estimado"
   | "mayorista"
   | "revisar"
-  | "desactualizado";
+  | "desactualizado"
+  | "actualizar";
 
 /**
  * ↑/↓: precio actual contra el promedio de los previos (los 7 días anteriores), umbral ±15 %
@@ -36,6 +38,15 @@ export function desactualizado(
   frecuencia: Frecuencia,
 ): boolean {
   return diasEntre(fecha, hoy) > (frecuencia === "diaria" ? 1 : 7) + 3;
+}
+
+/** Tienda/Carnicería de barrio: pide actualizar tras 14 días (diaria) o 30 (semanal) sin precio manual. */
+export function porActualizar(
+  fecha: string,
+  hoy: string,
+  frecuencia: Frecuencia,
+): boolean {
+  return diasEntre(fecha, hoy) > DIAS_ACTUALIZAR[frecuencia];
 }
 
 /** Hay una causa climática (es_clima) en los últimos 7 días. */
@@ -90,6 +101,8 @@ export type EntradaEtiquetas = {
   hoy: string;
   previos?: number[];
   causas?: { fecha: string; es_clima: boolean }[];
+  /** Con "barrio" la frescura es `actualizar`, no `desactualizado`. */
+  tienda?: string;
 };
 
 /** Todas las etiquetas de un precio efectivo, en orden de presentación. */
@@ -103,7 +116,9 @@ export function etiquetas(e: EntradaEtiquetas): Etiqueta[] {
   if (e.estado === "estimado") salida.push("estimado");
   if (e.fuente?.startsWith("SIPSA")) salida.push("mayorista");
   if (e.revisar) salida.push("revisar");
-  if (desactualizado(e.fecha, e.hoy, e.frecuencia))
+  if (e.tienda === "barrio") {
+    if (porActualizar(e.fecha, e.hoy, e.frecuencia)) salida.push("actualizar");
+  } else if (desactualizado(e.fecha, e.hoy, e.frecuencia))
     salida.push("desactualizado");
   return salida;
 }

@@ -9,7 +9,7 @@ const CLAVE = "mercado-medellin:resumen";
 
 type Props = {
   /** null sin sesión. Ya ordenadas por monto. */
-  alertas: { id: number; mensaje: string }[] | null;
+  alertas: { id: number; tipo: string; mensaje: string }[] | null;
   /** Texto de `cuando()` si la corrida tiene más de 26 h. */
   viejaDesde: string | null;
   caidas: string[];
@@ -32,7 +32,12 @@ export function ResumenDelDia({ alertas, viejaDesde, caidas }: Props) {
         avisar(
           "alerta_nueva",
           { mensaje: a.mensaje },
-          { texto: "Ver", alPulsar: () => router.push("/alertas") },
+          a.tipo === "precio_manual_vencido"
+            ? {
+                texto: "Actualizar precios de barrio",
+                alPulsar: () => router.push("/anotados/barrio"),
+              }
+            : { texto: "Ver", alPulsar: () => router.push("/alertas") },
           `alerta-${a.id}`,
         );
       if (resto) avisar("resumen_alertas", { n: resto });

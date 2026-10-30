@@ -3,6 +3,7 @@ import {
   type AlertaNueva,
   alertaMercadoCompleto,
   alertaSubida,
+  alertasBarrioVencido,
   alertasMasBarato,
 } from "@/lib/alertas/reglas";
 import { restarDias } from "@/lib/fecha";
@@ -15,6 +16,7 @@ const TIPOS_USUARIO = [
   "mercado_completo",
   "subida",
   "caro_por_clima",
+  "precio_manual_vencido",
 ];
 
 /**
@@ -106,6 +108,27 @@ export async function alertasUsuarios(db: Admin, hoy: string): Promise<number> {
     (preferencias ?? []).map((p) => [p.user_id, p.umbral_ahorro]),
   );
 
+  // Tienda de barrio: qué productos se le siguen y cuándo fue el último precio manual de cada uno.
+  const [{ data: catalogoDb }, { data: anotadosDb }, { data: productosDb }] =
+    await Promise.all([
+      db.from("catalogo_tienda").select("producto_id").eq("activo", true),
+      db
+        .from("anotados")
+        .select("producto_id, fecha")
+        .eq("tienda_id", "barrio"),
+      db.from("productos").select("id, frecuencia").in("id", ids),
+    ]);
+  const catalogoBarrio = new Set((catalogoDb ?? []).map((c) => c.producto_id));
+  const fechaBarrio = new Map(
+    (anotadosDb ?? []).map((a) => [a.producto_id, a.fecha]),
+  );
+  const frecuencia = new Map(
+    (productosDb ?? []).map((p) => [
+      p.id,
+      p.frecuencia === "semanal" ? ("semanal" as const) : ("diaria" as const),
+    ]),
+  );
+
   const filas: TablesInsert<"alertas">[] = [];
   for (const l of listas) {
     const lista = items.get(l.user_id) ?? {};
@@ -121,6 +144,15 @@ export async function alertasUsuarios(db: Admin, hoy: string): Promise<number> {
     ];
     const completo = alertaMercadoCompleto(lista, precios, preferida, tiendas);
     if (completo) nuevas.push(completo);
+    nuevas.push(
+      ...alertasBarrioVencido(
+        lista,
+        catalogoBarrio,
+        fechaBarrio,
+        frecuencia,
+        hoy,
+      ),
+    );
     for (const id of Object.keys(lista)) {
       const actual = precios[id]?.[preferida];
       if (actual == null) continue;

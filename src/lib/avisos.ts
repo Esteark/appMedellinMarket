@@ -69,6 +69,23 @@ export const AVISOS = {
     texto:
       "Este navegador no deja guardar la lista. Inicia sesión para no perderla.",
   },
+  barrio_sin_precio: {
+    tipo: "aviso",
+    emoji: "🏷️",
+    texto:
+      "Los productos de barrio sin precio no entran en el total: anótalos en Anotados → barrio.",
+  },
+  barrio_producto_agregado: {
+    tipo: "exito",
+    emoji: "➕",
+    texto: "Agregamos {producto} al catálogo de barrio.",
+  },
+  barrio_producto_quitado: {
+    tipo: "info",
+    emoji: "🗑️",
+    texto:
+      "Quitamos {producto} del catálogo de barrio. Sus precios se conservan.",
+  },
   plan_no_guardado: {
     tipo: "error",
     emoji: "☁️",

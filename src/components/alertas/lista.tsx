@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { marcarLeidas } from "@/app/alertas/acciones";
@@ -14,6 +15,7 @@ const EMOJI: Record<string, string> = {
   subida: "📈",
   caro_por_clima: "🌧️",
   fuente_caida: "⚠️",
+  precio_manual_vencido: "🏷️",
 };
 
 /** Alertas del usuario: las 5 de mayor monto y un botón para ver el resto. */
@@ -69,6 +71,14 @@ export function ListaAlertas({ alertas }: { alertas: AlertaFila[] }) {
             </span>
             <div className="flex flex-col gap-0.5">
               <span>{a.mensaje}</span>
+              {a.tipo === "precio_manual_vencido" && (
+                <Link
+                  href="/anotados/barrio"
+                  className="font-medium text-anot-ink underline underline-offset-2"
+                >
+                  Actualizar precios de barrio
+                </Link>
+              )}
               <span className="text-xs text-muted-foreground">
                 {cuando(a.creada)}
               </span>

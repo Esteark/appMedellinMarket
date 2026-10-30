@@ -6,6 +6,7 @@ import "./cargar-env";
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { ADAPTADORES } from "@/corrida/orquestador";
+import { CATALOGO_BARRIO } from "@/data/barrio";
 import type { Database, TablesInsert } from "@/lib/supabase/tipos";
 import { unidadBase } from "@/lib/unidades";
 
@@ -229,6 +230,19 @@ const filasEstado = Object.entries(estado.fuentes)
 // --- carga (en orden de llaves foráneas) ---
 await upsert("tiendas", filasTiendas, "id");
 await upsert("productos", filasProductos, "id");
+// Catálogo de barrio (solo qué productos se siguen, ningún precio). Si ya existe no se toca:
+// quitar un producto es `activo = false` y migrar no lo reactiva.
+{
+  const { error } = await db.from("catalogo_tienda").upsert(
+    CATALOGO_BARRIO.map((p) => ({
+      producto_id: p.id,
+      tienda_id: "barrio",
+      orden: p.orden,
+    })),
+    { onConflict: "producto_id,tienda_id", ignoreDuplicates: true },
+  );
+  if (error) throw new Error(`catalogo_tienda: ${error.message}`);
+}
 await upsert("precios_actuales", filasPrecios, "producto_id,tienda_id");
 await upsert("producto_fuente", filasFuente, "producto_id,tienda_id");
 await upsert(
@@ -261,6 +275,7 @@ if (!previa) {
 const esperado: [Tabla, number, "=" | "≥"][] = [
   ["tiendas", filasTiendas.length, "≥"],
   ["productos", filasProductos.length, "="],
+  ["catalogo_tienda", CATALOGO_BARRIO.length, "≥"],
   ["precios_actuales", filasPrecios.length, "≥"],
   ["tienda_estado", filasEstado.length, "≥"],
   ["anotados", filasAnotados.length, "≥"],

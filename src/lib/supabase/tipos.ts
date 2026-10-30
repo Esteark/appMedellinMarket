@@ -63,6 +63,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"catalogo_tienda": {
+                  Row: {
+                    "activo": boolean,"autor": string | null,"creado": string,"orden": number,"producto_id": string,"tienda_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activo"?: boolean,"autor"?: string | null,"creado"?: string,"orden"?: number,"producto_id": string,"tienda_id"?: string
+                  }
+                  Update: {
+                    "activo"?: boolean,"autor"?: string | null,"creado"?: string,"orden"?: number,"producto_id"?: string,"tienda_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "catalogo_tienda_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "catalogo_tienda_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"clima_causas": {
                   Row: {
                     "es_clima": boolean,"fecha": string,"fuente_url": string | null,"producto_id": string,"texto": string
