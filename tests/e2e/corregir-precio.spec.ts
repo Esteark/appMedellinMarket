@@ -42,7 +42,8 @@ test("con sesión, corregir un precio lo marca como corregido a mano y quitarlo 
   await tarjeta.getByRole("button", { name: /^Corregir precio/ }).click();
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "Quitar corrección" }).click();
+    .getByRole("button", { name: "Quitar corrección" })
+    .click();
   await expect(
     page.getByRole("status").filter({ hasText: "Quitaste tu corrección" }),
   ).toBeVisible();
