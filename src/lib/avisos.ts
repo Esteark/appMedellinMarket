@@ -69,6 +69,52 @@ export const AVISOS = {
     texto:
       "Este navegador no deja guardar la lista. Inicia sesión para no perderla.",
   },
+  lista_guardada: {
+    tipo: "exito",
+    emoji: "💾",
+    texto: "Lista «{nombre}» guardada.",
+  },
+  lista_cargada: {
+    tipo: "info",
+    emoji: "🛒",
+    texto: "«{nombre}» es ahora tu lista.",
+  },
+  lista_sumada: {
+    tipo: "exito",
+    emoji: "➕",
+    texto: "Sumaste «{nombre}» a tu lista.",
+  },
+  lista_renombrada: {
+    tipo: "exito",
+    emoji: "✏️",
+    texto: "Lista renombrada a «{nombre}».",
+  },
+  lista_duplicada: {
+    tipo: "exito",
+    emoji: "📑",
+    texto: "Creamos «{nombre}».",
+  },
+  lista_eliminada: {
+    tipo: "info",
+    emoji: "🗑️",
+    texto: "Eliminaste «{nombre}».",
+  },
+  limite_listas: {
+    tipo: "aviso",
+    emoji: "📚",
+    texto:
+      "Puedes guardar hasta 20 listas de 200 productos. Elimina una para guardar otra.",
+  },
+  nombre_repetido: {
+    tipo: "aviso",
+    emoji: "🔁",
+    texto: "Ya tienes una lista con ese nombre.",
+  },
+  listas_fusionadas: {
+    tipo: "exito",
+    emoji: "📚",
+    texto: "Unimos tus listas guardadas con las de tu cuenta ({n} en total).",
+  },
   lista_vaciada: { tipo: "info", emoji: "🧺", texto: "Lista vaciada." },
   datos_viejos: {
     tipo: "aviso",

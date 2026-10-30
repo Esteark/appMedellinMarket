@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BotonGuardar } from "@/components/listas/boton-guardar";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import type { Lista } from "@/lib/precios/lista";
 import { type ModoLista, SIN_PRECIO, seccionar } from "@/lib/precios/secciones";
@@ -95,6 +96,7 @@ export function ListaVista({ lista, productos, tiendas, alVaciar }: Props) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <DescargarPdf lista={lista} productos={productos} tiendas={tiendas} />
+        <BotonGuardar lista={lista} />
         <button
           type="button"
           onClick={alVaciar}

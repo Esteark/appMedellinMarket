@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { SincronizarListas } from "@/components/listas/sincronizar-listas";
 import { ordenarAlertas } from "@/lib/alertas/reglas";
 import { datosSesion, frescura, usuario } from "@/lib/datos";
 import { cuando } from "@/lib/fecha";
@@ -21,6 +22,7 @@ export async function Sesion() {
   return (
     <>
       {datos && <SincronizarLista guardada={datos.lista ?? {}} />}
+      {datos && <SincronizarListas nube={datos.listas} />}
       <ResumenDelDia
         alertas={datos ? ordenarAlertas(datos.alertas) : null}
         viejaDesde={

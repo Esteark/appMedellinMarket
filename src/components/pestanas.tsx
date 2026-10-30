@@ -16,6 +16,7 @@ const PESTANAS = [
   { href: "/dieta", texto: "Dieta" },
   { href: "/presupuesto", texto: "Presupuesto" },
   { href: "/anotados", texto: "Anotados" },
+  { href: "/listas", texto: "Mis listas" },
 ];
 
 export function Pestanas() {

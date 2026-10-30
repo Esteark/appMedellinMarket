@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { cache } from "react";
 import { alertasFuenteCaida, ordenarAlertas } from "@/lib/alertas/reglas";
 import { diasEntre, hoyBogota, restarDias } from "@/lib/fecha";
+import type { ListaGuardada } from "@/lib/listas/guardadas";
 import {
   desactualizado,
   type Etiqueta,
@@ -396,22 +397,32 @@ export type AlertaHoy = { id: number; mensaje: string; monto: number };
 /** Lista guardada y alertas no leídas de hoy del usuario con sesión. RLS filtra por usuario. */
 export async function datosSesion(): Promise<{
   lista: Record<string, number> | null;
+  listas: ListaGuardada[];
   alertas: AlertaHoy[];
 }> {
   await connection();
   const db = await clienteServidor();
-  const [lista, alertas] = await Promise.all([
+  const [lista, alertas, guardadas] = await Promise.all([
     db.from("listas").select("items").maybeSingle(),
     db
       .from("alertas")
       .select("id, mensaje, monto")
       .eq("leida", false)
       .gte("creada", `${hoyBogota()}T00:00:00-05:00`),
+    db
+      .from("listas_guardadas")
+      .select("nombre, items, tienda_preferida, actualizada"),
   ]);
-  for (const r of [lista, alertas])
+  for (const r of [lista, alertas, guardadas])
     if (r.error) throw new Error(r.error.message);
   return {
     lista: (lista.data?.items as Record<string, number> | undefined) ?? null,
+    listas: (guardadas.data ?? []).map((l) => ({
+      nombre: l.nombre,
+      items: l.items as Record<string, number>,
+      tienda_preferida: l.tienda_preferida ?? "d1",
+      actualizada: l.actualizada,
+    })),
     alertas: (alertas.data ?? []).map((a) => ({ ...a, monto: a.monto ?? 0 })),
   };
 }

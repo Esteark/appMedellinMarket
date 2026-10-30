@@ -143,6 +143,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"listas_guardadas": {
+                  Row: {
+                    "actualizada": string,"creada": string,"id": string,"items": NonNullable<Json>,"nombre": string,"nombre_clave": string | null,"tienda_preferida": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizada"?: string,"creada"?: string,"id"?: string,"items"?: NonNullable<Json>,"nombre": string,"nombre_clave"?: never,"tienda_preferida"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "actualizada"?: string,"creada"?: string,"id"?: string,"items"?: NonNullable<Json>,"nombre"?: string,"nombre_clave"?: never,"tienda_preferida"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "listas_guardadas_tienda_preferida_fkey"
+      columns: ["tienda_preferida"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"precios_actuales": {
                   Row: {
                     "estado": Database["public"]['Enums']["estado_precio"],"fecha": string,"fuente": string | null,"nota": string | null,"precio": number | null,"producto_id": string,"revisar": boolean,"tienda_id": string,"updated_at": string
