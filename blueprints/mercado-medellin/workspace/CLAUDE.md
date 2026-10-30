@@ -1,6 +1,6 @@
 # Mercado Medellín
 
-Compara precios de 144 productos de mercado en las tiendas de Medellín, arma la lista de la familia y avisa cuando la corrida diaria falla. Web pública de lectura (Next.js) + corrida diaria en GitHub Actions + Supabase.
+Compara precios de 144 productos de mercado en **5 tiendas de Medellín** —D1, La Minorista (SIPSA), La Vaquita, PriceSmart y Tienda/Carnicería de barrio—, arma la lista de la familia y avisa cuando la corrida diaria falla. Web pública de lectura (Next.js) + corrida diaria en GitHub Actions + Supabase. Incluye precios corregibles a mano, listas guardadas, Hogar/Dieta editables, pronóstico a 7 días y un tutorial con GSAP que aparece una vez por dispositivo. Éxito, Carulla, Euro, Ara e Ísimo se retiraron el 30-oct-2026.
 
 ## Comandos
 
@@ -21,7 +21,7 @@ Compara precios de 144 productos de mercado en las tiendas de Medellín, arma la
 | Cargar datos del artifact | `pnpm migrar` |
 | Tipos de la base | `pnpm gen:tipos` |
 | Corrida de precios | `pnpm corrida` · `pnpm corrida --todo` · `pnpm corrida --ayuda` |
-| Capturar fixtures reales | `pnpm capturar vtex` · `pnpm capturar euro` · `pnpm capturar sipsa` |
+| Capturar fixtures reales | `pnpm capturar vtex` · `pnpm capturar sipsa` · `pnpm capturar vaquita` |
 
 **Gate:** `pnpm typecheck && pnpm lint && pnpm test` pasa antes de marcar cualquier tarea como hecha.
 Desde el paso 2, Supabase local debe estar arriba (`pnpm exec supabase status` sale 0).
@@ -36,7 +36,7 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 
 **Petición web.** navegador → `src/proxy.ts` (refresca la sesión con `getClaims()`) → `src/app/<ruta>/page.tsx` (server component) → `src/lib/datos.ts` → `src/lib/supabase/server.ts` (clave publicable + cookies) → PostgREST con RLS. Las mutaciones son server actions (`src/app/**/acciones.ts`) que validan con zod y usan el cliente de sesión: RLS decide.
 
-**Corrida diaria.** `.github/workflows/corrida.yml` (cron `17 11 * * *` UTC = 6:17 a. m. Bogotá) → `pnpm corrida` → `scripts/corrida.ts` → `src/corrida/orquestador.ts` → adaptadores (`vtex.ts`, `euro.ts`, `sipsa.ts`) → upserts con `src/corrida/admin.ts` (service role) → `alertas-usuario.ts` → `correo.ts` (un correo al admin si algo falló).
+**Corrida diaria.** `.github/workflows/corrida.yml` (cron `17 11 * * *` UTC = 6:17 a. m. Bogotá) → `pnpm corrida` → `scripts/corrida.ts` → `src/corrida/orquestador.ts` → adaptadores (`vtex.ts`, `sipsa.ts`, `vaquita.ts`) → upserts con `src/corrida/admin.ts` (service role) → `alertas-usuario.ts` → `correo.ts` (un correo al admin si algo falló). PriceSmart y Tienda/Carnicería de barrio son manuales.
 
 | Capa | Puede importar | Nunca |
 |---|---|---|
@@ -57,6 +57,12 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 | Env de la web | `src/lib/supabase/server.ts` (zod) · env de scripts: `scripts/cargar-env.ts` |
 | Tokens de diseño | `src/app/globals.css` |
 | Planes Hogar/Dieta | `src/data/planes.ts` |
+| Precio corregido a mano | `anotados` (vigente) + `precios_manuales_historial` (observación), por `corregir_precio` / `quitar_correccion` |
+| Listas guardadas | `src/lib/listas/guardadas.ts`; tabla `listas_guardadas`; local `mercado-medellin:listas` |
+| Plan editable Hogar/Dieta | `src/lib/planes/config.ts`; tabla `planes_usuario`; local `mercado-medellin:plan:{hogar\|dieta}` |
+| Pronóstico a 7 días | `src/lib/precios/pronostico.ts` (puro, sin red); vistas `serie_pronostico` y tabla `contexto_mercado` |
+| Catálogo de Tienda/Carnicería de barrio | tabla `catalogo_tienda` (41 productos, sin precios) + `src/data/barrio.ts`; se edita en `/anotados/barrio` |
+| Tutorial y bombilla de ayuda | `src/lib/tutorial/*`, `src/components/tutorial/*`; local `mercado-medellin:tutorial:v1` |
 
 ## Reglas de código
 
@@ -66,9 +72,10 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 4. **Validar en el borde:** cada server action parsea su `FormData` con zod antes de tocar la base.
 5. **PostgREST devuelve máx. 1000 filas:** toda lectura que pueda pasar de 1000 pagina con `.range()`.
 6. **Fechas en Bogotá:** `hoyBogota()` de `src/lib/fecha.ts`; nunca `toISOString().slice(0, 10)`.
-7. **Nunca inventar un precio ni una causa.** Sin hallazgo no se toca `precios_actuales`; sin coincidencia climática explícita la UI dice "causa no reportada".
+7. **Nunca inventar un precio ni una causa.** Sin hallazgo no se toca `precios_actuales`; sin coincidencia climática explícita la UI dice "causa no reportada". La corrección a mano va por `corregir_precio`, con autor, y no borra el automático.
 8. **Componentes ≤ 250 líneas.** Más largo → partir por responsabilidad.
 9. **Sin dependencias nuevas** salvo las de `blueprint.md` §11.
+10. **El pronóstico no es un precio.** Estadística determinista (sin IA/LLM ni red), no se guarda en tablas de precios y no entra en totales, óptimo, alertas ni PDF; se muestra como rango con probabilidad y confianza.
 
 ## Sistema de diseño
 
@@ -121,7 +128,11 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 
 1. La service role key solo existe en `src/corrida/admin.ts`, `scripts/` y los secrets de GitHub. Nunca en `src/app`, `src/components` ni en una variable `NEXT_PUBLIC_*`.
 2. Una corrida que falla no puede pasar en silencio: excepción → exit 1 (GitHub avisa) y correo al admin; tienda en `fallo` → correo.
-3. Respetar robots.txt, User-Agent propio, ≥1 s entre peticiones a la misma tienda. Ísimo no tiene adaptador. Nunca saltar captchas ni logins.
+3. Respetar robots.txt, User-Agent propio, ≥1 s entre peticiones a la misma tienda. Solo se consultan D1, La Minorista y La Vaquita. Nunca saltar captchas ni logins.
 4. Los fixtures de `tests/fixtures/` se capturan con `pnpm capturar`; nunca se escriben a mano.
 5. Nunca commitear secretos, `.env.local` ni salida de build. Nunca editar a mano `tipos.ts` ni una migración ya aplicada.
 6. Nunca marcar una tarea como hecha con un gate en rojo. Plan de construcción: `blueprints/mercado-medellin/tasks.json` y `epics/`.
+7. Una corrección de precio es global y con autor: solo su autor la quita, el automático nunca se borra y el historial del pronóstico no se rellena a mano.
+8. Tienda/Carnicería de barrio no siembra ni inventa precios: `catalogo_tienda` solo dice qué productos se siguen y cada precio entra por `corregir_precio('barrio', …)`. "Quitar" es `activo = false`, nunca `delete`.
+9. Las tiendas retiradas no vuelven: `TIENDAS_RETIRADAS` en `scripts/migrar.ts` filtra Éxito, Carulla, Euro, Ara e Ísimo. PriceSmart se queda (manual).
+10. El tutorial no bloquea ni escribe datos: una vez por dispositivo, se salta con `Esc`/`Saltar`, no entra en rutas de auth y no toca Supabase.

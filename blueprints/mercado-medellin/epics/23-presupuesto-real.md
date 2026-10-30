@@ -66,11 +66,11 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] 23.10.2 Pulir móvil: evitar solapamiento con barra/carrito (bottom + safe-area), z-index 65, animaciones con GSAP y `prefers-reduced-motion`, sin bloquear interacción
 
 ### 23.11 Hogar/Dieta: reparto interactivo entre personas
-- [ ] Hacer los gráficos/reparto de Hogar/Dieta dinámicos (no estáticos). Añadir campo editable "¿Entre cuántas personas?" 
-- [ ] El texto "entre X personas toca dividir..." / "a cada uno le corresponde..." debe recalcularse en tiempo real al cambiar presupuesto o nº de personas
-- [ ] Debe reaccionar en toda la pestaña Hogar/Dieta; si se modifica el presupuesto/rubro o el número de personas se actualiza el reparto al instante
-- [ ] Partir de los valores actuales como base. Persistir configuración en `localStorage` y, si hay sesión, guardar/sobrescribir en DB (sin inventar valores)
-- [ ] Mantener coherencia con los montos del presupuesto Hogar/Dieta
+- [x] Hacer los gráficos/reparto de Hogar/Dieta dinámicos (no estáticos). Añadir campo editable "¿Entre cuántas personas?" 
+- [x] El texto "entre X personas toca dividir..." / "a cada uno le corresponde..." debe recalcularse en tiempo real al cambiar presupuesto o nº de personas
+- [x] Debe reaccionar en toda la pestaña Hogar/Dieta; si se modifica el presupuesto/rubro o el número de personas se actualiza el reparto al instante
+- [x] Partir de los valores actuales como base. Persistir configuración en `localStorage` y, si hay sesión, guardar/sobrescribir en DB (sin inventar valores)
+- [x] Mantener coherencia con los montos del presupuesto Hogar/Dieta
 
 ## Criterio de hecho
 

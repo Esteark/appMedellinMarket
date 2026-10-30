@@ -44,7 +44,7 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 | 🟢 **Frescura visible**           | El encabezado muestra cuándo se actualizó, qué fuentes respondieron y un banner rojo si la última corrida tiene más de 26 horas.                                                                                                                                                                    |
 | ✉️ **Nada falla en silencio**     | Si una tienda deja de responder o la corrida se cae, el administrador recibe un correo.                                                                                                                                                                                                             |
 
-**En camino** (ver [estado del proyecto](#estado-del-proyecto)): cuentas de usuario con la lista guardada, notificaciones, botón para actualizar precios cuando están viejos, precios anotados a mano, alertas personales y los planes _Hogar_ y _Dieta_.
+**En camino** (ver [estado del proyecto](#estado-del-proyecto)): cuentas de usuario con la lista guardada, notificaciones, botón para actualizar precios cuando están viejos, precios corregidos a mano, listas de mercado guardadas, los planes _Hogar_ y _Dieta_ editables, el pronóstico a 7 días, el catálogo manual de la tienda de barrio y el tutorial animado.
 
 ---
 
@@ -54,10 +54,10 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
                      6:17 a. m. (Bogotá), todos los días
 ┌──────────────────┐        ┌───────────────────────────────┐
 │  GitHub Actions  │ ─────► │  pnpm corrida                 │
-│  cron + manual   │        │  adaptadores: D1 · Euro · SIPSA│
-└──────────────────┘        │  normalizar → validar → upsert │
-                            │  alertas por usuario           │
-                            │  correo al admin si algo falla │
+│  cron + manual   │        │  D1 · La Vaquita · SIPSA      │
+└──────────────────┘        │  normalizar → validar → upsert│
+                            │  alertas por usuario          │
+                            │  correo al admin si falla     │
                             └───────────────┬───────────────┘
                                             │ service role
                                             ▼
@@ -76,14 +76,15 @@ Cada mañana una corrida automática consulta los precios de 144 productos de me
 
 ## Fuentes de precios
 
-| Tienda                                     | Cómo se obtiene                                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| **D1**                                     | API pública de catálogo VTEX, por SKU                                                                  |
-| **Euro**                                   | Páginas de producto públicas (`ld+json`)                                                               |
-| **La Minorista**                           | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
-| **La Vaquita**                             | Páginas de producto públicas (`ld+json`, Magento), 40 productos elegidos a mano                        |
-| **Éxito, Carulla, Ara, Ísimo, PriceSmart** | Precios anotados a mano: sus sitios lo prohíben en `robots.txt` o bloquean bots                        |
-| **Tienda/Carnicería de barrio**            | Solo anotados                                                                                          |
+| Tienda                          | Cómo se obtiene                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **D1**                          | API pública de catálogo VTEX, por SKU                                                                  |
+| **La Minorista**                | Boletín diario **SIPSA del DANE** (precio mayorista de la Central Mayorista de Antioquia) y sus causas |
+| **La Vaquita**                  | Páginas de producto públicas (`ld+json`, Magento), 40 productos elegidos a mano                        |
+| **PriceSmart**                  | Precios corregidos a mano                                                                              |
+| **Tienda/Carnicería de barrio** | Catálogo propio de 41 productos y **todos** los precios anotados a mano; no se siembra ninguno         |
+
+Desde el 30-oct-2026 Éxito, Carulla, Euro, Ara e Ísimo no se consultan ni se muestran: la familia no merca allí.
 
 ---
 
@@ -128,18 +129,18 @@ Para reiniciar la base: `pnpm exec supabase db reset` y luego `pnpm migrar`.
 
 ## Comandos
 
-| Tarea                              | Comando                                                              |
-| ---------------------------------- | -------------------------------------------------------------------- |
-| Desarrollo                         | `pnpm dev`                                                           |
-| Build de producción                | `pnpm build`                                                         |
-| Prueba de humo sobre el build      | `pnpm humo` · `pnpm humo --ruta producto/aceite --contiene "Aceite"` |
-| Typecheck · lint · formato         | `pnpm typecheck` · `pnpm lint` · `pnpm format`                       |
-| Pruebas unitarias y de integración | `pnpm test`                                                          |
-| Pruebas de RLS (pgTAP)             | `pnpm exec supabase test db`                                         |
-| Pruebas e2e y accesibilidad        | `pnpm test:e2e`                                                      |
-| Corrida de precios                 | `pnpm corrida` · `pnpm corrida --todo` · `pnpm corrida --ayuda`      |
-| Capturar fixtures reales           | `pnpm capturar vtex` · `pnpm capturar euro` · `pnpm capturar sipsa`  |
-| Regenerar tipos de la base         | `pnpm gen:tipos`                                                     |
+| Tarea                              | Comando                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| Desarrollo                         | `pnpm dev`                                                             |
+| Build de producción                | `pnpm build`                                                           |
+| Prueba de humo sobre el build      | `pnpm humo` · `pnpm humo --ruta producto/aceite --contiene "Aceite"`   |
+| Typecheck · lint · formato         | `pnpm typecheck` · `pnpm lint` · `pnpm format`                         |
+| Pruebas unitarias y de integración | `pnpm test`                                                            |
+| Pruebas de RLS (pgTAP)             | `pnpm exec supabase test db`                                           |
+| Pruebas e2e y accesibilidad        | `pnpm test:e2e`                                                        |
+| Corrida de precios                 | `pnpm corrida` · `pnpm corrida --todo` · `pnpm corrida --ayuda`        |
+| Capturar fixtures reales           | `pnpm capturar vtex` · `pnpm capturar sipsa` · `pnpm capturar vaquita` |
+| Regenerar tipos de la base         | `pnpm gen:tipos`                                                       |
 
 **Gate de calidad:** `pnpm typecheck && pnpm lint && pnpm test` debe pasar antes de dar por hecho cualquier cambio.
 
@@ -164,13 +165,16 @@ La plantilla está en [`.env.example`](.env.example). `.env.local` nunca se sube
 
 ```
 src/
-├── app/                 rutas: / (canasta), /antojos, /producto/[id], /api/salud
+├── app/                 rutas: / (canasta), /antojos, /producto/[id], /listas, /hogar, /dieta,
+│                         /presupuesto, /anotados, /anotados/barrio, /alertas, /api/salud
 │   └── @modal/          el detalle como hoja encima del catálogo
-├── components/          catálogo, carrito, detalle, gráficos, encabezado, pestañas
-├── corrida/             adaptadores (vtex, euro, sipsa), orquestador, alertas y correo
-├── data/                grupos y planes
-└── lib/                 lógica pura (precios, etiquetas, alertas, unidades, fechas),
-                         datos de la web, clientes de Supabase y animaciones
+├── components/          catálogo, carrito, detalle, gráficos, encabezado, pestañas,
+│                         listas, planes, presupuesto, anotados, tutorial, avisos
+├── corrida/             adaptadores (vtex, sipsa, vaquita), orquestador, contexto, alertas y correo
+├── data/                grupos, planes y catálogo de la tienda de barrio
+└── lib/                 lógica pura (precios, etiquetas, pronóstico, alertas, unidades, fechas),
+                         listas guardadas, plan editable, tutorial, datos de la web,
+                         clientes de Supabase y animaciones
 supabase/
 ├── migrations/          esquema, RLS y vistas (única fuente del esquema)
 └── tests/               pruebas pgTAP de RLS
@@ -206,18 +210,21 @@ El detalle completo está en [`blueprints/mercado-medellin/blueprint.md`](bluepr
 
 Se construye por pasos verificables; cada paso cerrado tiene su etiqueta `paso-NN`.
 
-| Paso  | Contenido                                                       | Estado |
-| ----- | --------------------------------------------------------------- | ------ |
-| 1–4   | Esqueleto, esquema con RLS, migración de datos y lógica pura    | ✅     |
-| 5–8   | Adaptadores D1, Euro y SIPSA, y orquestador de la corrida       | ✅     |
-| 9–10  | Alertas, correo al admin y workflow diario                      | ✅     |
-| 11–13 | Base web, catálogo, lista, detalle, fluctuación y gráficos      | ✅     |
-| 14    | Cuentas de usuario, notificaciones y botón "Actualizar precios" | ⏳     |
-| 15    | Responsive para móvil y tableta, con deslizadores               | ⏳     |
-| 16    | Precios anotados a mano                                         | ⏳     |
-| 17    | Alertas en la web con Realtime                                  | ⏳     |
-| 18    | Planes Hogar y Dieta                                            | ⏳     |
-| 19    | e2e y auditoría de accesibilidad                                | ⏳     |
+| Paso  | Contenido                                                         | Estado |
+| ----- | ----------------------------------------------------------------- | ------ |
+| 1–4   | Esqueleto, esquema con RLS, migración de datos y lógica pura      | ✅     |
+| 5–8   | Adaptadores D1 y SIPSA, y orquestador de la corrida               | ✅     |
+| 9–10  | Alertas, correo al admin y workflow diario                        | ✅     |
+| 11–13 | Base web, catálogo, lista, detalle, fluctuación y gráficos        | ✅     |
+| 14    | Cuentas de usuario, notificaciones y botón "Actualizar precios"   | ⏳     |
+| 15    | Responsive para móvil y tableta, con deslizadores                 | ⏳     |
+| 16    | Precios anotados a mano                                           | ⏳     |
+| 17    | Alertas en la web con Realtime                                    | ⏳     |
+| 18    | Planes Hogar y Dieta                                              | ⏳     |
+| 19    | e2e y auditoría de accesibilidad                                  | ⏳     |
+| 20–26 | Retiro de Solofruver, La Vaquita, gráfico, cuenta, lista y PDF    | ⏳     |
+| 27–30 | Precio corregido, listas guardadas, planes editables y pronóstico | ⏳     |
+| 31–33 | Retiro de 5 tiendas, catálogo de barrio y tutorial con GSAP       | ⏳     |
 
 ---
 
