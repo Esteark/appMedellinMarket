@@ -3,6 +3,7 @@ import { CargandoEnlace } from "@/components/cargando";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { cn } from "@/lib/utils";
+import { ChipPronostico } from "./chip-pronostico";
 import { Etiqueta } from "./etiqueta";
 
 type Props = {
@@ -89,6 +90,7 @@ export function Tarjeta({
             )}
           </span>
         )}
+        {p.pronostico && <ChipPronostico pronostico={p.pronostico} />}
         <div className="flex min-h-5 flex-wrap gap-1">
           {esMejor &&
             p.etiquetas.map((e) => (

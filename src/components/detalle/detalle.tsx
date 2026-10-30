@@ -3,6 +3,7 @@ import type { Detalle as Datos } from "@/lib/datos";
 import { Agregar } from "./agregar";
 import { Barras } from "./barras";
 import { Historial } from "./historial";
+import { BloquePronostico } from "./pronostico";
 
 /** Contenido del detalle de un producto (igual en la hoja y en la página directa). */
 export function Detalle({ datos }: { datos: Datos }) {
@@ -50,6 +51,8 @@ export function Detalle({ datos }: { datos: Datos }) {
           <p className="text-sm text-muted-foreground">Causa no reportada.</p>
         )
       )}
+
+      {p.pronostico && <BloquePronostico pronostico={p.pronostico} />}
 
       <section className="flex flex-col gap-1.5">
         <h3 className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">

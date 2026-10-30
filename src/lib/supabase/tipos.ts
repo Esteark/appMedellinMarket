@@ -83,6 +83,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"contexto_mercado": {
+                  Row: {
+                    "actualizado": string,"fuente": string,"fuente_url": string | null,"ipc_alimentos": number | null,"ipc_alimentos_anual": number | null,"mes": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizado"?: string,"fuente"?: string,"fuente_url"?: string | null,"ipc_alimentos"?: number | null,"ipc_alimentos_anual"?: number | null,"mes": string
+                  }
+                  Update: {
+                    "actualizado"?: string,"fuente"?: string,"fuente_url"?: string | null,"ipc_alimentos"?: number | null,"ipc_alimentos_anual"?: number | null,"mes"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"corridas": {
                   Row: {
                     "conteos": Json | null,"fin": string | null,"fuentes": Json | null,"id": number,"inicio": string,"notas": string | null
@@ -380,17 +394,19 @@ isOneToOne: true
                   }
                   ComputedFields: never
                   Relationships: [
-                    {
-      foreignKeyName: "precios_historial_producto_id_fkey"
-      columns: ["producto_id"]
-isOneToOne: false
-      referencedRelation: "productos"
-      referencedColumns: ["id"]
-    }
+                    
                   ]
                 },"precio_efectivo": {
                   Row: {
                     "estado": string | null,"fecha": string | null,"fuente": string | null,"precio": number | null,"producto_id": string | null,"revisar": boolean | null,"tienda_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                },"serie_pronostico": {
+                  Row: {
+                    "producto_id": string | null,"puntos": Json | null
                   }
                   ComputedFields: never
                   Relationships: [

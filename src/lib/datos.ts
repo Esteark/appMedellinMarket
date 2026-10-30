@@ -10,6 +10,7 @@ import {
   etiquetas,
   type Frecuencia,
 } from "@/lib/precios/etiquetas";
+import { type Pronostico, pronosticar } from "@/lib/precios/pronostico";
 import { todas } from "@/lib/supabase/paginar";
 import { clienteServidor } from "@/lib/supabase/server";
 
@@ -122,6 +123,8 @@ export type ProductoCatalogo = ResumenPrecio & {
   emoji: string | null;
   /** Mínimo diario de los últimos 30 días; solo si está en fluctuación. */
   serie: number[];
+  /** Solo Frutas, Verduras y Tubérculos con historial suficiente. No es un precio. */
+  pronostico: Pronostico | null;
 };
 
 export type Catalogo = {
@@ -198,6 +201,39 @@ function resumir(
   };
 }
 
+type Contexto = { ipc: number | null; dias: number | null };
+
+const CON_PRONOSTICO = new Set(["Frutas", "Verduras", "Tubérculos"]);
+
+/** Última fila de `contexto_mercado`; sin ella (o sin IPC) el pronóstico sale con confianza máxima «media». */
+function contextoDe(
+  fila: { ipc_alimentos: number | null; actualizado: string } | undefined,
+  hoy: string,
+): Contexto {
+  return fila
+    ? {
+        ipc: fila.ipc_alimentos,
+        dias: diasEntre(fila.actualizado.slice(0, 10), hoy),
+      }
+    : { ipc: null, dias: null };
+}
+
+function pronosticoDe(
+  grupo: string,
+  puntos: { fecha: string; precio: number }[],
+  causas: Causa[],
+  ctx: Contexto,
+  hoy: string,
+): Pronostico | null {
+  if (!CON_PRONOSTICO.has(grupo)) return null;
+  const clima = new Set(causas.filter((c) => c.es_clima).map((c) => c.fecha));
+  return pronosticar(
+    puntos,
+    { clima: clima.size, ipcMensual: ctx.ipc, contextoDias: ctx.dias },
+    hoy,
+  );
+}
+
 const agrupar = <T, K>(filas: T[], clave: (f: T) => K) => {
   const m = new Map<K, T[]>();
   for (const f of filas) m.set(clave(f), [...(m.get(clave(f)) ?? []), f]);
@@ -228,7 +264,7 @@ export async function catalogo(): Promise<Catalogo> {
   await connection();
   const hoy = hoyBogota();
   const db = await clienteServidor();
-  const [productos, tiendas, efectivos, historial, minimos, causas] =
+  const [productos, tiendas, efectivos, historial, series, causas, contexto] =
     await Promise.all([
       db
         .from("productos")
@@ -257,17 +293,8 @@ export async function catalogo(): Promise<Catalogo> {
             .range(d, h),
         "precios_historial",
       ),
-      todas(
-        (d, h) =>
-          db
-            .from("historial_minimo")
-            .select("producto_id, fecha, precio")
-            .gte("fecha", restarDias(hoy, 30))
-            .order("producto_id")
-            .order("fecha")
-            .range(d, h),
-        "historial_minimo",
-      ),
+      // Una fila por producto con hasta 60 puntos (144 filas, por debajo del tope de 1000).
+      db.from("serie_pronostico").select("producto_id, puntos"),
       todas(
         (d, h) =>
           db
@@ -279,8 +306,13 @@ export async function catalogo(): Promise<Catalogo> {
             .range(d, h),
         "clima_causas",
       ),
+      db
+        .from("contexto_mercado")
+        .select("ipc_alimentos, actualizado")
+        .order("mes", { ascending: false })
+        .limit(1),
     ]);
-  for (const r of [productos, tiendas])
+  for (const r of [productos, tiendas, series, contexto])
     if (r.error) throw new Error(r.error.message);
 
   const efectivo = new Map(
@@ -288,23 +320,26 @@ export async function catalogo(): Promise<Catalogo> {
   );
   const previos = previosDe(historial);
   const causasDe = agrupar(causas, (c) => c.producto_id);
-  const seriesDe = agrupar(
-    minimos.filter((m) => m.producto_id && m.fecha && m.precio != null),
-    (m) => m.producto_id,
+  const seriesDe = new Map(
+    (series.data ?? []).map((f) => [
+      f.producto_id,
+      (f.puntos ?? []) as { fecha: string; precio: number }[],
+    ]),
   );
+  const ctx = contextoDe(contexto.data?.[0], hoy);
   const ids = (tiendas.data ?? []).map((t) => t.id);
 
   return {
     tiendas: tiendas.data ?? [],
     productos: (productos.data ?? []).map((p) => {
-      const serie = (seriesDe.get(p.id) ?? []).map((m) => ({
-        fecha: m.fecha as string,
-        precio: m.precio as number,
-      }));
+      const completa = seriesDe.get(p.id) ?? [];
+      const serie = completa.filter((m) => m.fecha >= restarDias(hoy, 30));
+      const causasP = causasDe.get(p.id) ?? [];
       return {
         ...p,
-        ...resumir(p, ids, efectivo, previos, causasDe.get(p.id) ?? [], hoy),
+        ...resumir(p, ids, efectivo, previos, causasP, hoy),
         serie: enFluctuacion(serie, hoy) ? serie.map((m) => m.precio) : [],
+        pronostico: pronosticoDe(p.grupo, completa, causasP, ctx, hoy),
       };
     }),
   };
@@ -324,29 +359,51 @@ export async function detalle(id: string): Promise<Detalle | null> {
   await connection();
   const hoy = hoyBogota();
   const db = await clienteServidor();
-  const [producto, tiendas, efectivos, historial, causas] = await Promise.all([
-    db
-      .from("productos")
-      .select("id, nombre, grupo, unidad, emoji, frecuencia")
-      .eq("id", id)
-      .maybeSingle(),
-    db.from("tiendas").select("id, nombre, color").order("nombre"),
-    db.from("precio_efectivo").select(COLUMNAS_EFECTIVO).eq("producto_id", id),
-    // ≤ 10 tiendas × 31 días: por debajo del tope de 1000.
-    db
-      .from("precios_historial")
-      .select("producto_id, tienda_id, fecha, precio")
-      .eq("producto_id", id)
-      .gte("fecha", restarDias(hoy, 30))
-      .not("precio", "is", null)
-      .order("fecha"),
-    db
-      .from("clima_causas")
-      .select("producto_id, fecha, es_clima, texto")
-      .eq("producto_id", id)
-      .gte("fecha", restarDias(hoy, 7)),
-  ]);
-  for (const r of [producto, tiendas, efectivos, historial, causas])
+  const [producto, tiendas, efectivos, historial, causas, serie, contexto] =
+    await Promise.all([
+      db
+        .from("productos")
+        .select("id, nombre, grupo, unidad, emoji, frecuencia")
+        .eq("id", id)
+        .maybeSingle(),
+      db.from("tiendas").select("id, nombre, color").order("nombre"),
+      db
+        .from("precio_efectivo")
+        .select(COLUMNAS_EFECTIVO)
+        .eq("producto_id", id),
+      // ≤ 10 tiendas × 31 días: por debajo del tope de 1000.
+      db
+        .from("precios_historial")
+        .select("producto_id, tienda_id, fecha, precio")
+        .eq("producto_id", id)
+        .gte("fecha", restarDias(hoy, 30))
+        .not("precio", "is", null)
+        .order("fecha"),
+      db
+        .from("clima_causas")
+        .select("producto_id, fecha, es_clima, texto")
+        .eq("producto_id", id)
+        .gte("fecha", restarDias(hoy, 7)),
+      db
+        .from("serie_pronostico")
+        .select("puntos")
+        .eq("producto_id", id)
+        .maybeSingle(),
+      db
+        .from("contexto_mercado")
+        .select("ipc_alimentos, actualizado")
+        .order("mes", { ascending: false })
+        .limit(1),
+    ]);
+  for (const r of [
+    producto,
+    tiendas,
+    efectivos,
+    historial,
+    causas,
+    serie,
+    contexto,
+  ])
     if (r.error) throw new Error(r.error.message);
   if (!producto.data) return null;
 
@@ -371,6 +428,13 @@ export async function detalle(id: string): Promise<Detalle | null> {
       ...p,
       ...resumir(p, ids, efectivo, previos, causas.data ?? [], hoy),
       serie: [],
+      pronostico: pronosticoDe(
+        p.grupo,
+        (serie.data?.puntos ?? []) as { fecha: string; precio: number }[],
+        causas.data ?? [],
+        contextoDe(contexto.data?.[0], hoy),
+        hoy,
+      ),
     },
     tiendas: tiendas.data ?? [],
     historial: [...porFecha.values()],
