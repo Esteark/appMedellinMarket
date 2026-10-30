@@ -13,6 +13,8 @@ type Props = {
   esMejor: boolean;
   cantidad: number;
   onCambiar: (delta: number, emoji: Element | null) => void;
+  /** Abre la hoja para corregir el precio a mano. */
+  onCorregir: () => void;
 };
 
 export function Tarjeta({
@@ -22,12 +24,13 @@ export function Tarjeta({
   esMejor,
   cantidad,
   onCambiar,
+  onCorregir,
 }: Props) {
   return (
     <article
       data-testid={`tarjeta-${p.id}`}
       className={cn(
-        "tarjeta flex min-w-0 flex-col rounded-[14px] border bg-card",
+        "tarjeta relative flex min-w-0 flex-col rounded-[14px] border bg-card",
         cantidad > 0 && "border-save",
       )}
     >
@@ -36,7 +39,7 @@ export function Tarjeta({
         scroll={false}
         className="relative flex flex-col gap-0.5 rounded-t-[14px] px-3 pt-3 pb-1.5"
       >
-        <CargandoEnlace className="absolute top-3 right-3 text-muted-foreground" />
+        <CargandoEnlace className="absolute top-3 right-12 text-muted-foreground" />
         <span
           data-emoji
           className="w-max text-3xl leading-tight"
@@ -61,6 +64,11 @@ export function Tarjeta({
             data-minimo={esMejor || undefined}
           >
             {pesos(precio)}
+          </span>
+        )}
+        {esMejor && p.mejor?.estado === "anotado" && (
+          <span className="text-xs text-anot-ink" data-testid="corregido">
+            corregido a mano{p.mejor.fecha ? ` · ${p.mejor.fecha}` : ""}
           </span>
         )}
         {tienda && precio != null && (
@@ -88,6 +96,14 @@ export function Tarjeta({
             ))}
         </div>
       </Link>
+      <button
+        type="button"
+        aria-label={`Corregir precio de ${p.nombre}`}
+        onClick={onCorregir}
+        className="absolute top-2 right-2 grid size-9 place-items-center rounded-[10px] text-base text-muted-foreground hover:bg-secondary"
+      >
+        ✎
+      </button>
       <div className="mt-auto flex items-center justify-between gap-1.5 px-2.5 pt-1.5 pb-2.5">
         <button
           type="button"

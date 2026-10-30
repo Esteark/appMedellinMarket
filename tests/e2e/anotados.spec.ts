@@ -21,7 +21,7 @@ test("un anotado menor y más reciente reemplaza al automático y se ve en azul"
     .fill(String(ANOTADO));
   await page.getByRole("button", { name: "Guardar" }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Precio anotado" }),
+    page.getByRole("status").filter({ hasText: "Precio corregido" }),
   ).toBeVisible();
   const celda = page.getByTestId(CELDA);
   await expect(celda).toHaveAttribute("data-origen", "anotado");

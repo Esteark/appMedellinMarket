@@ -97,6 +97,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"gastos_reales": {
+                  Row: {
+                    "created_at": string,"fecha": string,"id": string,"mes": string,"monto": number,"nota": string | null,"origen": string,"producto_id": string | null,"rubro": string,"tienda_id": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"fecha"?: string,"id"?: string,"mes": string,"monto": number,"nota"?: string | null,"origen": string,"producto_id"?: string | null,"rubro": string,"tienda_id"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"fecha"?: string,"id"?: string,"mes"?: string,"monto"?: number,"nota"?: string | null,"origen"?: string,"producto_id"?: string | null,"rubro"?: string,"tienda_id"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "gastos_reales_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "gastos_reales_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"listas": {
                   Row: {
                     "items": NonNullable<Json>,"tienda_preferida": string | null,"updated_at": string,"user_id": string
@@ -169,6 +195,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"precios_manuales_historial": {
+                  Row: {
+                    "autor": string | null,"creado": string,"fecha": string,"id": number,"precio": number,"producto_id": string,"tienda_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "autor"?: string | null,"creado"?: string,"fecha"?: string,"id"?: number,"precio": number,"producto_id": string,"tienda_id": string
+                  }
+                  Update: {
+                    "autor"?: string | null,"creado"?: string,"fecha"?: string,"id"?: number,"precio"?: number,"producto_id"?: string,"tienda_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "precios_manuales_historial_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "precios_manuales_historial_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"preferencias_notif": {
                   Row: {
                     "umbral_ahorro": number,"user_id": string
@@ -179,6 +231,34 @@ isOneToOne: false
                   }
                   Update: {
                     "umbral_ahorro"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"presupuestos_cierres": {
+                  Row: {
+                    "ahorro": number,"created_at": string,"id": string,"mes": string,"por_rubro": NonNullable<Json>,"total_gastado": number,"total_presupuestado": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ahorro"?: number,"created_at"?: string,"id"?: string,"mes": string,"por_rubro"?: NonNullable<Json>,"total_gastado"?: number,"total_presupuestado"?: number,"user_id": string
+                  }
+                  Update: {
+                    "ahorro"?: number,"created_at"?: string,"id"?: string,"mes"?: string,"por_rubro"?: NonNullable<Json>,"total_gastado"?: number,"total_presupuestado"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"presupuestos_mensuales": {
+                  Row: {
+                    "created_at": string,"id": string,"mes": string,"monto": number,"orden": number,"rubro": string,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"mes": string,"monto": number,"orden"?: number,"rubro": string,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"mes"?: string,"monto"?: number,"orden"?: number,"rubro"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -285,7 +365,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            [_ in never]: never
+            "corregir_precio":
+{ Args: { "p_precio": number,"p_producto": string,"p_tienda": string }; Returns: undefined
+                           },
+"quitar_correccion":
+{ Args: { "p_producto": string,"p_tienda": string }; Returns: boolean
+                           }
           }
           Enums: {
             "estado_fuente": "ok"|"parcial"|"fallo","estado_precio": "real"|"estimado"|"sin_dato"|"simulado"

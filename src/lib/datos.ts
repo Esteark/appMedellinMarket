@@ -98,7 +98,12 @@ export type ResumenPrecio = {
   /** Tiendas cuyo precio está desactualizado → días desde que se vio; pudo haber cambiado. */
   viejos: Record<string, number>;
   /** Tienda más barata, sobre la que se calculan las etiquetas. */
-  mejor: { tienda: string; precio: number; estado: string } | null;
+  mejor: {
+    tienda: string;
+    precio: number;
+    estado: string;
+    fecha?: string | null;
+  } | null;
   etiquetas: Etiqueta[];
   /** % contra el promedio de los 7 días anteriores en la tienda más barata. */
   cambio: number | null;
@@ -145,7 +150,12 @@ function resumir(
     )
       viejos[t] = diasEntre(e.fecha, hoy);
     if (e?.precio != null && (!mejor || e.precio < mejor.precio))
-      mejor = { tienda: t, precio: e.precio, estado: e.estado ?? "real" };
+      mejor = {
+        tienda: t,
+        precio: e.precio,
+        estado: e.estado ?? "real",
+        fecha: e.fecha ?? null,
+      };
   }
   const causa =
     causas

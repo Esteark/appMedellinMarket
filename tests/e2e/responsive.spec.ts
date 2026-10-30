@@ -50,9 +50,9 @@ for (const v of VISTAS) {
       page,
     }) => {
       await page.goto("/");
-      const tiendas = page.getByTestId("chips-tiendas");
-      await expect(tiendas).toBeVisible();
-      const flechaDer = tiendas
+      const chips = page.getByTestId("chips-grupos");
+      await expect(chips).toBeVisible();
+      const flechaDer = chips
         .locator("xpath=..")
         .locator('[data-flecha="der"]');
 
@@ -62,7 +62,7 @@ for (const v of VISTAS) {
           await flechaDer.click();
           await page.waitForTimeout(400);
         }
-        await expect(tiendas.getByRole("button").last()).toBeInViewport();
+        await expect(chips.getByRole("button").last()).toBeInViewport();
         return;
       }
 

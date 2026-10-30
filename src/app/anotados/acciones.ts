@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { usuario } from "@/lib/datos";
-import { hoyBogota } from "@/lib/fecha";
 import { clienteServidor } from "@/lib/supabase/server";
 
 type Resultado = { ok: true } | { ok: false; error: string };
@@ -15,7 +14,7 @@ const precio = z.preprocess(
   z.coerce.number().int().min(100).max(10_000_000),
 );
 
-/** Guarda (o reemplaza) el precio anotado de una celda. RLS exige autor = usuario. */
+/** Corrige a mano el precio de una celda: anotado vigente + fila en el historial (SQL `corregir_precio`). */
 export async function anotar(datos: FormData): Promise<Resultado> {
   const u = await usuario();
   if (!u) return { ok: false, error: "sin_sesion" };
@@ -26,17 +25,15 @@ export async function anotar(datos: FormData): Promise<Resultado> {
   });
   if (!v.success) return { ok: false, error: "invalido" };
   const db = await clienteServidor();
-  const { error } = await db.from("anotados").upsert({
-    producto_id: v.data.producto,
-    tienda_id: v.data.tienda,
-    precio: v.data.precio,
-    fecha: hoyBogota(),
-    autor: u.id,
+  const { error } = await db.rpc("corregir_precio", {
+    p_producto: v.data.producto,
+    p_tienda: v.data.tienda,
+    p_precio: v.data.precio,
   });
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-/** Revierte un anotado propio: vuelve a mandar el precio automático (si hay). */
+/** Quita una corrección propia: vuelve a mandar el precio automático (si hay). */
 export async function quitarAnotado(datos: FormData): Promise<Resultado> {
   const u = await usuario();
   if (!u) return { ok: false, error: "sin_sesion" };
@@ -46,13 +43,11 @@ export async function quitarAnotado(datos: FormData): Promise<Resultado> {
   });
   if (!v.success) return { ok: false, error: "invalido" };
   const db = await clienteServidor();
-  const { data, error } = await db
-    .from("anotados")
-    .delete()
-    .eq("producto_id", v.data.producto)
-    .eq("tienda_id", v.data.tienda)
-    .select("producto_id");
+  const { data, error } = await db.rpc("quitar_correccion", {
+    p_producto: v.data.producto,
+    p_tienda: v.data.tienda,
+  });
   if (error) return { ok: false, error: error.message };
-  // RLS deja borrar solo los propios: 0 filas = lo anotó otra persona.
-  return data.length ? { ok: true } : { ok: false, error: "ajeno" };
+  // false = la corrección es de otra persona.
+  return data ? { ok: true } : { ok: false, error: "ajeno" };
 }

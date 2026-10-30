@@ -133,6 +133,16 @@ export const AVISOS = {
     emoji: "📝",
     texto: "Precio anotado: {precio} en {tienda}.",
   },
+  precio_corregido: {
+    tipo: "exito",
+    emoji: "📝",
+    texto: "Precio corregido: {precio} en {tienda}.",
+  },
+  correccion_quitada: {
+    tipo: "info",
+    emoji: "↩️",
+    texto: "Quitaste tu corrección: vuelve el precio automático.",
+  },
   anotado_invalido: {
     tipo: "error",
     emoji: "✏️",

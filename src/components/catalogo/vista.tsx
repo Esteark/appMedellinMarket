@@ -1,11 +1,21 @@
 import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
-import { catalogo } from "@/lib/datos";
+import { catalogo, usuario } from "@/lib/datos";
 import { Catalogo } from "./catalogo";
 
 async function Datos({ grupos }: { grupos: string[] }) {
-  const { productos, tiendas } = await catalogo();
-  return <Catalogo productos={productos} tiendas={tiendas} grupos={grupos} />;
+  const [{ productos, tiendas }, u] = await Promise.all([
+    catalogo(),
+    usuario(),
+  ]);
+  return (
+    <Catalogo
+      productos={productos}
+      tiendas={tiendas}
+      grupos={grupos}
+      conSesion={!!u}
+    />
+  );
 }
 
 /** Mientras llegan los precios: aviso con spinner y tarjetas con la forma de las reales. */

@@ -2,11 +2,14 @@
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { Carrito } from "@/components/carrito/carrito";
 import { useLista } from "@/components/carrito/use-lista";
 import { Deslizador } from "@/components/deslizador";
+import { CorregirPrecio } from "@/components/precios/corregir-precio";
 import { cascada, pulso, volar } from "@/lib/animaciones";
+import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
 import { cn } from "@/lib/utils";
 import { Fluctuacion } from "./fluctuacion";
@@ -22,6 +25,7 @@ type Props = {
   tiendas: TiendaCatalogo[];
   /** Grupos de esta vista (básicos o antojos). */
   grupos: string[];
+  conSesion: boolean;
 };
 
 function Chip({
@@ -50,7 +54,12 @@ function Chip({
   );
 }
 
-export function Catalogo({ productos, tiendas, grupos }: Props) {
+export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
+  const router = useRouter();
+  const [corrigiendo, setCorrigiendo] = useState<{
+    producto: ProductoCatalogo;
+    tienda: string;
+  } | null>(null);
   const [lista, cambiar] = useLista();
   const [busqueda, setBusqueda] = useState("");
   const [grupo, setGrupo] = useState<string | null>(null);
@@ -149,6 +158,21 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
                 esMejor={id === p.mejor?.tienda}
                 cantidad={lista[p.id] ?? 0}
                 onCambiar={(delta, emoji) => alCambiar(p.id, delta, emoji)}
+                onCorregir={() => {
+                  if (conSesion)
+                    return setCorrigiendo({
+                      producto: p,
+                      tienda: id ?? tiendas[0].id,
+                    });
+                  avisar(
+                    "anotar_sin_sesion",
+                    {},
+                    {
+                      texto: "Ingresar",
+                      alPulsar: () => router.push("/ingresar"),
+                    },
+                  );
+                }}
               />
             );
           })}
@@ -171,6 +195,20 @@ export function Catalogo({ productos, tiendas, grupos }: Props) {
         icono={icono}
         tiendaElegida={tienda}
       />
+      {corrigiendo && (
+        <CorregirPrecio
+          producto={corrigiendo.producto}
+          tiendas={tiendas}
+          tiendaInicial={corrigiendo.tienda}
+          precios={corrigiendo.producto.precios}
+          corregidaEn={
+            corrigiendo.producto.mejor?.estado === "anotado"
+              ? corrigiendo.producto.mejor.tienda
+              : null
+          }
+          alCerrar={() => setCorrigiendo(null)}
+        />
+      )}
     </div>
   );
 }

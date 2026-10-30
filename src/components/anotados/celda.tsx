@@ -96,7 +96,7 @@ export function Celda(props: Props) {
       action={(d) =>
         correr(anotar, d, () => {
           const n = Number(String(d.get("precio")).replace(/[.\s$]/g, ""));
-          avisar("anotado_guardado", {
+          avisar("precio_corregido", {
             precio: pesos(n),
             tienda: tienda.nombre,
           });
