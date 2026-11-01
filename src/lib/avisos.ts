@@ -112,6 +112,11 @@ export const AVISOS = {
     emoji: "💾",
     texto: "Lista «{nombre}» guardada.",
   },
+  lista_actualizada: {
+    tipo: "exito",
+    emoji: "💾",
+    texto: "«{nombre}» actualizada.",
+  },
   lista_cargada: {
     tipo: "info",
     emoji: "🛒",

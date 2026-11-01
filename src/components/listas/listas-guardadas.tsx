@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { leerLista, reemplazarLista } from "@/components/carrito/use-lista";
 import { avisar } from "@/lib/avisos";
 import {
+  actualizarLista,
   cargar,
+  type Items,
   type ListaGuardada,
   leerLocales,
   MAX_LISTAS,
@@ -12,6 +14,7 @@ import {
   sumar,
 } from "@/lib/listas/guardadas";
 import { persistir } from "./almacen";
+import type { ProductoLista } from "./contenido-lista";
 import { TarjetaLista } from "./tarjeta-lista";
 
 /** Descarga la lista como `lista-mercado-<nombre>-<fecha>.json`, sin dependencias. */
@@ -27,7 +30,7 @@ function exportar(l: ListaGuardada) {
 }
 
 /** Las listas guardadas viven en el dispositivo; con sesión `SincronizarListas` y `persistir` las reflejan en la cuenta. */
-export function ListasGuardadas() {
+export function ListasGuardadas({ productos }: { productos: ProductoLista[] }) {
   const [listas, setListas] = useState<ListaGuardada[] | null>(null);
   // Se lee tras hidratar: el servidor no ve localStorage.
   useEffect(() => setListas(leerLocales()), []);
@@ -65,6 +68,11 @@ export function ListasGuardadas() {
     avisar("lista_duplicada", { nombre });
   };
 
+  const actualizar = (l: ListaGuardada, items: Items) => {
+    guardar(listas.map((x) => (x === l ? actualizarLista(x, items) : x)));
+    avisar("lista_actualizada", { nombre: l.nombre });
+  };
+
   const eliminar = (l: ListaGuardada) => {
     guardar(listas.filter((x) => x !== l));
     avisar(
@@ -87,7 +95,7 @@ export function ListasGuardadas() {
 
   return (
     <ul className="flex flex-col gap-2.5">
-      {listas.map((l) => (
+      {listas.map((l, i) => (
         <TarjetaLista
           key={normalizarNombre(l.nombre)}
           lista={l}
@@ -103,6 +111,9 @@ export function ListasGuardadas() {
           alDuplicar={() => duplicar(l)}
           alEliminar={() => eliminar(l)}
           alExportar={() => exportar(l)}
+          alActualizar={(items) => actualizar(l, items)}
+          productos={productos}
+          primera={i === 0}
         />
       ))}
     </ul>

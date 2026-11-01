@@ -7,20 +7,24 @@ import { aliasGlobales, catalogo } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Mis listas · Mercado Medellín" };
 
-async function Cargar() {
+async function Datos() {
   const [{ productos }, alias] = await Promise.all([
     catalogo(),
     aliasGlobales(),
   ]);
+  const lista = productos.map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    unidad: p.unidad,
+    emoji: p.emoji,
+  }));
   return (
-    <CargarLista
-      aliasNube={alias}
-      productos={productos.map((p) => ({
-        id: p.id,
-        nombre: p.nombre,
-        unidad: p.unidad,
-      }))}
-    />
+    <>
+      <div data-tour="listas">
+        <ListasGuardadas productos={lista} />
+      </div>
+      <CargarLista productos={lista} aliasNube={alias} />
+    </>
   );
 }
 
@@ -35,9 +39,6 @@ export default function Listas() {
           cuenta.
         </p>
       </div>
-      <div data-tour="listas">
-        <ListasGuardadas />
-      </div>
       <Suspense
         fallback={
           <p
@@ -45,11 +46,11 @@ export default function Listas() {
             className="flex items-center gap-2 text-sm text-muted-foreground"
           >
             <Spinner />
-            Cargando catálogo…
+            Cargando listas…
           </p>
         }
       >
-        <Cargar />
+        <Datos />
       </Suspense>
     </main>
   );

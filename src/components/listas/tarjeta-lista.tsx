@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { ListaGuardada } from "@/lib/listas/guardadas";
+import type { Items, ListaGuardada } from "@/lib/listas/guardadas";
+import { ContenidoLista, type ProductoLista } from "./contenido-lista";
 
 type Props = {
   lista: ListaGuardada;
@@ -11,6 +12,10 @@ type Props = {
   alDuplicar: () => void;
   alEliminar: () => void;
   alExportar: () => void;
+  alActualizar: (items: Items) => void;
+  productos: ProductoLista[];
+  /** La primera tarjeta lleva el objetivo del tutorial. */
+  primera?: boolean;
 };
 
 const BOTON =
@@ -21,6 +26,7 @@ export function TarjetaLista(p: Props) {
   const { lista } = p;
   const [renombrando, setRenombrando] = useState(false);
   const [nuevo, setNuevo] = useState(lista.nombre);
+  const [abierta, setAbierta] = useState(false);
   const n = Object.keys(lista.items).length;
 
   return (
@@ -76,6 +82,15 @@ export function TarjetaLista(p: Props) {
         </button>
         <button
           type="button"
+          aria-expanded={abierta}
+          data-tour={p.primera ? "contenido-lista" : undefined}
+          onClick={() => setAbierta(!abierta)}
+          className={BOTON}
+        >
+          {abierta ? "Ocultar productos" : "Ver productos"}
+        </button>
+        <button
+          type="button"
           onClick={() => setRenombrando(true)}
           className={BOTON}
         >
@@ -95,6 +110,13 @@ export function TarjetaLista(p: Props) {
           Eliminar
         </button>
       </div>
+      {abierta && (
+        <ContenidoLista
+          items={lista.items}
+          productos={p.productos}
+          alGuardar={p.alActualizar}
+        />
+      )}
     </li>
   );
 }

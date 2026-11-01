@@ -100,6 +100,13 @@ export const PASOS_PANTALLA: Record<string, Paso[]> = {
       objetivo: "listas",
     },
     {
+      id: "contenido-lista",
+      titulo: "Qué hay dentro de cada lista",
+      texto:
+        "Con «Ver productos» abres una lista, cambias cantidades, quitas o agregas productos y guardas los cambios.",
+      objetivo: "contenido-lista",
+    },
+    {
       id: "cargar-lista",
       titulo: "Cargar una lista desde texto",
       texto:
