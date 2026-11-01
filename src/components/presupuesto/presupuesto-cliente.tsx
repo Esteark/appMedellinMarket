@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { agregarGasto, eliminarGasto } from "@/app/presupuesto/acciones";
+import {
+  agregarGasto,
+  eliminarGasto,
+  listarGastos,
+} from "@/app/presupuesto/acciones";
+import { ImportarFactura } from "@/components/importar/importar-factura";
 import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import {
   agregarCierreLocal,
+  fusionarGastos,
   guardarPresupuestoDieta,
   guardarPresupuestoHogar,
   leerCierresLocal,
@@ -31,7 +37,8 @@ type Tab =
   | "seguimiento"
   | "graficas"
   | "aprendizajes"
-  | "historico";
+  | "historico"
+  | "importar";
 
 function hoyBogota(): string {
   const now = new Date();
@@ -59,6 +66,7 @@ type Props = {
 
 export function PresupuestoCliente({ productos = [] }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
+  const [version, setVersion] = useState(0);
   const [mes, setMes] = useState("");
   const [hoy, setHoy] = useState("");
   const [rubros, setRubros] = useState<PresupuestoRubro[]>([]);
@@ -105,6 +113,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     return m;
   }, [productos]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `version` solo fuerza la recarga
   useEffect(() => {
     setRubros(inicializarRubros());
     setCierres(leerCierresLocal());
@@ -119,7 +128,12 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     } catch {
       setGastos([]);
     }
-  }, [mes]);
+    // Con sesión, lo del servidor (incluidas las importaciones) se une a lo local.
+    void listarGastos(mes).then((r) => {
+      if (r.ok)
+        setGastos((prev) => fusionarGastos(prev, r.gastos as GastoReal[]));
+    });
+  }, [mes, version]);
 
   const guardarGastosLocal = (nuevos: GastoReal[]) => {
     setGastos(nuevos);
@@ -232,6 +246,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
         nota: notaFinal,
         producto_id: gasto.producto_id,
       });
+      setVersion((v) => v + 1);
     } catch {
       // ignorar si no hay sesión
     }
@@ -269,6 +284,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     { id: "graficas", texto: "Gráficas" },
     { id: "aprendizajes", texto: "Aprendizajes" },
     { id: "historico", texto: "Histórico" } as { id: Tab; texto: string },
+    { id: "importar", texto: "Importar factura" },
   ];
 
   return (
@@ -729,6 +745,12 @@ export function PresupuestoCliente({ productos = [] }: Props) {
             </div>
           )}
         </section>
+      )}
+      {tab === "importar" && (
+        <ImportarFactura
+          productos={productos}
+          onImportado={() => setVersion((v) => v + 1)}
+        />
       )}
       {tab === "historico" && (
         <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">

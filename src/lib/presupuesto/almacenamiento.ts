@@ -138,3 +138,14 @@ export function guardarImportacionesLocal(lotes: LoteLocal[]) {
     // ignorar
   }
 }
+
+/** Une lo local con lo del servidor por (fecha, rubro, monto, descripción): el servidor gana. */
+export function fusionarGastos(
+  locales: GastoReal[],
+  servidor: GastoReal[],
+): GastoReal[] {
+  const clave = (g: GastoReal) =>
+    `${g.fecha}|${g.rubro}|${g.monto}|${g.descripcion ?? g.nota ?? ""}`;
+  const delServidor = new Set(servidor.map(clave));
+  return [...servidor, ...locales.filter((g) => !delServidor.has(clave(g)))];
+}

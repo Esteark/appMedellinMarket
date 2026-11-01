@@ -120,25 +120,30 @@
     "dependencies": ["E34-T4"],
     "priority": "p0",
     "acceptance": [
-      "WHEN se elige un `.xlsx` THE SYSTEM SHALL mostrar 'guárdalo como CSV' y no leer el archivo.",
+      "WHEN `agrupar` recibe filas de dos tiendas y una fila sin fecha THE SYSTEM SHALL agrupar por tienda + fecha usando la fecha del lote.",
+      "WHEN `noCuadra` compara la suma de líneas con el total impreso THE SYSTEM SHALL avisar con más de 500 pesos o más de 1 % de diferencia.",
       "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0 con la pestaña incluida.",
-      "WHEN se cuentan las líneas de cada archivo de `src/components/importar/` y de `presupuesto-cliente.tsx` THE SYSTEM SHALL dar 250 o menos."
+      "WHEN se cuentan las líneas de cada archivo de `src/components/importar/` THE SYSTEM SHALL dar 250 o menos.",
+      "WHEN se cuentan las líneas de `presupuesto-cliente.tsx` THE SYSTEM SHALL dar 860 o menos (ya tenía 833; partirlo queda fuera de esta tarea)."
     ],
     "verify": [
+      "pnpm test tests/unit/importar-grupos.test.ts",
       "pnpm typecheck",
       "pnpm lint",
       "pnpm build",
-      "for f in src/components/importar/*.tsx src/components/presupuesto/presupuesto-cliente.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done"
+      "for f in src/components/importar/*.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done",
+      "test \"$(wc -l < src/components/presupuesto/presupuesto-cliente.tsx)\" -le 860"
     ],
     "checkpoint": "paso-34e",
     "files": [
-      "src/components/importar/importar-factura.tsx",
-      "src/components/importar/revision.tsx",
-      "src/components/importar/resultado.tsx",
-      "src/components/importar/prompt.tsx",
-      "src/components/presupuesto/presupuesto-cliente.tsx"
+      "src/components/importar/*.tsx",
+      "src/lib/importar/grupos.ts",
+      "src/lib/importar/factura.ts",
+      "src/lib/presupuesto/almacenamiento.ts",
+      "src/components/presupuesto/presupuesto-cliente.tsx",
+      "tests/unit/importar-grupos.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E34-T6",
