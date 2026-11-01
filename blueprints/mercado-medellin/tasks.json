@@ -79,9 +79,10 @@
       "src/lib/importar/emparejar.ts",
       "src/lib/importar/prompt.ts",
       "src/lib/presupuesto/rubros.ts",
-      "tests/unit/importar-emparejar.test.ts"
+      "tests/unit/importar-emparejar.test.ts",
+      "src/components/presupuesto/presupuesto-cliente.tsx"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E34-T4",

@@ -18,6 +18,7 @@ import { compararPresupuestadoVsGastado } from "@/lib/presupuesto/calculos";
 import { generarSnapshotCierre } from "@/lib/presupuesto/cierres";
 import { RUBROS_SUGERIDOS } from "@/lib/presupuesto/defaults";
 import { calcularDesfases, mensajeDesfase } from "@/lib/presupuesto/desfases";
+import { grupoARubro } from "@/lib/presupuesto/rubros";
 import type {
   GastoReal,
   PresupuestoCierreSnapshot,
@@ -55,21 +56,6 @@ function inicializarRubros(): PresupuestoRubro[] {
 type Props = {
   productos?: ProductoCatalogo[];
 };
-
-function grupoARubro(grupo: string): string {
-  const g = grupo.toLowerCase();
-  if (g.includes("carne")) return "Carnes";
-  if (g.includes("grano")) return "Granos";
-  if (g.includes("verdura")) return "Verduras";
-  if (g.includes("fruta")) return "Frutas";
-  if (g.includes("lácteo") || g.includes("leche")) return "Lácteos";
-  if (g.includes("pan")) return "Panadería";
-  if (g.includes("despensa")) return "Despensa";
-  if (g.includes("aseo")) return "Aseo";
-  if (g.includes("bebida")) return "Bebidas";
-  if (g.includes("mecato") || g.includes("snack")) return "Mecato";
-  return "Otros";
-}
 
 export function PresupuestoCliente({ productos = [] }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
