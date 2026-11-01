@@ -67,6 +67,7 @@ export function RevisionFactura(p: Props) {
         return (
           <div
             key={p.filas[g.indices[0]].linea}
+            data-testid="grupo-importacion"
             className="flex flex-col gap-2 rounded-[14px] border bg-card p-3.5"
           >
             <div className="grid gap-2 sm:grid-cols-3">

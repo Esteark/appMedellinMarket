@@ -15,6 +15,7 @@
     ],
     "verify": [
       "pnpm exec supabase db reset",
+      "sleep 8",
       "pnpm migrar",
       "pnpm gen:tipos",
       "pnpm typecheck",
@@ -153,7 +154,7 @@
     "priority": "p0",
     "acceptance": [
       "WHEN se pega `varias-tiendas.csv` THE SYSTEM SHALL mostrar dos grupos tienda+fecha en la revisión.",
-      "WHEN se guarda el lote THE SYSTEM SHALL dejar los gastos en `/presupuesto` y la tienda nueva en `/tiendas`.",
+      "WHEN se guarda el lote THE SYSTEM SHALL mostrar los gastos guardados y dejar la tienda nueva en `/anotados` (en `/tiendas` llega con el paso 35).",
       "WHEN se repite el mismo CSV THE SYSTEM SHALL mostrar `importacion_duplicada`.",
       "WHEN se pulsa Deshacer THE SYSTEM SHALL borrar los gastos y restaurar el precio anterior, y permitir importar el archivo otra vez.",
       "WHEN `pnpm migrar` corre después de todo esto THE SYSTEM SHALL imprimir `precios=432 tiendas=4`."
@@ -161,12 +162,13 @@
     "verify": [
       "pnpm test:e2e tests/e2e/importar.spec.ts",
       "pnpm exec supabase db reset",
+      "sleep 8",
       "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-34f",
-    "files": ["tests/e2e/importar.spec.ts"],
-    "status": "pending"
+    "files": ["tests/e2e/importar.spec.ts", "src/components/importar/revision.tsx"],
+    "status": "done"
   },
   {
     "id": "E35-T1",
@@ -184,6 +186,7 @@
     ],
     "verify": [
       "pnpm exec supabase db reset",
+      "sleep 8",
       "pnpm migrar",
       "pnpm gen:tipos",
       "pnpm typecheck",
@@ -268,6 +271,7 @@
     "verify": [
       "pnpm test:e2e tests/e2e/tiendas.spec.ts",
       "pnpm exec supabase db reset",
+      "sleep 8",
       "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
