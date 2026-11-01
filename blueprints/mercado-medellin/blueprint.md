@@ -1997,6 +1997,48 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - E2E `tests/e2e/cargar-lista.spec.ts`: cargar el CSV de ejemplo → revisión → "Usar como mi lista" → la pantalla principal muestra los ítems y el total por tienda; sin sesión "Guardar" lo deja en `mercado-medellin:listas`; con sesión aparece en `/listas` desde otro navegador; repetir el nombre avisa `nombre_repetido`; el producto elegido en la revisión se empareja solo la segunda vez.
   - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan.
 
+**37. Ver y editar el contenido de una lista guardada.** *(pedido del 1-nov-2026: poder ver qué hay dentro de cada lista y corregirla sin rehacerla)*
+- **Depende de:** pasos 28 (listas guardadas, `persistir`) y 36 (el catálogo ya llega a `/listas`). **Sin migración y sin dependencias nuevas:** `listas_guardadas.items` ya guarda `producto → cantidad`.
+- **Hacer:**
+  - `src/lib/listas/guardadas.ts` (puro): `ajustarItem(items, id, delta)` (1–999), `quitarItem(items, id)` y `agregarItem(items, id)` (máx. `MAX_ITEMS`), y `actualizarLista(lista, items)` que devuelve la lista con `actualizada = ahora`. Una lista guardada nunca queda vacía: para eso está «Eliminar».
+  - `src/components/listas/contenido-lista.tsx` (`"use client"`): se abre desde «Ver productos» (`aria-expanded`) en `tarjeta-lista.tsx`. Una fila por producto (emoji, nombre, cantidad con − / +, «Quitar»), un selector «Agregar producto» con buscador y un borrador local. «Guardar cambios» llama `persistir`; «Descartar» vuelve al estado guardado. Sin cambios, ambos botones quedan deshabilitados. Con `pointer: coarse` cada control mide ≥ 44 px.
+  - `src/app/listas/page.tsx`: lee el catálogo una sola vez y lo pasa a `CargarLista` y a `ListasGuardadas` (`id`, `nombre`, `emoji`). Un producto que ya no existe se muestra como «producto retirado» y se puede quitar.
+  - `src/lib/avisos.ts`: `lista_actualizada`. El tope de 200 productos reusa `limite_listas`.
+  - Tutorial (paso 33): un paso `contenido-lista` en el recorrido de `/listas`.
+- **Hecho cuando:**
+  - `tests/unit/listas-editar.test.ts`: `ajustarItem` no baja de 1 ni sube de 999; `quitarItem` borra solo ese id; `agregarItem` rechaza el producto 201; `actualizarLista` cambia `actualizada` y no toca el nombre.
+  - E2E `tests/e2e/listas-editar.spec.ts`: sin sesión, «Ver productos» lista los productos de la lista; subir una cantidad, quitar un producto, agregar otro y «Guardar cambios» persiste tras recargar; «Descartar» deja todo igual; con sesión el cambio se ve desde otro navegador.
+  - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan.
+
+**38. Guardar cambios desde la lista principal.** *(mismo pedido: editar en la pantalla principal y guardar sobre la lista de origen)*
+- **Depende de:** paso 37. **Sin migración.**
+- **Hacer:**
+  - `src/components/carrito/use-lista.ts`: marcador `mercado-medellin:lista-origen` (nombre de la lista guardada de la que salió la lista activa). Se escribe al «Cargar» una guardada y al «Usar como mi lista» con una sección; se borra al vaciar la lista, al cargar otra o al «Guardar como nueva». «Sumar» no lo cambia.
+  - `src/components/listas/boton-guardar.tsx`: si hay marcador y esa lista guardada existe, muestra «Guardar cambios en «X»» (actualiza `items` y `actualizada` con `actualizarLista`, sin pedir nombre) junto a «Guardar como nueva» (el flujo de hoy, que sigue sin pisar un nombre repetido). Si la lista de origen fue eliminada, solo queda el flujo de hoy.
+  - `src/components/carrito/lista-vista.tsx`: chip «Viene de «X»» y, si las cantidades difieren de la guardada, «cambios sin guardar».
+  - Con sesión el cambio sube con `persistir`, como cualquier otra edición de listas.
+- **Hecho cuando:**
+  - `tests/unit/listas-editar.test.ts`: la comparación «cambios sin guardar» ignora el orden de los productos.
+  - E2E `tests/e2e/listas-editar.spec.ts`: cargar «Quincena», cambiar una cantidad en el catálogo, ver «cambios sin guardar», pulsar «Guardar cambios en «Quincena»» y comprobar la cantidad nueva en `/listas`; vaciar la lista quita el chip; eliminar la lista de origen deja solo «Guardar como nueva».
+  - El gate y `pnpm test:e2e` pasan.
+
+**39. Prompt de listas para varios tipos de listado.** *(mismo pedido: que el prompt acepte listas que no son «cantidad + unidad por semana»)*
+- **Depende de:** paso 36. **Sin migración y sin dependencias nuevas.**
+- **Qué cubre el prompt hoy y qué no.** Cubre listas con secciones por período y cantidad + unidad (el ejemplo de la plaza). No cubre bien:
+  1. listas **planas sin cantidades** («leche, huevos, pan»): el prompt prohíbe inventar cantidades, así que la IA omite o rellena de forma inconsistente;
+  2. cantidad **antes** del producto o con otra forma («2 kg de papa», «2x leche», «leche x2», «media libra», «un cuarto»);
+  3. **viñetas, casillas, numeración, tablas** o todo en **una sola línea** separado por comas o «y»;
+  4. **categorías o pasillos** («Carnes:», «Aseo:») que hoy se leerían como listas distintas;
+  5. líneas con **precio o marca** («Leche Colanta $4.500»);
+  6. **foto** de una lista a mano (la IA puede leerla si el prompt lo dice).
+  No cubre y queda fuera: recetas o platos («arepas para 4»), porque exigen decidir ingredientes.
+- **Hacer:**
+  - `prompts/importar-lista.md` y `src/lib/importar/prompt-lista.ts`: aceptar texto o imagen; sin cantidad → `1` y `u`; fracciones y formas coloquiales («media libra» = 0.5 lb, «un cuarto» = 0.25 kg, docena = 12 u); quitar viñetas, casillas, numeración y emojis; separar una línea con comas o «y» en filas; **solo los títulos de período, evento o destino crean una lista** («2 semanas», «quincena», «fiesta», «Éxito») y los de categoría (Carnes, Aseo) van a la nota con una sola lista; precio y marca van a la nota y nunca se usan para calcular. Un ejemplo por tipo en una sección «Casos» del `.md`.
+  - `src/lib/importar/lista.ts`: `cantidad` vacía vale `1` y `unidad` vacía vale `u` en vez de error, para tolerar a la IA que deja la celda en blanco.
+- **Hecho cuando:**
+  - `tests/unit/lista-importar.test.ts`: el ejemplo de cada tipo de la sección «Casos» se lee sin errores y da las listas y cantidades esperadas; una fila sin cantidad ni unidad da `1 u`; un título de categoría no crea una lista aparte; `PROMPT_LISTA` sigue contenido en el `.md`.
+  - El gate pasa. **Límite honesto:** la calidad real con cada IA y con fotos no se comprueba en pruebas; se mide a mano con listados reales (§11).
+
 ## 11. Lanzamiento (manual, con tus cuentas)
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
