@@ -100,7 +100,7 @@ export function ListasGuardadas({ productos }: { productos: ProductoLista[] }) {
           key={normalizarNombre(l.nombre)}
           lista={l}
           alCargar={() => {
-            reemplazarLista(cargar(l));
+            reemplazarLista(cargar(l), l.nombre);
             avisar("lista_cargada", { nombre: l.nombre });
           }}
           alSumar={() => {

@@ -7,6 +7,7 @@ import {
   agregarItem,
   ajustarItem,
   type Items,
+  mismosItems,
   quitarItem,
 } from "@/lib/listas/guardadas";
 
@@ -18,10 +19,6 @@ export type ProductoLista = {
 
 const mini =
   "rounded-[10px] border bg-background px-2.5 py-1 text-sm font-medium";
-const igual = (a: Items, b: Items) => {
-  const ks = Object.keys(a);
-  return ks.length === Object.keys(b).length && ks.every((k) => a[k] === b[k]);
-};
 
 type Props = {
   items: Items;
@@ -38,7 +35,7 @@ export function ContenidoLista({ items, productos, alGuardar }: Props) {
   const filas = Object.keys(borrador).sort((a, b) =>
     nombre(a).localeCompare(nombre(b)),
   );
-  const cambiado = !igual(borrador, items);
+  const cambiado = !mismosItems(borrador, items);
   const q = normalizarNombre(busqueda);
   const candidatos = productos.filter(
     (p) =>

@@ -478,7 +478,7 @@
     "priority": "p1",
     "acceptance": [
       "WHEN se carga una lista guardada THE SYSTEM SHALL guardar su nombre como origen de la lista activa.",
-      "WHEN la lista se vacía, se carga otra o se guarda como nueva THE SYSTEM SHALL borrar el origen.",
+      "WHEN la lista se vacía, se reemplaza por un plan o se usa una lista de un CSV THE SYSTEM SHALL borrar el origen, y al editarla o sumarle productos conservarlo.",
       "WHEN `cambiado` compara la lista activa con la guardada THE SYSTEM SHALL ignorar el orden de los productos.",
       "WHEN el almacenamiento está corrupto o no existe THE SYSTEM SHALL devolver «sin origen» sin lanzar."
     ],
@@ -490,10 +490,15 @@
     "checkpoint": "paso-38a",
     "files": [
       "src/lib/listas/origen.ts",
+      "src/lib/listas/guardadas.ts",
       "src/components/carrito/use-lista.ts",
+      "src/components/listas/listas-guardadas.tsx",
+      "src/components/listas/cargar-lista.tsx",
+      "src/components/planes/botones-plan.tsx",
+      "src/components/listas/contenido-lista.tsx",
       "tests/unit/listas-origen.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E36-T6",
@@ -518,9 +523,7 @@
     "checkpoint": "paso-38b",
     "files": [
       "src/components/listas/boton-guardar.tsx",
-      "src/components/carrito/lista-vista.tsx",
-      "src/components/listas/listas-guardadas.tsx",
-      "src/components/listas/cargar-lista.tsx"
+      "src/components/carrito/lista-vista.tsx"
     ],
     "status": "pending"
   },

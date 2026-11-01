@@ -33,7 +33,7 @@ export function BotonesPlan({
     const items =
       propio && editable ? editable.config.items : PLANES[plan].items;
     const nueva = aplicarPlan(previa, items, modo, new Set(ids));
-    reemplazarLista(nueva);
+    reemplazarLista(nueva, modo === "sumar" ? undefined : null);
     const datos = { plan: PLANES[plan].nombre };
     if (modo === "sumar")
       avisar("plan_sumado", {

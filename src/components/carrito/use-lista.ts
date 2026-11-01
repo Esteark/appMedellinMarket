@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { avisar } from "@/lib/avisos";
+import { CLAVE_ORIGEN, guardarOrigen, leerOrigen } from "@/lib/listas/origen";
 import type { Lista } from "@/lib/precios/lista";
 
 const CLAVE = "mercado-medellin:lista";
@@ -25,6 +26,7 @@ function leer(): Lista {
 // Un solo estado para toda la página (catálogo, carrito y hoja de detalle comparten la lista).
 let actual: Lista | null = null;
 let sinAlmacenamiento = false;
+let origenActual: string | null | undefined;
 const oyentes = new Set<() => void>();
 const notificar = () => {
   for (const o of oyentes) o();
@@ -34,8 +36,9 @@ function suscribir(oyente: () => void) {
   oyentes.add(oyente);
   // Otra pestaña cambió la lista.
   const alAlmacenar = (e: StorageEvent) => {
-    if (e.key !== CLAVE) return;
-    actual = leer();
+    if (e.key === CLAVE_ORIGEN) origenActual = leerOrigen();
+    else if (e.key === CLAVE) actual = leer();
+    else return;
     notificar();
   };
   window.addEventListener("storage", alAlmacenar);
@@ -53,9 +56,25 @@ const foto = () => {
 /** La lista actual fuera de un render (el primer render tras hidratar ve la vacía del servidor). */
 export const leerLista = foto;
 
-/** Reemplaza la lista entera (fusión con la guardada, vaciar, deshacer). */
-export function reemplazarLista(lista: Lista) {
+const origen = () => {
+  origenActual ??= leerOrigen();
+  return origenActual;
+};
+
+/** Nombre de la lista guardada de la que salió la lista activa (fuera de un render). */
+export const leerOrigenActual = origen;
+
+/**
+ * Reemplaza la lista entera (fusión con la guardada, vaciar, deshacer).
+ * `desde` fija el origen (nombre de la lista guardada) o lo borra (`null`); sin él se conserva,
+ * salvo que la lista quede vacía.
+ */
+export function reemplazarLista(lista: Lista, desde?: string | null) {
   actual = lista;
+  if (desde !== undefined || Object.keys(lista).length === 0) {
+    origenActual = desde ?? null;
+    guardarOrigen(origenActual);
+  }
   try {
     localStorage.setItem(CLAVE, JSON.stringify(lista));
   } catch {
@@ -78,4 +97,9 @@ export function cambiarLista(id: string, delta: number) {
 export function useLista() {
   const lista = useSyncExternalStore(suscribir, foto, () => VACIA);
   return [lista, cambiarLista] as const;
+}
+
+/** Nombre de la lista guardada de la que viene la lista activa, o `null`. */
+export function useOrigen() {
+  return useSyncExternalStore(suscribir, origen, () => null);
 }

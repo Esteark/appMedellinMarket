@@ -157,7 +157,8 @@ export function CargarLista({
       return setConfirmar(s);
     recordar(sec);
     setConfirmar(null);
-    reemplazarLista(itemsDe(sec));
+    // Una lista que viene de un CSV no es una guardada: no se puede «guardar cambios» sobre ella.
+    reemplazarLista(itemsDe(sec), null);
     avisar("lista_cargada", { nombre: sec.nombre });
   };
 

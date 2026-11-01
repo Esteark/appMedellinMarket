@@ -2013,7 +2013,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 **38. Guardar cambios desde la lista principal.** *(mismo pedido: editar en la pantalla principal y guardar sobre la lista de origen)*
 - **Depende de:** paso 37. **Sin migración.**
 - **Hacer:**
-  - `src/components/carrito/use-lista.ts`: marcador `mercado-medellin:lista-origen` (nombre de la lista guardada de la que salió la lista activa). Se escribe al «Cargar» una guardada y al «Usar como mi lista» con una sección; se borra al vaciar la lista, al cargar otra o al «Guardar como nueva». «Sumar» no lo cambia.
+  - `src/components/carrito/use-lista.ts`: marcador `mercado-medellin:lista-origen` (nombre de la lista guardada de la que salió la lista activa). Se escribe al «Cargar» una guardada. Se borra al vaciar la lista, al reemplazarla por un plan o al «Usar como mi lista» con una sección de un CSV (esa lista no es una guardada y «Guardar cambios» podría pisar otra que se llame igual). Cargar otra guardada lo cambia, «Sumar» y editar cantidades lo conservan, y tras «Guardar como nueva» el origen pasa a ser la lista recién guardada, para seguir editándola.
   - `src/components/listas/boton-guardar.tsx`: si hay marcador y esa lista guardada existe, muestra «Guardar cambios en «X»» (actualiza `items` y `actualizada` con `actualizarLista`, sin pedir nombre) junto a «Guardar como nueva» (el flujo de hoy, que sigue sin pisar un nombre repetido). Si la lista de origen fue eliminada, solo queda el flujo de hoy.
   - `src/components/carrito/lista-vista.tsx`: chip «Viene de «X»» y, si las cantidades difieren de la guardada, «cambios sin guardar».
   - Con sesión el cambio sube con `persistir`, como cualquier otra edición de listas.

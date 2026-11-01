@@ -98,3 +98,9 @@ export function actualizarLista(
 ): ListaGuardada {
   return { ...lista, items, actualizada: new Date().toISOString() };
 }
+
+/** Mismos productos con las mismas cantidades, sin importar el orden. */
+export function mismosItems(a: Items, b: Items): boolean {
+  const ks = Object.keys(a);
+  return ks.length === Object.keys(b).length && ks.every((k) => a[k] === b[k]);
+}
