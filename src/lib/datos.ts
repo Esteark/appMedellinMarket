@@ -580,6 +580,59 @@ export async function catalogoTiendas(): Promise<TiendaConConteos[]> {
   });
 }
 
+export type ProductoGestion = {
+  id: string;
+  nombre: string;
+  grupo: string;
+  unidad: string;
+  emoji: string | null;
+  frecuencia: string;
+  revisado: boolean;
+  origen: string;
+  /** Precio efectivo y su fecha por tienda. */
+  precios: Record<string, { precio: number | null; fecha: string | null }>;
+};
+
+/** Todos los productos con sus campos editables y el precio efectivo por tienda; para /tiendas. */
+export async function productosGestion(): Promise<ProductoGestion[]> {
+  await connection();
+  const db = await clienteServidor();
+  const [productos, efectivos] = await Promise.all([
+    todas(
+      (d, h) =>
+        db
+          .from("productos")
+          .select(
+            "id, nombre, grupo, unidad, emoji, frecuencia, revisado, origen",
+          )
+          .order("nombre")
+          .order("id")
+          .range(d, h),
+      "productos",
+    ),
+    todas(
+      (d, h) =>
+        db
+          .from("precio_efectivo")
+          .select("producto_id, tienda_id, precio, fecha")
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "precio_efectivo",
+    ),
+  ]);
+  const porProducto = agrupar(efectivos, (e) => e.producto_id);
+  return productos.map((p) => ({
+    ...p,
+    precios: Object.fromEntries(
+      (porProducto.get(p.id) ?? []).map((e) => [
+        e.tienda_id,
+        { precio: e.precio, fecha: e.fecha },
+      ]),
+    ),
+  }));
+}
+
 export type FilaAnotados = {
   id: string;
   nombre: string;

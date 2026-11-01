@@ -50,7 +50,11 @@ export const aPayload = (filas: FilaRevision[]) =>
   }));
 
 export const claveAviso = (error: string) =>
-  (error in AVISOS ? error : "importacion_error") as ClaveAviso;
+  (error === "sin_sesion"
+    ? "sesion_expirada"
+    : error in AVISOS
+      ? error
+      : "importacion_error") as ClaveAviso;
 
 /** Sin sesión: los gastos quedan en `mercado-medellin:gastos:{mes}` del mes de cada línea. */
 export function guardarLocal(filas: FilaRevision[], fechaLote: string) {

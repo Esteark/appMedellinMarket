@@ -142,7 +142,13 @@ export async function editarProducto(
     actual?.unidad === c.data.unidad ? {} : unidadBase(c.data.unidad);
   const { error } = await db
     .from("productos")
-    .update({ ...c.data, emoji: c.data.emoji ?? null, ...base })
+    .update({
+      ...c.data,
+      emoji: c.data.emoji ?? null,
+      ...base,
+      // Asignarle un grupo real a un producto "Por revisar" lo da por revisado.
+      ...(c.data.grupo !== "Otros" ? { revisado: true } : {}),
+    })
     .eq("id", i.data);
   return error ? { ok: false, error: "importacion_error" } : { ok: true };
 }

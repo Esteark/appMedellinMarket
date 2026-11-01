@@ -249,12 +249,13 @@
     "checkpoint": "paso-35c",
     "files": [
       "src/app/tiendas/page.tsx",
-      "src/components/tiendas/vista.tsx",
-      "src/components/tiendas/tabla-productos.tsx",
-      "src/components/tiendas/dialogo-fusion.tsx",
-      "src/components/encabezado.tsx"
+      "src/components/tiendas/*.tsx",
+      "src/components/encabezado.tsx",
+      "src/lib/datos.ts",
+      "src/app/tiendas/acciones.ts",
+      "src/lib/importar/factura.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E35-T4",
