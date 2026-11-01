@@ -26,8 +26,13 @@ insert into catalogo_tienda (producto_id, orden) values ('p1', 1);
 update catalogo_tienda set activo = false where producto_id = 'p1';
 select results_eq($$select activo from catalogo_tienda where producto_id = 'p1'$$, array[false],
   'quitar es activo = false: la fila sigue ahí');
-select throws_ok($$insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 'd1')$$, '23514', null,
-  'el catálogo es solo de barrio');
+reset role;
+insert into tiendas (id, nombre, color) values ('d1', 'D1', '#111111') on conflict do nothing;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);
+select lives_ok($$insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 'd1')$$,
+  'desde el paso 34 el catálogo acepta cualquier tienda');
 
 reset role;
 select lives_ok(

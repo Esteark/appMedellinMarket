@@ -1,0 +1,348 @@
+[
+  {
+    "id": "E34-T1",
+    "title": "Migrar catálogo compartido y funciones de importación",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `anon` inserta en `tiendas` o `productos`, o ejecuta `importar_compra`, THE SYSTEM SHALL rechazarlo por permisos.",
+      "WHEN con sesión se llama `crear_tienda('OLIMPICA')` y luego `crear_tienda('Olímpica')` THE SYSTEM SHALL devolver el mismo id.",
+      "WHEN con sesión se crea la sexta tienda del día THE SYSTEM SHALL fallar con `limite_tiendas`.",
+      "WHEN se crea un producto nuevo THE SYSTEM SHALL dejarlo con `grupo = 'Otros'`, `unidad = 'u'`, `cantidad_base = 1`, `frecuencia = 'semanal'` y `revisado = false`.",
+      "WHEN se importa el mismo hash dos veces para el mismo usuario sin deshacer THE SYSTEM SHALL rechazar la segunda con error de duplicado.",
+      "WHEN `deshacer_importacion` corre y el precio vigente cambió después del lote THE SYSTEM SHALL conservar ese precio y contarlo en `conservados`."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset",
+      "pnpm migrar",
+      "pnpm gen:tipos",
+      "pnpm typecheck",
+      "pnpm exec supabase test db"
+    ],
+    "checkpoint": "paso-34a",
+    "files": [
+      "supabase/migrations/*_importar_compras.sql",
+      "supabase/tests/importar_compras.test.sql",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E34-T2",
+    "title": "Leer el CSV de una factura y calcular su hash",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": ["E34-T1"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `leerCsv` recibe el mismo CSV con BOM y CRLF THE SYSTEM SHALL devolver las mismas filas que sin ellos.",
+      "WHEN el delimitador es `;` y el precio es `12500,50` THE SYSTEM SHALL leerlo como 12500.5.",
+      "WHEN la cabecera no trae `tienda` THE SYSTEM SHALL fallar indicando la línea 1.",
+      "WHEN una fila trae 4 columnas y se esperan 5, o un archivo trae 501 filas, THE SYSTEM SHALL rechazarlo con el número de línea o el límite.",
+      "WHEN el texto incluye `# TOTAL=48200` y `# DUDOSA: falta un renglón` THE SYSTEM SHALL llenar `total` y `notas` sin crear filas.",
+      "WHEN `hashLote` recibe el mismo texto y fecha THE SYSTEM SHALL devolver 64 hex iguales, y distintos si cambia la fecha."
+    ],
+    "verify": [
+      "pnpm test tests/unit/importar.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-34b",
+    "files": [
+      "src/lib/importar/tipos.ts",
+      "src/lib/importar/csv.ts",
+      "src/lib/importar/hash.ts",
+      "tests/importar/*.csv",
+      "tests/unit/importar.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E34-T3",
+    "title": "Emparejar productos, rubros y prompt de factura",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": ["E34-T2"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN el nombre coincide por código, alias de tienda, alias global o nombre normalizado THE SYSTEM SHALL devolver ese producto, en ese orden.",
+      "WHEN la presentación difiere ('Leche 1 L' contra 'Leche 1.1 L') THE SYSTEM SHALL tratarlo como producto nuevo.",
+      "WHEN `grupoARubro` recibe Proteínas, Tubérculos y Gourmet THE SYSTEM SHALL devolver Carnes, Verduras y Despensa.",
+      "WHEN se lee `prompts/importar-gastos.md` THE SYSTEM SHALL contener el texto de `PROMPT_FACTURA` sin diferencias."
+    ],
+    "verify": [
+      "pnpm test tests/unit/importar-emparejar.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-34c",
+    "files": [
+      "src/lib/importar/emparejar.ts",
+      "src/lib/importar/prompt.ts",
+      "src/lib/presupuesto/rubros.ts",
+      "tests/unit/importar-emparejar.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E34-T4",
+    "title": "Acciones de servidor y almacenamiento de importaciones",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": ["E34-T3"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `importarCompra` recibe más de 500 filas o una fecha inválida THE SYSTEM SHALL rechazarlo con zod antes de tocar la base.",
+      "WHEN no hay sesión THE SYSTEM SHALL responder `sin_sesion` y no escribir nada.",
+      "WHEN `leerImportacionesLocal` lee un `localStorage` corrupto THE SYSTEM SHALL devolver una lista vacía sin lanzar.",
+      "WHEN `catalogoTiendas()` corre THE SYSTEM SHALL paginar con `.range()` y devolver `manual`, `productos`, `precios` y `ultimaFecha` por tienda.",
+      "WHEN se pide cada clave de aviso de la importación THE SYSTEM SHALL encontrarla en el catálogo de `avisos.ts`."
+    ],
+    "verify": [
+      "pnpm test tests/unit/importar-acciones.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-34d",
+    "files": [
+      "src/app/presupuesto/acciones.ts",
+      "src/lib/presupuesto/almacenamiento.ts",
+      "src/lib/datos.ts",
+      "src/lib/avisos.ts",
+      "tests/unit/importar-acciones.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E34-T5",
+    "title": "Pestaña Importar factura en /presupuesto",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": ["E34-T4"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se elige un `.xlsx` THE SYSTEM SHALL mostrar 'guárdalo como CSV' y no leer el archivo.",
+      "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0 con la pestaña incluida.",
+      "WHEN se cuentan las líneas de cada archivo de `src/components/importar/` y de `presupuesto-cliente.tsx` THE SYSTEM SHALL dar 250 o menos."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "for f in src/components/importar/*.tsx src/components/presupuesto/presupuesto-cliente.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done"
+    ],
+    "checkpoint": "paso-34e",
+    "files": [
+      "src/components/importar/importar-factura.tsx",
+      "src/components/importar/revision.tsx",
+      "src/components/importar/resultado.tsx",
+      "src/components/importar/prompt.tsx",
+      "src/components/presupuesto/presupuesto-cliente.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E34-T6",
+    "title": "Probar de punta a punta la importación de facturas",
+    "epic": "34-importacion-y-catalogo",
+    "dependencies": ["E34-T5"],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se pega `varias-tiendas.csv` THE SYSTEM SHALL mostrar dos grupos tienda+fecha en la revisión.",
+      "WHEN se guarda el lote THE SYSTEM SHALL dejar los gastos en `/presupuesto` y la tienda nueva en `/tiendas`.",
+      "WHEN se repite el mismo CSV THE SYSTEM SHALL mostrar `importacion_duplicada`.",
+      "WHEN se pulsa Deshacer THE SYSTEM SHALL borrar los gastos y restaurar el precio anterior, y permitir importar el archivo otra vez.",
+      "WHEN `pnpm migrar` corre después de todo esto THE SYSTEM SHALL imprimir `precios=432 tiendas=4`."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/importar.spec.ts",
+      "pnpm exec supabase db reset",
+      "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-34f",
+    "files": ["tests/e2e/importar.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T1",
+    "title": "Migrar la fusión de productos duplicados",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E34-T1"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `anon` ejecuta `fusionar_productos` THE SYSTEM SHALL rechazarlo, y solo puede leer `fusiones_productos`.",
+      "WHEN con sesión se fusiona un producto en otro THE SYSTEM SHALL mover precios, historial, anotados, catálogo, alias, códigos, gastos y las entradas de listas y planes, y borrar el origen.",
+      "WHEN origen y destino son el mismo id THE SYSTEM SHALL fallar sin mover nada.",
+      "WHEN una referencia impide borrar el origen THE SYSTEM SHALL deshacer toda la transacción.",
+      "WHEN se intenta borrar una tienda o un producto THE SYSTEM SHALL fallar porque no hay política ni grant de `delete`.",
+      "WHEN con sesión se renombra una tienda a un nombre que solo difiere en tilde o mayúscula THE SYSTEM SHALL fallar por el índice único."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset",
+      "pnpm migrar",
+      "pnpm gen:tipos",
+      "pnpm typecheck",
+      "pnpm exec supabase test db"
+    ],
+    "checkpoint": "paso-35a",
+    "files": [
+      "supabase/migrations/*_fusionar_productos.sql",
+      "supabase/tests/fusion.test.sql",
+      "supabase/tests/tiendas.test.sql",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T2",
+    "title": "Lógica de fusión y acciones de /tiendas",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E35-T1", "E34-T4"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `validarFusion` recibe ids iguales o vacíos THE SYSTEM SHALL rechazarlos.",
+      "WHEN `candidatosFusion` ordena THE SYSTEM SHALL poner primero el nombre normalizado idéntico y no proponer el propio producto.",
+      "WHEN `textoFusion` se genera THE SYSTEM SHALL nombrar origen y destino.",
+      "WHEN una acción recibe un nombre de tienda de 1 o 61 caracteres THE SYSTEM SHALL rechazarlo con zod."
+    ],
+    "verify": [
+      "pnpm test tests/unit/fusion.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-35b",
+    "files": [
+      "src/lib/tiendas/fusion.ts",
+      "src/app/tiendas/acciones.ts",
+      "src/lib/avisos.ts",
+      "src/lib/datos.ts",
+      "tests/unit/fusion.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T3",
+    "title": "Pantalla /tiendas con edición y diálogo de fusión",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E35-T2"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `pnpm build` corre THE SYSTEM SHALL incluir la ruta `/tiendas` y terminar con exit 0.",
+      "WHEN se cuentan las líneas de cada componente de `src/components/tiendas/` THE SYSTEM SHALL dar 250 o menos.",
+      "WHEN se busca el texto 'Borrar' en `src/components/tiendas/` THE SYSTEM SHALL no encontrarlo."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "for f in src/components/tiendas/*.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done",
+      "status=0; grep -rq \"Borrar\" src/components/tiendas || status=$?; test \"$status\" -eq 1"
+    ],
+    "checkpoint": "paso-35c",
+    "files": [
+      "src/app/tiendas/page.tsx",
+      "src/components/tiendas/vista.tsx",
+      "src/components/tiendas/tabla-productos.tsx",
+      "src/components/tiendas/dialogo-fusion.tsx",
+      "src/components/encabezado.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T4",
+    "title": "Probar de punta a punta /tiendas y la fusión",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E35-T3"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se abre `/tiendas` THE SYSTEM SHALL listar las 5 tiendas sembradas y la creada en el paso 34.",
+      "WHEN con sesión se crea una tienda y un producto THE SYSTEM SHALL mostrarlos de inmediato en otro navegador con sesión.",
+      "WHEN se edita el grupo de un producto 'Por revisar' THE SYSTEM SHALL sacarlo del filtro.",
+      "WHEN se fusiona un duplicado escribiendo el nombre del origen THE SYSTEM SHALL mover sus precios al destino y quitar el origen del catálogo."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/tiendas.spec.ts",
+      "pnpm exec supabase db reset",
+      "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-35d",
+    "files": ["tests/e2e/tiendas.spec.ts"],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T5",
+    "title": "Leer el CSV de una lista y convertir unidades",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E34-T3"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `leerListaCsv` recibe el ejemplo de papas, pepino, tomate, pimentón, cebolla morada y aguacate con dos secciones THE SYSTEM SHALL devolver dos listas.",
+      "WHEN la unidad es `lb` THE SYSTEM SHALL contar 500 g por libra, de modo que 8 lb dan 4 kg.",
+      "WHEN la nota dice 'aprox. 8 libras' THE SYSTEM SHALL ignorarla en el cálculo.",
+      "WHEN la unidad pedida es de otra familia que la del producto THE SYSTEM SHALL marcar la fila 'unidad distinta' sin convertir.",
+      "WHEN la cabecera es distinta, una cantidad no es numérica o el archivo es `.xlsx` THE SYSTEM SHALL rechazarlo con el número de línea.",
+      "WHEN se lee `prompts/importar-lista.md` THE SYSTEM SHALL contener el texto de `PROMPT_LISTA` sin diferencias."
+    ],
+    "verify": [
+      "pnpm test tests/unit/lista-importar.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-36a",
+    "files": [
+      "src/lib/importar/lista.ts",
+      "src/lib/importar/prompt-lista.ts",
+      "tests/unit/lista-importar.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T6",
+    "title": "Cargar lista desde texto en /listas",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E35-T5", "E35-T3"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0 con el componente de carga incluido.",
+      "WHEN `registrarAliasLista` se llama sin sesión THE SYSTEM SHALL responder `sin_sesion` y no escribir nada.",
+      "WHEN se cuentan las líneas de `cargar-lista.tsx` THE SYSTEM SHALL dar 250 o menos.",
+      "WHEN `pasos.ts` se revisa THE SYSTEM SHALL incluir el paso `cargar-lista` del tutorial."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "test \"$(wc -l < src/components/listas/cargar-lista.tsx)\" -le 250",
+      "grep -q \"cargar-lista\" src/lib/tutorial/pasos.ts"
+    ],
+    "checkpoint": "paso-36b",
+    "files": [
+      "src/components/listas/cargar-lista.tsx",
+      "src/app/listas/acciones.ts",
+      "src/lib/avisos.ts",
+      "src/lib/tutorial/pasos.ts",
+      "src/app/listas/page.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E35-T7",
+    "title": "Probar de punta a punta la carga de listas",
+    "epic": "35-tiendas-y-listas",
+    "dependencies": ["E35-T6"],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se carga el CSV de ejemplo y se pulsa 'Usar como mi lista' THE SYSTEM SHALL mostrar los ítems y el total por tienda en la pantalla principal.",
+      "WHEN no hay sesión y se pulsa Guardar THE SYSTEM SHALL dejar la lista en `mercado-medellin:listas`.",
+      "WHEN hay sesión y se guarda THE SYSTEM SHALL mostrar la lista en `/listas` desde otro navegador.",
+      "WHEN se repite el nombre THE SYSTEM SHALL avisar `nombre_repetido` y no guardar.",
+      "WHEN se carga el mismo listado por segunda vez THE SYSTEM SHALL emparejar el producto elegido antes sin preguntar."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/cargar-lista.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-36c",
+    "files": ["tests/e2e/cargar-lista.spec.ts"],
+    "status": "pending"
+  }
+]

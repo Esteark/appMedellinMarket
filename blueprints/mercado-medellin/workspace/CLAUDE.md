@@ -63,6 +63,9 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 | Pronóstico a 7 días | `src/lib/precios/pronostico.ts` (puro, sin red); vistas `serie_pronostico` y tabla `contexto_mercado` |
 | Catálogo de Tienda/Carnicería de barrio | tabla `catalogo_tienda` (41 productos, sin precios) + `src/data/barrio.ts`; se edita en `/anotados/barrio` |
 | Tutorial y bombilla de ayuda | `src/lib/tutorial/*`, `src/components/tutorial/*`; local `mercado-medellin:tutorial:v1` |
+| Importar factura (CSV) | `src/lib/importar/*` (puro: csv, hash, emparejar, prompt); tablas `importaciones_gastos`, `importacion_cambios`; prompt en `blueprints/mercado-medellin/prompts/importar-gastos.md` |
+| Catálogo compartido de tiendas y productos | tablas `tiendas`, `productos`, `tienda_alias`, `producto_alias`, `producto_codigo`; funciones `crear_tienda`, `crear_producto`, `fusionar_productos`; pantalla `/tiendas` |
+| Cargar lista desde texto (CSV) | `src/lib/importar/lista.ts` (puro), `src/components/listas/cargar-lista.tsx`; prompt en `blueprints/mercado-medellin/prompts/importar-lista.md`; la lista cargada es la activa y se guarda como en `listas/guardadas.ts` |
 
 ## Reglas de código
 
@@ -133,6 +136,8 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 5. Nunca commitear secretos, `.env.local` ni salida de build. Nunca editar a mano `tipos.ts` ni una migración ya aplicada.
 6. Nunca marcar una tarea como hecha con un gate en rojo. Plan de construcción: `blueprints/mercado-medellin/tasks.json` y `epics/`.
 7. Una corrección de precio es global y con autor: solo su autor la quita, el automático nunca se borra y el historial del pronóstico no se rellena a mano.
-8. Tienda/Carnicería de barrio no siembra ni inventa precios: `catalogo_tienda` solo dice qué productos se siguen y cada precio entra por `corregir_precio('barrio', …)`. "Quitar" es `activo = false`, nunca `delete`.
+8. Ninguna tienda del catálogo siembra ni inventa precios (Barrio es el caso base): `catalogo_tienda` solo dice qué productos se siguen y cada precio entra por `corregir_precio('barrio', …)`. "Quitar" es `activo = false`, nunca `delete`.
 9. Las tiendas retiradas no vuelven: `TIENDAS_RETIRADAS` en `scripts/migrar.ts` filtra Éxito, Carulla, Euro, Ara e Ísimo. PriceSmart se queda (manual).
 10. El tutorial no bloquea ni escribe datos: una vez por dispositivo, se salta con `Esc`/`Saltar`, no entra en rutas de auth y no toca Supabase.
+11. El catálogo compartido es global y sin borrado: con sesión se crean y editan tiendas y productos; nadie los borra, se renombran, desactivan o fusionan (`fusionar_productos`). Una tienda es una cadena, no una sucursal. El emparejamiento es exacto, nunca por parecido, y nada se crea sin confirmar en la revisión.
+12. Los archivos y textos importados no salen del navegador y no usan IA: el CSV de una factura o de una lista se lee en el cliente y al servidor solo llegan las filas ya revisadas. Un lote se puede deshacer, no repite por hash y respeta los límites del blueprint (500 filas / 1 MB en facturas; 200 filas en listas).

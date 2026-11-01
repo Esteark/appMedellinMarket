@@ -72,15 +72,18 @@ La app compara los precios de 144 productos de mercado en **5 tiendas de Medell�
 ## 3. Estructura
 
 ```
-src/app/                 rutas: / (canasta), antojos, listas, hogar, dieta, presupuesto, anotados,
-                         anotados/barrio, alertas, producto/[id], ingresar, registro, recuperar, api/salud
-src/app/**/acciones.ts   server actions de cada área (lista, listas, planes, anotados, auth, presupuesto)
-src/components/          catalogo/, carrito/, detalle/, graficos/, planes/, presupuesto/, anotados/,
-                         listas/, precios/, tutorial/, avisos/, ui/ (shadcn)
+src/app/                 rutas: / (canasta), antojos, listas, hogar, dieta, presupuesto, tiendas,
+                         anotados, anotados/barrio, alertas, producto/[id], ingresar, registro,
+                         recuperar, api/salud
+src/app/**/acciones.ts   server actions de cada área (lista, listas, planes, anotados, auth,
+                         presupuesto, tiendas)
+src/components/          catalogo/, carrito/, detalle/, graficos/, planes/, presupuesto/, importar/,
+                         tiendas/, anotados/, listas/, precios/, tutorial/, avisos/, ui/ (shadcn)
 src/lib/                 supabase/{server,client,tipos}.ts,
                          precios/{lista,etiquetas,pronostico,planes,secciones,exportar}.ts,
                          listas/guardadas.ts, planes/config.ts, tutorial/*, alertas/reglas.ts,
-                         presupuesto/*, unidades.ts, fecha.ts, datos.ts
+                         presupuesto/*, importar/{csv,hash,emparejar,prompt,tipos,lista,prompt-lista}.ts,
+                         tiendas/fusion.ts, unidades.ts, fecha.ts, datos.ts
 src/corrida/             orquestador.ts, normalizar.ts, admin.ts, alertas-usuario.ts, correo.ts,
                          contexto.ts, adaptadores/{vtex,sipsa,vaquita}.ts
 src/data/planes.ts       portado de data/origen/constantes-artifact.js
@@ -90,7 +93,7 @@ scripts/                 cargar-env.ts, env-local.ts, humo.ts (ya en workspace/)
                          corrida.ts, capturar-fixtures.ts
 supabase/migrations/     una por cambio, con marca de tiempo: 0001_esquema.sql y las siguientes
 supabase/tests/          rls.test.sql (pgTAP) + una prueba por tabla o vista nueva
-tests/unit|integracion|e2e|fixtures/
+tests/unit|integracion|e2e|fixtures/ (capturados) e importar/ (CSV de entrada)
 .github/workflows/corrida.yml
 data/                    export/ y origen/ (copiados de workspace; excluidos de lint, tsc y tests)
 ```
@@ -199,7 +202,7 @@ alter publication supabase_realtime add table alertas;
 - **Estado de tiendas y corridas:** `tienda_estado` y una fila en `corridas` salen de `meta.json`.
 - **Anotados:** `anotados.json` está vacío hoy; si trae datos, se cargan con `autor = null`.
 
-**Migraciones de los pasos 27–33 (30-oct-2026).** No se edita ninguna migración aplicada: cada paso agrega la suya con marca de tiempo. Todas repiten el patrón de permisos de `0001_esquema.sql` —`revoke all` sobre la tabla nueva y después `grant` explícito—, porque en Supabase toda tabla nueva nace con permisos para `anon` y `authenticated` y la RLS quedaría como única barrera.
+**Migraciones de los pasos 27–35 (30-oct-2026).** No se edita ninguna migración aplicada: cada paso agrega la suya con marca de tiempo. Todas repiten el patrón de permisos de `0001_esquema.sql` —`revoke all` sobre la tabla nueva y después `grant` explícito—, porque en Supabase toda tabla nueva nace con permisos para `anon` y `authenticated` y la RLS quedaría como única barrera.
 
 | Paso | Migración | Cambios |
 |---|---|---|
@@ -210,6 +213,8 @@ alter publication supabase_realtime add table alertas;
 | 31 | `…_retirar_tiendas.sql` | borra Éxito, Carulla, Euro, Ara e Ísimo de sus tablas hijas y de `tiendas`; cambia el default de `listas.tienda_preferida` a `d1` |
 | 32 | `…_catalogo_barrio.sql` | tabla `catalogo_tienda` + 41 productos de barrio; `alertas.tipo` acepta `precio_manual_vencido` |
 | 33 | — | sin migración: tutorial en el cliente |
+| 34 | `…_importar_compras.sql` | `importaciones_gastos`, `importacion_cambios`, `producto_alias`, `tienda_alias`, `producto_codigo`; `gastos_reales.cantidad/descripcion/lote_importacion` y `origen='importado'`; `precios_manuales_historial.origen/cantidad/total/promocion/importacion_id`; escritura global de `tiendas`/`productos` con `nombre_norm`, `origen`, `revisado` y auditoría; `historial_minimo` sin promociones; `catalogo_tienda` sin el candado de `barrio`; funciones `normalizar_nombre`, `slug_tienda`, `crear_tienda`, `crear_producto`, `emparejar_producto`, `previsualizar_compra`, `importar_compra`, `deshacer_importacion` |
+| 35 | `…_fusionar_productos.sql` | tabla `fusiones_productos` y función `fusionar_productos(text, text)` (mueve precios, historial, gastos, catálogo, alias, códigos y las listas y planes que apuntaban al origen, y borra el origen) |
 
 `precio_efectivo` no cambia: la corrección a mano sigue viviendo en `anotados`, así que la regla de precio efectivo de §5 se cumple sin tocar la vista. **`listas.tienda_preferida` pasa de `'exito'` a `'d1'`**: la columna se creó con default `'exito'` en `0001_esquema.sql` y, al retirar Éxito, ese valor quedaría apuntando a una tienda inexistente. La migración del paso 31 actualiza las filas existentes y cambia el default; `src/corrida/alertas-usuario.ts` deja de caer en `"exito"` y cae en `"d1"`. Después de cada migración se corre `pnpm gen:tipos`; mientras `tipos.ts` no incluya una tabla nueva, la server action la consulta con el molde explícito que ya usa `presupuesto/acciones.ts`.
 
@@ -239,6 +244,31 @@ alter publication supabase_realtime add table alertas;
 - La frescura es más laxa que la de una tienda automática: **14 días** para frecuencia diaria y **30** para semanal. Pasado ese plazo, la etiqueta es `actualizar` (no `desactualizado`) y la tarjeta lleva a `/anotados/barrio`.
 - Al entrar en la lista activa, el producto genera `precio_manual_vencido` una vez al día; productos del catálogo que no están en la lista no generan alertas.
 - La UI dice siempre "solo anotados" y "sin dato" hasta que alguien escriba un precio; nunca muestra un precio de referencia.
+
+**Catálogo compartido de tiendas y productos (paso 34).**
+- `tiendas` y `productos` dejan de ser de solo lectura: con sesión se crean y se editan; `anon` solo lee. **Nadie borra** una tienda ni un producto con datos: se renombra, se desactiva o se fusiona.
+- El nombre se normaliza (minúsculas, sin acentos, espacios colapsados) y es único. Crear "Olímpica" cuando ya existe "OLIMPICA" devuelve la existente: nunca se duplica una tienda por tilde o mayúscula.
+- Una tienda nueva nace `manual = true` (sin corrida), con un color de la paleta y `nota = 'Creada desde una factura'`. **Una tienda es una cadena, no una sucursal**: la dirección y el NIT no se guardan.
+- Un producto nuevo nace `grupo = 'Otros'`, `unidad = 'u'`, `unidad_base = 'u'`, `cantidad_base = 1`, `frecuencia = 'semanal'` y `origen = 'compra'`. Se corrige en `/tiendas` y se puede fusionar con otro.
+- `producto_alias`, `tienda_alias` y `producto_codigo` recuerdan cómo venía escrito cada nombre en cada tienda y el código de barras: la siguiente importación empareja sola, sin volver a preguntar.
+- Todas las escrituras son globales e inmediatas. `creado_por` y `creado` quedan en tiendas y productos; no hay perfiles, así que la UI no muestra nombres de persona.
+- `/tiendas` es la pantalla de gestión; `/anotados` solo muestra tiendas con al menos un precio en `precio_efectivo`, salvo las automáticas (`manual = false`), que se muestran siempre para que una fuente caída no borre su columna.
+
+**Importación de una factura (CSV) (paso 34).**
+- Contrato: cabecera mínima `producto,cantidad,precio_total,tienda`; al final se aceptan `fecha` y `codigo` (opcionales, en ese orden). UTF-8, una fila por línea de la factura, sin totales ni columnas extra. Se toleran BOM, CRLF, `;` y coma decimal; el resto se rechaza con el número de línea.
+- Un CSV puede traer varias facturas: se agrupa por `tienda` + `fecha`. `fecha` vacía usa la fecha del lote; `codigo` vacío no aporta nada.
+- `cantidad` es informativa para el gasto y **base del precio**: el precio de tienda es `round(precio_total / cantidad)`. Así "3 × 2.500" guarda 2.500, y "1.25 kg por 18.750" guarda 15.000/kg.
+- El precio se registra con la **fecha de la factura** y no pisa uno más nuevo de esa tienda; siempre queda en `precios_manuales_historial` con `origen = 'compra'`, cantidad y total. Si ya había uno más nuevo, el import lo informa en el resultado.
+- Un precio fuera de 100–10.000.000 no se escribe (el gasto sí) y se avisa en la revisión. Una fila marcada como **promoción** va al historial pero no pisa el precio vigente.
+- El emparejamiento es exacto, nunca por parecido: código de barras, alias de la tienda, alias global y nombre normalizado, en ese orden. Si la presentación no coincide ("Leche 1 L" vs "Leche 1.1 L"), es un producto distinto.
+- Tienda o producto desconocidos se muestran en la revisión y se crean **solo si el usuario confirma**; el nombre de la tienda se normaliza y se puede corregir antes de crear.
+- El gasto guarda `monto = precio_total`, `cantidad`, `descripcion` (el nombre tal como vino), `lote_importacion`, `tienda_id`, `producto_id` y `mes = fecha.slice(0,7)`; `origen = 'importado'`.
+- El lote y los gastos son **privados**; tiendas, productos y precios son **globales**. El interruptor "publicar precios" (por defecto sí) permite importar solo los gastos: en ese caso el gasto queda con `tienda_id = null`, `producto_id = null` y no se crea nada en el catálogo.
+- Duplicado: hash SHA-256 del CSV normalizado + fecha del lote, **por usuario** y con el mismo valor con o sin sesión. Con sesión vive en `importaciones_gastos` (índice único `(user_id, hash)` mientras `deshecho is null`); sin sesión, en `localStorage`. El mismo archivo con la misma fecha se bloquea con un mensaje que dice cuándo se importó; no hay opción de "importar igual". Después de deshacer, el mismo archivo se puede volver a importar.
+- Límites: 500 filas, 1 MB, 5 tiendas nuevas y 50 productos nuevos por usuario y día. El servidor los vuelve a validar.
+- La revisión pide opcionalmente el **total impreso del recibo** por cada grupo tienda+fecha y avisa si la suma de líneas no cuadra (diferencia > 1 % o > 500 COP), sin bloquear.
+- "Deshacer importación" restaura los precios que el lote pisó, solo si nadie los cambió después (si cambiaron, los deja y lo dice), y borra sus gastos. Las tiendas y productos creados quedan en el catálogo.
+- Efecto conocido: los precios importados entran a `precio_efectivo` y a `historial_minimo`, así que cambian totales, mejor tienda, alertas y pronóstico para todos. La revisión lo dice antes de guardar; el lote no genera alertas por sí mismo.
 
 **Listas guardadas.** Una lista guardada es un nombre y una copia de la lista activa:
 - Nombre de 1 a 60 caracteres, único por cuenta sin distinguir mayúsculas ni espacios sobrantes. Repetirlo avisa `nombre_repetido` y no guarda.
@@ -1190,6 +1220,783 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - Mientras el tutorial está abierto o completado, `TipsNoInvisivos` no muestra tips; los tips siguen saliendo para quien saltó el tutorial.
   - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan sin dependencias nuevas.
 
+**34. Importar una factura en CSV y abrir el catálogo de tiendas y productos.** *(pedido del 31-oct-2026: cargar lo que se compra sin digitar producto por producto)*
+- **Depende de:** pasos 14 (avisos), 16 (`/anotados`), 27 (precio corregido) y 29 (presupuesto real). **No agrega dependencias:** el CSV se lee con `FileReader`, el hash con `crypto.subtle` y la UI reusa los componentes de `presupuesto/`.
+- **Migración nueva `supabase/migrations/<ts>_importar_compras.sql`:**
+
+  ```sql
+  -- 31-oct-2026: catálogo compartido + compras importadas desde una factura en CSV.
+  -- El archivo no se sube: el navegador lo lee, calcula el hash y manda las filas ya normalizadas.
+  create function normalizar_nombre(p_texto text) returns text
+  language sql immutable as $$
+    select btrim(regexp_replace(
+      translate(lower(coalesce(p_texto, '')),
+        'áàäâãéèëêíìïîóòöôõúùüûñç',
+        'aaaaaeeeeiiiiooooouuuunc'),
+      '\s+', ' ', 'g'));
+  $$;
+
+  create function slug_tienda(p_nombre text) returns text
+  language sql immutable as $$
+    select left(coalesce(nullif(btrim(regexp_replace(
+      normalizar_nombre(p_nombre), '[^a-z0-9]+', '-', 'g'), '-'), ''), 'tienda'), 30);
+  $$;
+
+  -- Nombres normalizados y auditoría. `nombre_norm` es generado: no se puede olvidar.
+  alter table tiendas
+    add column nombre_norm text generated always as (normalizar_nombre(nombre)) stored,
+    add column origen text not null default 'seed' check (origen in ('seed','manual','importado')),
+    add column creado_por uuid references auth.users default auth.uid(),
+    add column creado timestamptz not null default now();
+  create unique index tiendas_nombre_norm on tiendas (nombre_norm);
+  alter table tiendas add constraint tiendas_nombre_largo
+    check (char_length(btrim(nombre)) between 2 and 60) not valid;
+
+  alter table productos
+    add column nombre_norm text generated always as (normalizar_nombre(nombre)) stored,
+    add column origen text not null default 'seed' check (origen in ('seed','manual','compra')),
+    add column revisado boolean not null default true,
+    add column creado_por uuid references auth.users default auth.uid(),
+    add column creado timestamptz not null default now();
+  create unique index productos_nombre_norm on productos (nombre_norm);
+
+  -- Cómo venía escrito cada nombre y el código de barras: la próxima factura empareja sola.
+  create table tienda_alias (
+    alias_norm text primary key,
+    tienda_id text not null references tiendas on delete cascade,
+    creado_por uuid references auth.users default auth.uid(),
+    creado timestamptz not null default now()
+  );
+
+  create table producto_alias (
+    id bigserial primary key,
+    alias_norm text not null,
+    tienda_id text references tiendas on delete cascade,  -- null = sirve en cualquier tienda
+    producto_id text not null references productos on delete cascade,
+    creado_por uuid references auth.users default auth.uid(),
+    creado timestamptz not null default now()
+  );
+  create unique index producto_alias_tienda on producto_alias (alias_norm, tienda_id)
+    where tienda_id is not null;
+  create unique index producto_alias_global on producto_alias (alias_norm)
+    where tienda_id is null;
+  create index on producto_alias (producto_id);
+
+  create table producto_codigo (
+    codigo text primary key check (codigo ~ '^[0-9A-Za-z-]{4,40}$'),
+    producto_id text not null references productos on delete cascade,
+    creado_por uuid references auth.users default auth.uid(),
+    creado timestamptz not null default now()
+  );
+  create index on producto_codigo (producto_id);
+
+  -- Un lote = un archivo. Privado, con hash para bloquear la repetición.
+  create table importaciones_gastos (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users on delete cascade,
+    hash text not null check (hash ~ '^[a-f0-9]{64}$'),
+    fecha_lote date not null,
+    archivo text,
+    filas int not null check (filas between 1 and 500),
+    total bigint not null default 0 check (total >= 0),
+    creado timestamptz not null default now(),
+    deshecho timestamptz
+  );
+  -- Solo bloquea mientras el lote siga vigente: deshacer y volver a importar el mismo archivo es legítimo.
+  create unique index importaciones_gastos_vigente on importaciones_gastos (user_id, hash)
+    where deshecho is null;
+
+  -- Foto de lo que el lote pisó, para que "deshacer" sea real.
+  create table importacion_cambios (
+    id bigserial primary key,
+    importacion_id uuid not null references importaciones_gastos on delete cascade,
+    producto_id text not null references productos,
+    tienda_id text not null references tiendas,
+    fecha date not null,
+    precio_nuevo int not null,
+    promocion boolean not null default false,
+    anotado_precio int,
+    anotado_fecha date,
+    historial_precio int,
+    historial_origen text,
+    historial_promocion boolean,
+    creado timestamptz not null default now(),
+    unique (importacion_id, producto_id, tienda_id, fecha)
+  );
+  create index on importacion_cambios (importacion_id);
+
+  alter table gastos_reales
+    add column cantidad numeric(10,3) check (cantidad is null or cantidad > 0),
+    add column descripcion text,
+    add column lote_importacion uuid references importaciones_gastos on delete set null;
+  alter table gastos_reales drop constraint gastos_reales_origen_check;
+  alter table gastos_reales add constraint gastos_reales_origen_check
+    check (origen in ('manual','desde_lista','plan_hogar','plan_dieta','importado'));
+  create index on gastos_reales (lote_importacion);
+
+  alter table precios_manuales_historial
+    add column origen text not null default 'manual' check (origen in ('manual','compra')),
+    add column cantidad numeric(10,3),
+    add column total int,
+    add column promocion boolean not null default false,
+    add column importacion_id uuid references importaciones_gastos on delete set null;
+
+  -- Una promoción va al historial pero no al mínimo: no distorsiona serie, alertas ni pronóstico.
+  create or replace view historial_minimo with (security_invoker = true) as
+  select producto_id, fecha, min(precio) as precio
+  from (
+    select producto_id, fecha, precio from precios_historial where precio is not null
+    union all
+    select producto_id, fecha, precio from precios_manuales_historial
+      where not promocion and precio is not null
+  ) s
+  group by producto_id, fecha;
+
+  -- El catálogo de barrio deja de ser el único: cualquier tienda puede tener productos seguidos.
+  alter table catalogo_tienda drop constraint catalogo_tienda_tienda_id_check;
+
+  -- Escritura global con sesión; `anon` sigue leyendo. Nadie borra tiendas ni productos.
+  create policy crear on tiendas for insert to authenticated
+    with check (creado_por = auth.uid());
+  create policy editar on tiendas for update to authenticated
+    using (true) with check (true);
+  grant insert, update on tiendas to authenticated;
+
+  create policy crear on productos for insert to authenticated
+    with check (creado_por = auth.uid());
+  create policy editar on productos for update to authenticated
+    using (true) with check (true);
+  grant insert, update on productos to authenticated;
+
+  alter table tienda_alias enable row level security;
+  create policy leer on tienda_alias for select using (true);
+  create policy crear on tienda_alias for insert to authenticated with check (creado_por = auth.uid());
+  create policy editar on tienda_alias for update to authenticated using (true) with check (true);
+  create policy borrar on tienda_alias for delete to authenticated using (true);
+  revoke all on tienda_alias from anon, authenticated;
+  grant select on tienda_alias to anon, authenticated;
+  grant insert, update, delete on tienda_alias to authenticated;
+
+  alter table producto_alias enable row level security;
+  create policy leer on producto_alias for select using (true);
+  create policy crear on producto_alias for insert to authenticated with check (creado_por = auth.uid());
+  create policy editar on producto_alias for update to authenticated using (true) with check (true);
+  create policy borrar on producto_alias for delete to authenticated using (true);
+  revoke all on producto_alias from anon, authenticated;
+  grant select on producto_alias to anon, authenticated;
+  grant insert, update, delete on producto_alias to authenticated;
+  grant usage on sequence producto_alias_id_seq to authenticated;
+
+  alter table producto_codigo enable row level security;
+  create policy leer on producto_codigo for select using (true);
+  create policy crear on producto_codigo for insert to authenticated with check (creado_por = auth.uid());
+  create policy borrar on producto_codigo for delete to authenticated using (true);
+  revoke all on producto_codigo from anon, authenticated;
+  grant select on producto_codigo to anon, authenticated;
+  grant insert, delete on producto_codigo to authenticated;
+
+  alter table importaciones_gastos enable row level security;
+  create policy propia on importaciones_gastos for all to authenticated
+    using (user_id = auth.uid()) with check (user_id = auth.uid());
+  revoke all on importaciones_gastos from anon, authenticated;
+  grant select, insert, update, delete on importaciones_gastos to authenticated;
+
+  alter table importacion_cambios enable row level security;
+  create policy leer on importacion_cambios for select to authenticated
+    using (exists (select 1 from importaciones_gastos i
+      where i.id = importacion_id and i.user_id = auth.uid()));
+  create policy crear on importacion_cambios for insert to authenticated
+    with check (exists (select 1 from importaciones_gastos i
+      where i.id = importacion_id and i.user_id = auth.uid()));
+  -- La fila nace con el precio de la línea y se corrige con el ponderado del lote.
+  create policy editar on importacion_cambios for update to authenticated
+    using (exists (select 1 from importaciones_gastos i
+      where i.id = importacion_id and i.user_id = auth.uid()))
+    with check (exists (select 1 from importaciones_gastos i
+      where i.id = importacion_id and i.user_id = auth.uid()));
+  revoke all on importacion_cambios from anon, authenticated;
+  grant select, insert, update, delete on importacion_cambios to authenticated;
+  grant usage on sequence importacion_cambios_id_seq to authenticated;
+
+  -- Deshacer un lote propio puede borrar observaciones de días pasados.
+  create policy borrar_lote on precios_manuales_historial for delete to authenticated
+    using (importacion_id is not null and exists (
+      select 1 from importaciones_gastos i
+      where i.id = importacion_id and i.user_id = auth.uid()));
+
+  -- Crear tienda: idempotente por nombre o alias. Tope de 5 nuevas por usuario y día.
+  create function crear_tienda(p_nombre text) returns text
+  language plpgsql security invoker set search_path = public as $$
+  declare
+    v_norm text := normalizar_nombre(p_nombre);
+    v_id text;
+    v_base text;
+    v_n int := 1;
+    v_hoy date := (now() at time zone 'America/Bogota')::date;
+    v_color text;
+  begin
+    if auth.uid() is null then raise exception 'sin_sesion'; end if;
+    if v_norm is null or char_length(v_norm) not between 2 and 60 then
+      raise exception 'nombre_invalido';
+    end if;
+    select tienda_id into v_id from tienda_alias where alias_norm = v_norm;
+    if v_id is not null then return v_id; end if;
+    select id into v_id from tiendas where nombre_norm = v_norm;
+    if v_id is not null then return v_id; end if;
+
+    if (select count(*) from tiendas
+        where creado_por = auth.uid() and (creado at time zone 'America/Bogota')::date = v_hoy) >= 5 then
+      raise exception 'limite_tiendas';
+    end if;
+
+    v_base := coalesce(nullif(slug_tienda(p_nombre), ''), 'tienda');
+    v_id := v_base;
+    while exists (select 1 from tiendas where id = v_id) loop
+      v_n := v_n + 1;
+      v_id := v_base || '-' || v_n;
+    end loop;
+    v_color := (array['#0f766e','#b45309','#7c3aed','#be123c','#0369a1','#4d7c0f'])
+      [(1 + (abs(hashtext(v_id))::bigint % 6))::int];
+    insert into tiendas (id, nombre, color, manual, nota, origen, creado_por)
+      values (v_id, btrim(p_nombre), v_color, true, 'Creada desde una factura', 'importado', auth.uid());
+    return v_id;
+  exception when unique_violation then
+    select id into v_id from tiendas where nombre_norm = v_norm;
+    return v_id;
+  end $$;
+  revoke all on function crear_tienda(text) from public, anon;
+  grant execute on function crear_tienda(text) to authenticated;
+
+  -- Crear producto: idempotente por nombre normalizado. Grupo/unidad por defecto, corregibles en /tiendas.
+  create function crear_producto(
+    p_nombre text,
+    p_grupo text default 'Otros',
+    p_unidad text default 'u',
+    p_cantidad_base numeric default 1,
+    p_frecuencia text default 'semanal'
+  ) returns text
+  language plpgsql security invoker set search_path = public as $$
+  declare
+    v_norm text := normalizar_nombre(p_nombre);
+    v_id text;
+    v_base text;
+    v_n int := 1;
+    v_ub text;
+    v_cb numeric;
+    v_frec text;
+    v_hoy date := (now() at time zone 'America/Bogota')::date;
+  begin
+    if auth.uid() is null then raise exception 'sin_sesion'; end if;
+    if v_norm is null or char_length(v_norm) not between 2 and 120 then
+      raise exception 'nombre_invalido';
+    end if;
+    select id into v_id from productos where nombre_norm = v_norm;
+    if v_id is not null then return v_id; end if;
+
+    if (select count(*) from productos
+        where creado_por = auth.uid() and (creado at time zone 'America/Bogota')::date = v_hoy) >= 50 then
+      raise exception 'limite_productos';
+    end if;
+
+    v_ub := case when p_unidad in ('g','ml','u') then p_unidad
+                 when p_unidad = 'kg' then 'g'
+                 when p_unidad = 'l' then 'ml'
+                 else 'u' end;
+    v_cb := case when p_unidad in ('kg','l') then coalesce(p_cantidad_base, 1) * 1000
+                 when p_unidad in ('g','ml','u') then coalesce(p_cantidad_base, 1)
+                 else 1 end;
+    v_frec := case when p_frecuencia in ('diaria','semanal') then p_frecuencia else 'semanal' end;
+
+    v_base := 'p-' || coalesce(nullif(slug_tienda(p_nombre), ''), 'producto');
+    v_id := v_base;
+    while exists (select 1 from productos where id = v_id) loop
+      v_n := v_n + 1;
+      v_id := v_base || '-' || v_n;
+    end loop;
+    insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia,
+        origen, revisado, creado_por)
+      values (v_id, btrim(p_nombre), coalesce(nullif(btrim(p_grupo), ''), 'Otros'), p_unidad,
+              v_ub, v_cb, v_frec, 'compra', false, auth.uid());
+    return v_id;
+  exception when unique_violation then
+    select id into v_id from productos where nombre_norm = v_norm;
+    return v_id;
+  end $$;
+  revoke all on function crear_producto(text, text, text, numeric, text) from public, anon;
+  grant execute on function crear_producto(text, text, text, numeric, text) to authenticated;
+
+  -- Empareja como lo hará la importación: código de barras, alias de la tienda, alias global y nombre.
+  create function emparejar_producto(p_nombre text, p_tienda text, p_codigo text)
+  returns text language sql stable security invoker set search_path = public as $$
+    select coalesce(
+      (select producto_id from producto_codigo
+        where codigo = nullif(btrim(coalesce(p_codigo, '')), '') limit 1),
+      (select producto_id from producto_alias
+        where alias_norm = normalizar_nombre(p_nombre) and tienda_id = p_tienda limit 1),
+      (select producto_id from producto_alias
+        where alias_norm = normalizar_nombre(p_nombre) and tienda_id is null limit 1),
+      (select id from productos where nombre_norm = normalizar_nombre(p_nombre) limit 1));
+  $$;
+  revoke all on function emparejar_producto(text, text, text) from public, anon;
+  grant execute on function emparejar_producto(text, text, text) to authenticated;
+
+  -- Revisión: qué tienda y qué producto se van a usar, sin escribir nada.
+  create function previsualizar_compra(p_filas jsonb)
+  returns table (linea int, tienda_texto text, producto_texto text, tienda_id text,
+    producto_id text, producto_nombre text, grupo text, precio int,
+    tienda_nueva boolean, producto_nuevo boolean, aviso text)
+  language plpgsql security invoker set search_path = public as $$
+  #variable_conflict use_variable
+  declare
+    f jsonb; i int := 0; v_t text; v_cod text;
+  begin
+    if jsonb_typeof(p_filas) <> 'array' then raise exception 'filas_invalidas'; end if;
+    if jsonb_array_length(p_filas) > 500 then raise exception 'demasiadas_filas'; end if;
+    for f in select * from jsonb_array_elements(p_filas) loop
+      i := i + 1;
+      tienda_texto := btrim(coalesce(f->>'tienda', ''));
+      producto_texto := btrim(coalesce(f->>'producto', ''));
+      v_t := normalizar_nombre(tienda_texto);
+      v_cod := nullif(btrim(coalesce(f->>'codigo', '')), '');
+      tienda_id := null; producto_id := null; producto_nombre := null;
+      grupo := 'Otros'; tienda_nueva := false; producto_nuevo := false; aviso := null;
+
+      select ta.tienda_id into tienda_id from tienda_alias ta where ta.alias_norm = v_t;
+      if tienda_id is null then
+        select t.id into tienda_id from tiendas t where t.nombre_norm = v_t;
+      end if;
+      tienda_nueva := tienda_id is null;
+
+      producto_id := emparejar_producto(producto_texto, tienda_id, v_cod);
+      producto_nuevo := producto_id is null;
+      if producto_id is not null then
+        select p.nombre, p.grupo into producto_nombre, grupo from productos p where p.id = producto_id;
+      end if;
+
+      precio := round((f->>'precio_total')::numeric / nullif((f->>'cantidad')::numeric, 0));
+      if precio is null or precio not between 100 and 10000000 then
+        aviso := 'precio_fuera_de_rango';
+      end if;
+      return next;
+    end loop;
+  end $$;
+  revoke all on function previsualizar_compra(jsonb) from public, anon;
+  grant execute on function previsualizar_compra(jsonb) to authenticated;
+
+  -- Importa el lote completo en una transacción: gastos privados + precios globales.
+  create function importar_compra(
+    p_fecha date,
+    p_archivo text,
+    p_publicar boolean,
+    p_filas jsonb,
+    p_hash text
+  ) returns jsonb
+  language plpgsql security invoker set search_path = public as $$
+  #variable_conflict use_variable
+  declare
+    v_imp uuid;
+    v_f jsonb;
+    v_linea int := 0;
+    v_tid text; v_pid text; v_precio int; v_fecha date; v_pub boolean; v_promo boolean;
+    v_total bigint := 0; v_gastos int := 0; v_avisos jsonb := '[]'::jsonb;
+    v_t0 int := (select count(*) from tiendas);
+    v_p0 int := (select count(*) from productos);
+    v_prev_precio int; v_prev_fecha date;
+    v_h_precio int; v_h_origen text; v_h_promo boolean;
+    v_efectivo int;
+  begin
+    if auth.uid() is null then raise exception 'sin_sesion'; end if;
+    if p_fecha is null then raise exception 'fecha_invalida'; end if;
+    if jsonb_typeof(p_filas) <> 'array' or jsonb_array_length(p_filas) = 0 then
+      raise exception 'filas_invalidas';
+    end if;
+    if jsonb_array_length(p_filas) > 500 then raise exception 'demasiadas_filas'; end if;
+
+    if p_hash !~ '^[a-f0-9]{64}$' then raise exception 'hash_invalido'; end if;
+    insert into importaciones_gastos (user_id, hash, fecha_lote, archivo, filas)
+      values (auth.uid(), p_hash, p_fecha, left(coalesce(p_archivo,'factura.csv'), 120),
+              jsonb_array_length(p_filas))
+      on conflict (user_id, hash) where deshecho is null do nothing
+      returning id into v_imp;
+    if v_imp is null then raise exception 'importacion_duplicada'; end if;
+
+    for v_f in select * from jsonb_array_elements(p_filas) loop
+      v_linea := v_linea + 1;
+      v_fecha := coalesce(nullif(v_f->>'fecha','')::date, p_fecha);
+      v_precio := round((v_f->>'precio_total')::numeric / nullif((v_f->>'cantidad')::numeric, 0));
+      v_pub := p_publicar and coalesce((v_f->>'publicar_precio')::boolean, true);
+      v_promo := coalesce((v_f->>'promocion')::boolean, false);
+      v_total := v_total + (v_f->>'precio_total')::int;
+      v_tid := null; v_pid := null;
+
+      if v_pub then
+        v_tid := crear_tienda(v_f->>'tienda');
+        v_pid := emparejar_producto(v_f->>'producto', v_tid, v_f->>'codigo');
+        if v_pid is null then
+          v_pid := crear_producto(v_f->>'producto',
+            coalesce(nullif(v_f->>'rubro',''), 'Otros'),
+            coalesce(nullif(v_f->>'unidad',''), 'u'), 1, 'semanal');
+        end if;
+        insert into tienda_alias (alias_norm, tienda_id)
+          values (normalizar_nombre(v_f->>'tienda'), v_tid)
+          on conflict (alias_norm) do nothing;
+        insert into producto_alias (alias_norm, tienda_id, producto_id)
+          values (normalizar_nombre(v_f->>'producto'), v_tid, v_pid)
+          on conflict do nothing;
+        if btrim(coalesce(v_f->>'codigo','')) ~ '^[0-9A-Za-z-]{4,40}$' then
+          insert into producto_codigo (codigo, producto_id)
+            values (btrim(v_f->>'codigo'), v_pid)
+            on conflict (codigo) do nothing;
+        end if;
+
+        if v_precio is not null and v_precio between 100 and 10000000 then
+          v_prev_precio := null; v_prev_fecha := null;
+          v_h_precio := null; v_h_origen := null; v_h_promo := null;
+          v_efectivo := null;
+          select precio, fecha into v_prev_precio, v_prev_fecha
+            from anotados where producto_id = v_pid and tienda_id = v_tid;
+          select precio, origen, promocion into v_h_precio, v_h_origen, v_h_promo
+            from precios_manuales_historial
+            where producto_id = v_pid and tienda_id = v_tid and fecha = v_fecha;
+
+          insert into importacion_cambios (importacion_id, producto_id, tienda_id, fecha,
+            precio_nuevo, promocion, anotado_precio, anotado_fecha,
+            historial_precio, historial_origen, historial_promocion)
+            values (v_imp, v_pid, v_tid, v_fecha, v_precio, v_promo,
+              v_prev_precio, v_prev_fecha, v_h_precio, v_h_origen, v_h_promo)
+            on conflict (importacion_id, producto_id, tienda_id, fecha) do nothing;
+
+          insert into precios_manuales_historial
+            (producto_id, tienda_id, precio, fecha, autor, origen, cantidad, total, promocion, importacion_id)
+            values (v_pid, v_tid, v_precio, v_fecha, auth.uid(), 'compra',
+              (v_f->>'cantidad')::numeric, (v_f->>'precio_total')::int, v_promo, v_imp)
+            on conflict (producto_id, tienda_id, fecha) do update
+              set precio = case when precios_manuales_historial.importacion_id = excluded.importacion_id
+                    then round((coalesce(precios_manuales_historial.total, 0) + excluded.total)
+                      / nullif(coalesce(precios_manuales_historial.cantidad, 0) + excluded.cantidad, 0))
+                    else excluded.precio end,
+                  cantidad = case when precios_manuales_historial.importacion_id = excluded.importacion_id
+                    then coalesce(precios_manuales_historial.cantidad, 0) + excluded.cantidad
+                    else excluded.cantidad end,
+                  total = case when precios_manuales_historial.importacion_id = excluded.importacion_id
+                    then coalesce(precios_manuales_historial.total, 0) + excluded.total
+                    else excluded.total end,
+                  autor = excluded.autor, origen = 'compra',
+                  promocion = excluded.promocion, importacion_id = excluded.importacion_id
+              where precios_manuales_historial.origen = 'compra'
+            returning precio into v_efectivo;
+          if v_efectivo is null then v_efectivo := v_precio; end if;
+
+          if not v_promo then
+            insert into anotados (producto_id, tienda_id, precio, fecha, autor)
+              values (v_pid, v_tid, v_efectivo, v_fecha, auth.uid())
+              on conflict (producto_id, tienda_id) do update
+                set precio = excluded.precio, fecha = excluded.fecha, autor = excluded.autor
+                where anotados.fecha <= excluded.fecha;
+            if not found then
+              v_avisos := v_avisos || jsonb_build_object('linea', v_linea, 'aviso', 'precio_mas_nuevo');
+            end if;
+          end if;
+          update importacion_cambios set precio_nuevo = v_efectivo
+            where importacion_id = v_imp and producto_id = v_pid
+              and tienda_id = v_tid and fecha = v_fecha;
+        else
+          v_avisos := v_avisos || jsonb_build_object('linea', v_linea, 'aviso', 'precio_fuera_de_rango');
+        end if;
+      end if;
+
+      insert into gastos_reales (user_id, fecha, mes, rubro, monto, tienda_id, producto_id,
+        origen, nota, cantidad, descripcion, lote_importacion)
+      values (auth.uid(), v_fecha, to_char(v_fecha, 'YYYY-MM'),
+        coalesce(nullif(v_f->>'rubro',''), 'Otros'), (v_f->>'precio_total')::int,
+        v_tid, v_pid, 'importado',
+        case when v_tid is null then btrim(v_f->>'tienda') end,
+        (v_f->>'cantidad')::numeric, v_f->>'producto', v_imp);
+      v_gastos := v_gastos + 1;
+    end loop;
+
+    update importaciones_gastos set total = v_total where id = v_imp;
+    return jsonb_build_object(
+      'importacion_id', v_imp,
+      'gastos', v_gastos,
+      'precios', (select count(*) from precios_manuales_historial where importacion_id = v_imp),
+      'tiendas_creadas', (select count(*) from tiendas) - v_t0,
+      'productos_creados', (select count(*) from productos) - v_p0,
+      'avisos', v_avisos);
+  end $$;
+  revoke all on function importar_compra(date, text, boolean, jsonb, text) from public, anon;
+  grant execute on function importar_compra(date, text, boolean, jsonb, text) to authenticated;
+
+  -- Deshacer: solo toca lo que sigue igual que cuando entró el lote.
+  create function deshacer_importacion(p_id uuid) returns jsonb
+  language plpgsql security invoker set search_path = public as $$
+  declare
+    v_c record;
+    v_precio int;
+    v_fecha date;
+    v_restaurados int := 0;
+    v_conservados int := 0;
+  begin
+    if auth.uid() is null then raise exception 'sin_sesion'; end if;
+    perform 1 from importaciones_gastos
+      where id = p_id and user_id = auth.uid() and deshecho is null for update;
+    if not found then raise exception 'importacion_no_deshacible'; end if;
+
+    for v_c in select * from importacion_cambios where importacion_id = p_id loop
+      -- La promoción nunca tocó el precio vigente: solo hay que borrar su historial.
+      if not v_c.promocion then
+        v_precio := null; v_fecha := null;
+        select precio, fecha into v_precio, v_fecha
+          from anotados where producto_id = v_c.producto_id and tienda_id = v_c.tienda_id;
+        if found and v_precio = v_c.precio_nuevo and v_fecha = v_c.fecha then
+          if v_c.anotado_precio is null then
+            -- El anotado lo creó el lote: solo se puede borrar si sigue siendo de quien deshace.
+            delete from anotados
+              where producto_id = v_c.producto_id and tienda_id = v_c.tienda_id
+                and autor = auth.uid();
+            if found then v_restaurados := v_restaurados + 1;
+            else v_conservados := v_conservados + 1; end if;
+          else
+            update anotados
+              set precio = v_c.anotado_precio, fecha = v_c.anotado_fecha, autor = auth.uid()
+              where producto_id = v_c.producto_id and tienda_id = v_c.tienda_id;
+            v_restaurados := v_restaurados + 1;
+          end if;
+        else
+          v_conservados := v_conservados + 1;
+        end if;
+      end if;
+
+      delete from precios_manuales_historial
+        where producto_id = v_c.producto_id and tienda_id = v_c.tienda_id
+          and fecha = v_c.fecha and importacion_id = p_id;
+      if v_c.historial_precio is not null then
+        insert into precios_manuales_historial
+          (producto_id, tienda_id, precio, fecha, autor, origen, promocion)
+          values (v_c.producto_id, v_c.tienda_id, v_c.historial_precio, v_c.fecha,
+                  auth.uid(), coalesce(v_c.historial_origen, 'manual'),
+                  coalesce(v_c.historial_promocion, false))
+          on conflict (producto_id, tienda_id, fecha) do nothing;
+      end if;
+    end loop;
+
+    delete from gastos_reales where lote_importacion = p_id and user_id = auth.uid();
+    update importaciones_gastos set deshecho = now() where id = p_id;
+    return jsonb_build_object('restaurados', v_restaurados, 'conservados', v_conservados);
+  end $$;
+  revoke all on function deshacer_importacion(uuid) from public, anon;
+  grant execute on function deshacer_importacion(uuid) to authenticated;
+  ```
+
+  `crear_tienda`, `crear_producto` y `emparejar_producto` son `security invoker`: dependen de las políticas nuevas y dejan `creado_por`. `emparejar_producto` es el único lugar donde se decide qué producto corresponde (código de barras, alias de la tienda, alias global y nombre normalizado) y lo usan tanto la revisión como la importación, para que lo que se ve antes de guardar sea lo que se guarda. El hash del lote lo calcula el navegador sobre el CSV normalizado y llega como `p_hash`; con y sin sesión se usa el mismo valor, y el índice único `(user_id, hash)` con `where deshecho is null` bloquea la repetición mientras el lote siga vigente. Si una factura repite el mismo producto, tienda y fecha, el precio del día se pondera con la suma de cantidades y totales (el gasto sigue uno por línea). `deshacer_importacion` restaura el precio anterior **solo si el anotado sigue teniendo el precio y la fecha del lote**; si alguien lo corrigió después, lo conserva y lo cuenta en `conservados`. Al restaurar, el autor pasa a ser quien deshace (la RLS de `anotados` exige `autor = auth.uid()`). Las promociones nunca llegan a `anotados` y quedan fuera de `historial_minimo`, así que no mueven totales, alertas ni pronóstico.
+- **Hacer:**
+  - `src/lib/importar/tipos.ts` (puro): `FilaCsv` (`linea`, `producto`, `cantidad`, `precioTotal`, `tienda`, `fecha`, `codigo`), `FilaRevision` (agrega `rubro`, `unidad`, `publicarPrecio`, `promocion`, `tiendaId`, `productoId`, `nuevo`), `ResultadoImportacion` (`importacionId`, `gastos`, `precios`, `tiendasCreadas`, `productosCreados`, `avisos`) y `ResultadoDeshacer` (`restaurados`, `conservados`).
+  - `src/lib/importar/csv.ts` (puro, sin DOM): `leerCsv(texto)` devuelve `{ filas, total, notas, errores }`. Tolera BOM, CRLF, delimitador `;` (si la primera línea tiene más `;` que `,`), coma decimal cuando el delimitador es `;`, vallas de markdown y líneas `#` (de ahí salen `# TOTAL=` y las notas `# DUDOSA:`). Cabecera sin acentos ni mayúsculas: `producto,cantidad,precio_total,tienda` y, al final, `fecha,codigo` opcionales. Máximo 1 MB, 500 filas, 120 caracteres de producto, 60 de tienda, `cantidad` 0,001–9.999, `precio_total` 1–50.000.000, `fecha` vacía o `YYYY-MM-DD` válida. Cualquier otra columna, fila corta o número inválido devuelve el número de línea y no deja importar.
+  - `src/lib/importar/hash.ts`: `hashLote(texto, fecha)` con `crypto.subtle.digest("SHA-256")` sobre el texto normalizado (sin BOM, `\n`, extremos recortados) + `|` + fecha; devuelve 64 hex. Se usa con y sin sesión: el mismo valor va a `localStorage` y a `importar_compra` como `p_hash`, así que un archivo importado sin sesión tampoco se puede repetir después de iniciarla.
+  - `src/lib/importar/emparejar.ts` (puro): misma regla que `emparejar_producto` —código, alias de la tienda, alias global, nombre normalizado— y la misma regla de presentación: si el nombre no coincide exactamente, es un producto nuevo. Sin sesión (no se publican precios) solo se usa para proponer rubro; con sesión la revisión manda las filas a `previsualizar_compra` y esa respuesta es la que vale.
+  - `src/lib/importar/prompt.ts`: constante `PROMPT_FACTURA` con el texto del prompt; es la fuente única y el botón "Copiar prompt" la usa. `prompts/importar-gastos.md` reproduce el mismo texto para consultarlo fuera de la app, y `tests/unit/importar.test.ts` comprueba que el .md contiene `PROMPT_FACTURA` para que no deriven.
+  - `src/app/presupuesto/acciones.ts`: `previsualizarCompra(filas)` (zod: ≤500 filas, strings recortados, fecha válida, `precio_total` entero), `importarCompra({ fecha, archivo, publicar, hash, filas })`, `listarImportaciones()`, `deshacerImportacion(id)` y `editarGasto(gasto)`; `agregarGasto` acepta `origen = 'importado'`, `cantidad` y `descripcion` (sin `lote_importacion`: al subir un gasto local el lote no existe en la nube). Traducen los `raise` de Postgres (`importacion_duplicada`, `limite_tiendas`, `limite_productos`, `nombre_invalido`, `precio_fuera_de_rango`, `hash_invalido`) a mensajes del catálogo de avisos, nunca a `error.message` crudo.
+  - `src/components/importar/importar-factura.tsx` (`"use client"`): nueva pestaña **"Importar factura"** en `/presupuesto`, en tres pantallas. (1) Origen: zona de arrastre y selector que solo aceptan `.csv` (un `.xlsx` se rechaza con "Abre el Excel y guárdalo como CSV"; nunca se sube nada), o un `textarea` para pegar el CSV; botón "Copiar prompt" y explicación de tres líneas. (2) Revisión: tabla editable con producto, tienda, fecha, cantidad, precio total, precio por unidad calculado, rubro, unidad, promoción y "publicar precio"; agrupada por `tienda + fecha`; por grupo, total impreso opcional y aviso si la suma no cuadra (> 1 % o > 500 COP, sin bloquear); marca las tiendas y productos nuevos y pide confirmación antes de crearlos; si no hay sesión, oculta "publicar precios" y dice "inicia sesión para actualizar el catálogo". (3) Resultado: gastos, precios publicados, tiendas y productos creados, avisos y "Deshacer importación" (con confirmación en línea).
+  - `src/components/importar/revision.tsx` y `src/components/importar/resultado.tsx` separados para que el parser y la tabla se prueben por partes; `src/components/importar/prompt.tsx` con el botón de copiar.
+  - `src/lib/presupuesto/rubros.ts` (puro): mover ahí `grupoARubro` y corregirlo: `Proteínas → Carnes`, `Tubérculos → Verduras`, `Gourmet → Despensa`; el resto por nombre (`Granos`, `Frutas`, `Lácteos`, `Panadería`, `Despensa`, `Aseo`, `Bebidas`, `Mecato`, `Verduras`) y `Otros` solo si no hay coincidencia. `presupuesto-cliente.tsx` y la revisión lo importan del mismo sitio.
+  - `src/lib/presupuesto/almacenamiento.ts`: `leerGastosLocal(mes)` / `guardarGastosLocal(mes, gastos)` con la clave actual `mercado-medellin:gastos:{mes}`, y `leerImportacionesLocal()` / `guardarImportacionesLocal()` con `mercado-medellin:importaciones` = `{ version: 1, lotes: [{ hash, fecha, filas, creado }] }`, todo en try/catch.
+  - Arreglos de `/presupuesto` en el mismo paso (hoy los gastos nunca se sincronizan): al cambiar de mes, `listarGastos(mes)` si hay sesión y fusión por clave `(fecha, rubro, monto, descripcion)` con lo local; los gastos locales llevan `id` `local-<uuid>` y, al subir, se reemplazan por el id del servidor; `eliminarGasto` se ejecuta de verdad para ids del servidor (hoy todos empiezan por `local-` y nunca se borra nada); `editarGasto` permite corregir fecha, rubro, monto, tienda y nota y recalcula `mes = fecha.slice(0, 7)`; cada alta y cada importación usan `mes = fecha.slice(0, 7)`, no el mes seleccionado en pantalla; `SincronizarGastos` (patrón de `sincronizar-presupuesto.tsx`) sube los pendientes al iniciar sesión y avisa `gastos_sincronizados`.
+  - `src/components/presupuesto/presupuesto-cliente.tsx`: pestaña nueva, gastos con tienda y descripción visibles, botón editar y borrar que sí funcionan, y el panel del prompt dentro de la pestaña.
+  - `src/lib/datos.ts`: `catalogoTiendas()` devuelve tiendas con `manual`, `productos`, `precios`, `ultimaFecha` y `origen`, para `/presupuesto` (selector de tienda) y `/tiendas` (paso 35). `catalogo()` sigue igual.
+  - `src/lib/datos.ts` (`usuario`) no cambia; la importación sin sesión escribe solo en `localStorage` y no toca el catálogo.
+  - `src/lib/avisos.ts`: `importacion_lista`, `importacion_duplicada`, `importacion_error`, `importacion_deshecha`, `importacion_sin_cambios`, `factura_total_no_cuadra`, `tienda_creada`, `producto_creado`, `precio_publicado`, `precio_no_publicado`, `precio_mas_nuevo`, `gastos_sincronizados`, `gasto_editado` y `archivo_no_csv`.
+  - `tests/importar/`: `d1.csv`, `barrio.csv`, `varias-tiendas.csv` (dos tiendas y dos fechas), `con-promocion.csv` y `malo.csv` (fila corta y precio con letras). Son **sintéticos** y se escriben a mano: viven fuera de `tests/fixtures/` a propósito, porque no son respuestas capturadas de un sitio sino entradas de prueba; llevan una cabecera `#` que lo dice y no pasan por `pnpm capturar`.
+  - `blueprints/mercado-medellin/prompts/importar-gastos.md`: el prompt definitivo documentado, listo para pegar en cualquier IA con la foto o el PDF de la factura.
+  - `pnpm gen:tipos` después de la migración.
+- **Hecho cuando:**
+  - `tests/unit/importar.test.ts`: BOM y CRLF no cambian las filas; `;` con coma decimal lee `12500,50` como 12.500,5; una cabecera sin `tienda` falla con la línea 1; una fila con 4 columnas cuando se esperan 5 falla con su número; 501 filas se rechazan; `# TOTAL=48200` llena `total` y no crea una fila; `# DUDOSA: falta un renglón` llega a `notas` y no a `filas`; el hash es igual para el mismo texto y fecha y distinto al cambiar la fecha; `grupoARubro("Proteínas") === "Carnes"`, `("Tubérculos") === "Verduras"` y `("Gourmet") === "Despensa"`; dos nombres con tilde y sin tilde emparejan con el mismo producto; `PROMPT_FACTURA` está contenido en `prompts/importar-gastos.md` (comparando sin CRLF).
+  - pgTAP (`supabase/tests/importar_compras.test.sql`): `anon` no puede insertar en `tiendas` ni en `productos` y no ejecuta `importar_compra`; con sesión `crear_tienda('OLIMPICA')` y `crear_tienda('Olímpica')` devuelven el mismo id; la sexta tienda nueva del día falla con `limite_tiendas`; un producto nuevo nace con `grupo = 'Otros'`, `unidad = 'u'`, `unidad_base = 'u'`, `cantidad_base = 1`, `frecuencia = 'semanal'` y `revisado = false`; `importar_compra` crea gastos con `lote_importacion`, `cantidad`, `descripcion`, `mes = to_char(fecha,'YYYY-MM')` y `origen = 'importado'`; el precio queda con la **fecha de la factura** y no pisa un anotado más nuevo; dos líneas del mismo producto, tienda y fecha ponderan el precio con la suma de cantidades y totales; una línea con el mismo `codigo` de barras que un producto existente, o con el nombre ya usado en otra tienda, no crea un producto nuevo (y deja el alias de la tienda); una promoción no escribe `anotados` ni entra en `historial_minimo`; el mismo `p_hash` repetido falla con `importacion_duplicada` mientras el lote siga vigente y vuelve a entrar después de deshacerlo, y un hash que no es de 64 hex falla con `hash_invalido`; `deshacer_importacion` repone el anotado anterior, borra los gastos del lote y deja intacto un precio corregido después (lo reporta en `conservados`); el usuario B no puede deshacer el lote de A.
+  - E2E `tests/e2e/importar.spec.ts`: elegir un `.xlsx` muestra "guárdalo como CSV" y no lee nada; pegar `varias-tiendas.csv` muestra dos grupos tienda+fecha; editar el precio de una fila y el rubro de otra se refleja en el resumen; guardar deja los gastos en `/presupuesto` y la tienda nueva en `/tiendas`; repetir el mismo CSV muestra `importacion_duplicada`; "Deshacer" borra los gastos, restaura el precio y deja volver a importar el mismo archivo; sin sesión la importación queda en el dispositivo y no aparece en `/tiendas`.
+  - `pnpm migrar` sigue imprimiendo `precios=432 tiendas=5`; `select count(*) from productos` sigue en 144 y todos conservan su `nombre_norm`.
+  - El gate (`pnpm typecheck && pnpm lint && pnpm test`) pasa.
+
+**35. `/tiendas`: gestionar el catálogo compartido y fusionar duplicados.** *(cierre del pedido del 31-oct-2026: las tiendas y sus productos se administran desde la app)*
+- **Depende de:** paso 34 (tablas, `crear_tienda`, `crear_producto` y `catalogoTiendas()`), paso 32 (`catalogo_tienda`) y paso 16 (`/anotados`).
+- **Migración nueva `supabase/migrations/<ts>_fusionar_productos.sql`:**
+
+  ```sql
+  -- 31-oct-2026: fusionar dos productos sin perder precios, historial, gastos ni alias.
+  create table fusiones_productos (
+    id bigserial primary key,
+    origen text not null,
+    destino text not null,
+    autor uuid references auth.users default auth.uid(),
+    creado timestamptz not null default now(),
+    check (origen <> destino)
+  );
+  create index on fusiones_productos (origen, creado desc);
+
+  alter table fusiones_productos enable row level security;
+  create policy leer on fusiones_productos for select using (true);
+  -- Solo la función escribe la auditoría: no hay política ni grant de insert.
+  revoke all on fusiones_productos from anon, authenticated;
+  grant select on fusiones_productos to anon, authenticated;
+
+  -- La única función `security definer` de la app: mueve filas hijas y borra el origen,
+  -- algo que la RLS no puede expresar ("nadie borra productos" salvo una fusión).
+  create function fusionar_productos(p_origen text, p_destino text) returns jsonb
+  language plpgsql security definer set search_path = public as $$
+  declare
+    v_precios int; v_historial int; v_manual int; v_anotados int;
+    v_gastos int; v_catalogo int; v_alias int; v_codigos int;
+  begin
+    if auth.uid() is null then raise exception 'sin_sesion'; end if;
+    if p_origen = p_destino then raise exception 'mismo_producto'; end if;
+    perform 1 from productos where id = p_origen;
+    if not found then raise exception 'producto_no_existe'; end if;
+    perform 1 from productos where id = p_destino;
+    if not found then raise exception 'producto_no_existe'; end if;
+
+    select count(*) into v_precios  from precios_actuales where producto_id = p_origen;
+    select count(*) into v_historial from precios_historial where producto_id = p_origen;
+    select count(*) into v_manual from precios_manuales_historial where producto_id = p_origen;
+    select count(*) into v_anotados from anotados where producto_id = p_origen;
+    select count(*) into v_gastos from gastos_reales where producto_id = p_origen;
+    select count(*) into v_catalogo from catalogo_tienda where producto_id = p_origen;
+    select count(*) into v_alias from producto_alias where producto_id = p_origen;
+    select count(*) into v_codigos from producto_codigo where producto_id = p_origen;
+
+    insert into precios_actuales (producto_id, tienda_id, precio, fecha, fuente, estado, nota, revisar, updated_at)
+    select p_destino, tienda_id, precio, fecha, fuente, estado, nota, revisar, updated_at
+    from precios_actuales where producto_id = p_origen
+    on conflict (producto_id, tienda_id) do update
+      set precio = excluded.precio, fecha = excluded.fecha, fuente = excluded.fuente,
+          estado = excluded.estado, nota = excluded.nota, revisar = excluded.revisar,
+          updated_at = excluded.updated_at
+      where excluded.fecha >= precios_actuales.fecha;
+    delete from precios_actuales where producto_id = p_origen;
+
+    insert into precios_historial (producto_id, tienda_id, fecha, precio, estado)
+    select p_destino, tienda_id, fecha, precio, estado
+    from precios_historial where producto_id = p_origen
+    on conflict (producto_id, tienda_id, fecha) do nothing;
+    delete from precios_historial where producto_id = p_origen;
+
+    insert into precios_manuales_historial
+      (producto_id, tienda_id, precio, fecha, autor, creado, origen, cantidad, total, promocion, importacion_id)
+    select p_destino, tienda_id, precio, fecha, autor, creado, origen, cantidad, total, promocion, importacion_id
+    from precios_manuales_historial where producto_id = p_origen
+    on conflict (producto_id, tienda_id, fecha) do nothing;
+    delete from precios_manuales_historial where producto_id = p_origen;
+
+    insert into anotados (producto_id, tienda_id, precio, fecha, autor)
+    select p_destino, tienda_id, precio, fecha, autor
+    from anotados where producto_id = p_origen
+    on conflict (producto_id, tienda_id) do update
+      set precio = excluded.precio, fecha = excluded.fecha, autor = excluded.autor
+      where excluded.fecha >= anotados.fecha;
+    delete from anotados where producto_id = p_origen;
+
+    insert into producto_fuente (producto_id, tienda_id, url, termino, sku, factor, activo)
+    select p_destino, tienda_id, url, termino, sku, factor, activo
+    from producto_fuente where producto_id = p_origen
+    on conflict (producto_id, tienda_id) do nothing;
+    delete from producto_fuente where producto_id = p_origen;
+
+    insert into catalogo_tienda (producto_id, tienda_id, activo, orden, autor, creado)
+    select p_destino, tienda_id, activo, orden, autor, creado
+    from catalogo_tienda where producto_id = p_origen
+    on conflict (producto_id, tienda_id) do update
+      set activo = catalogo_tienda.activo or excluded.activo,
+          orden = least(catalogo_tienda.orden, excluded.orden);
+    delete from catalogo_tienda where producto_id = p_origen;
+
+    delete from producto_alias a using producto_alias b
+      where a.producto_id = p_origen and b.producto_id = p_destino
+        and a.alias_norm = b.alias_norm
+        and a.tienda_id is not distinct from b.tienda_id;
+    update producto_alias set producto_id = p_destino where producto_id = p_origen;
+    update producto_codigo set producto_id = p_destino where producto_id = p_origen;
+
+    insert into clima_causas (producto_id, fecha, texto, es_clima, fuente_url)
+    select p_destino, fecha, texto, es_clima, fuente_url
+    from clima_causas where producto_id = p_origen
+    on conflict (producto_id, fecha) do nothing;
+    delete from clima_causas where producto_id = p_origen;
+
+    delete from importacion_cambios a using importacion_cambios b
+      where a.producto_id = p_origen and b.producto_id = p_destino
+        and a.importacion_id = b.importacion_id and a.tienda_id = b.tienda_id and a.fecha = b.fecha;
+    update importacion_cambios set producto_id = p_destino where producto_id = p_origen;
+
+    update gastos_reales set producto_id = p_destino where producto_id = p_origen;
+    update alertas set producto_id = p_destino where producto_id = p_origen;
+
+    -- Listas y planes guardan ids de producto: el que apuntaba al origen pasa al destino.
+    update listas set items = (items - p_origen) || jsonb_build_object(p_destino,
+        coalesce((items->>p_destino)::numeric, 0) + (items->>p_origen)::numeric),
+      updated_at = now()
+    where items ? p_origen;
+
+    update listas_guardadas set items = (items - p_origen) || jsonb_build_object(p_destino,
+        coalesce((items->>p_destino)::numeric, 0) + (items->>p_origen)::numeric),
+      actualizada = now()
+    where items ? p_origen;
+
+    update planes_usuario set config = jsonb_set(config, '{items}',
+        (config->'items' - p_origen) || jsonb_build_object(p_destino,
+          coalesce((config->'items'->>p_destino)::numeric, 0)
+            + (config->'items'->>p_origen)::numeric)),
+      actualizada = now()
+    where jsonb_typeof(config->'items') = 'object' and config->'items' ? p_origen;
+
+    insert into fusiones_productos (origen, destino, autor)
+      values (p_origen, p_destino, auth.uid());
+    delete from productos where id = p_origen;
+
+    return jsonb_build_object('precios', v_precios, 'historial', v_historial,
+      'manuales', v_manual, 'anotados', v_anotados, 'gastos', v_gastos,
+      'catalogo', v_catalogo, 'alias', v_alias, 'codigos', v_codigos);
+  end $$;
+  revoke all on function fusionar_productos(text, text) from public, anon;
+  grant execute on function fusionar_productos(text, text) to authenticated;
+  ```
+
+  Todo ocurre en una transacción: si una referencia inesperada impide borrar el origen, no se mueve nada. `historial_minimo` y `serie_pronostico` se recalculan solas; `importacion_cambios` se mueve antes de borrar para que el "deshacer" de un lote viejo siga funcionando; `listas`, `listas_guardadas` y `planes_usuario.config->'items'` cambian el id y suman la cantidad donde había dos filas del mismo producto. La fusión **no se puede deshacer automáticamente**: queda en `fusiones_productos` y la UI lo advierte antes de confirmar.
+- **Hacer:**
+  - `src/lib/tiendas/fusion.ts` (puro): `validarFusion(origen, destino)` (ids distintos y no vacíos), `textoFusion(origen, destino)` para la confirmación y `candidatosFusion(producto, productos)` que ordena por nombre normalizado igual y luego por palabras compartidas. Los candidatos son solo sugerencias: la fusión la decide la persona y el emparejamiento de facturas sigue siendo exacto.
+  - `src/app/tiendas/page.tsx` (servidor): `await catalogoTiendas()` y `await usuario()`; pasa tiendas, productos, alias y precios. `metadata` "Tiendas y productos".
+  - `src/components/tiendas/vista.tsx` (`"use client"`): buscador, resumen ("N tiendas · M productos · K en Otros"), tarjetas por tienda con color, `manual`/`origen`, número de productos con precio, última fecha y botón "Renombrar" (nunca "Borrar"). Botones "Nueva tienda" y "Nuevo producto" con hojas de formulario.
+  - `src/components/tiendas/tabla-productos.tsx`: por tienda, tabla con producto, grupo, unidad, precio y fecha. Editar nombre, grupo, unidad, emoji y frecuencia en línea; el precio se cambia con la hoja `corregir-precio.tsx` del paso 27 (con autor y fecha), no con un `update` directo. Chip **"Por revisar"** cuando `grupo = 'Otros' and not revisado`; asignar grupo pone `revisado = true`.
+  - `src/components/tiendas/dialogo-fusion.tsx`: elegir destino, ver qué se mueve (precios, historial, gastos, catálogo, alias, listas y planes) y confirmar con el nombre del producto origen escrito a mano. Si el destino no existe, se puede crear ahí mismo con `crearProducto`.
+  - `src/app/tiendas/acciones.ts`: `crearTienda`, `renombrarTienda`, `crearProducto`, `editarProducto`, `marcarRevisado` y `fusionarProductos`, con zod (nombre 2–60 tienda / 2–120 producto, grupo, unidad, frecuencia `diaria|semanal`, emoji ≤ 8). `crearTienda` inserta con `origen = 'manual'` y color de la paleta; `crearProducto`, con `origen = 'manual'` y `revisado = true`. `renombrarTienda` traduce el choque de `tiendas_nombre_norm` a `nombre_repetido` y no deja crear "Olímpica" si ya existe "OLIMPICA". `fusionarProductos` llama el `rpc` y devuelve los conteos.
+  - `src/lib/datos.ts` (`tablaAnotados`): devuelve solo tiendas con al menos un precio en `precio_efectivo`, salvo las automáticas (`manual = false`), que se muestran siempre aunque una fuente falle. Así una tienda nueva no agrega una columna vacía a 144 filas.
+  - `src/components/encabezado.tsx`: enlace **"Tiendas"** junto a Anotados, con `data-tour="tiendas"`; `src/app/layout.tsx` no cambia.
+  - `src/lib/avisos.ts`: `tienda_renombrada`, `tienda_nombre_repetido`, `producto_editado`, `producto_revisado`, `producto_fusionado`, `fusion_sin_datos`, `fusion_no_permitida` y `limite_tiendas` (si no existía).
+  - `pnpm gen:tipos` después de la migración.
+- **Hecho cuando:**
+  - `tests/unit/fusion.test.ts`: `validarFusion` rechaza ids iguales o vacíos; `candidatosFusion` pone primero el nombre normalizado idéntico y no propone el propio producto; `textoFusion` nombra origen y destino.
+  - pgTAP (`supabase/tests/fusion.test.sql`): `anon` solo lee `fusiones_productos` y no ejecuta `fusionar_productos`; con sesión, fusionar mueve precios actuales, historial, manuales, anotados, catálogo, alias, códigos, gastos y las entradas de `listas`, `listas_guardadas` y `planes_usuario` (sumando la cantidad), borra el producto origen y deja una fila en `fusiones_productos`; cuando origen y destino tienen el mismo día, gana el más nuevo o se conserva el destino sin duplicar; `producto_id` y `p_origen = p_destino` fallan sin mover nada; el producto fusionado ya no aparece en `productos` y su nombre viejo sigue emparejando por alias.
+  - pgTAP (`supabase/tests/tiendas.test.sql`): con sesión se crea y se renombra una tienda; renombrar a un nombre que solo difiere en tilde o mayúscula falla con el índice único; `anon` no puede insertar ni actualizar; no hay política ni grant de `delete` en `tiendas` ni en `productos`.
+  - E2E `tests/e2e/tiendas.spec.ts`: `/tiendas` lista las 5 tiendas sembradas y la creada en el paso 34; crear una tienda y un producto los muestra de inmediato en otro navegador con sesión (catálogo global); editar el grupo de un producto "Por revisar" lo saca del filtro; fusionar un duplicado mueve su precio y sus gastos y el producto viejo desaparece; `/anotados` no muestra la tienda manual sin precios; el enlace "Tiendas" del encabezado funciona en móvil.
+  - `pnpm migrar` sigue imprimiendo `precios=432 tiendas=5`; una fusión no cambia los conteos de precios, solo el producto que los tenía.
+  - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan.
+
+**36. Cargar una lista de mercado desde texto (prompt + lector fijo).** *(pedido del 31-oct-2026: pegar un listado como "Papas: 4 kg (aprox. 8 libras)" y verlo como lista en la pantalla principal)*
+- **Depende de:** pasos 28 (listas guardadas y su sincronización), 34 (`producto_alias`, `emparejar_producto`, `crear_producto`) y 35 (`/tiendas` para corregir lo creado). **Sin migración y sin dependencias nuevas:** reusa `producto_alias` (alias global, `tienda_id = null`) y `listas_guardadas`.
+- **Flujo:** la persona pega su texto en cualquier IA junto con el prompt de `prompts/importar-lista.md` (también visible en la app), recibe un CSV de formato fijo y lo pega en **Listas → Cargar lista**. **La app no lee texto libre ni llama a ninguna IA**: solo parsea el CSV con código determinista (misma regla del paso 30). El texto original nunca sale del navegador.
+- **Contrato del CSV:** cabecera exacta `lista,producto,cantidad,unidad,nota`. `lista` es el encabezado de la sección ("1 semana", "2 semanas"; vacío = "Lista importada"); `cantidad` es un número con punto decimal; `unidad` es una de `kg`, `g`, `lb`, `l`, `ml`, `u`; `nota` es opcional (variedades, "aprox. 8 libras", "compra la mitad verdes"). Se toleran BOM, CRLF, `;`, coma decimal y vallas de markdown; el resto se rechaza con el número de línea. Límites: 200 filas y 200 ítems por lista, 5 secciones y 1 MB.
+- **Conversión de unidades (`src/lib/importar/lista.ts`, puro):** `lb` = 500 g, `kg` = 1000 g, `l` = 1000 ml. La cantidad pedida se pasa a la unidad base del producto y el ítem de la lista es `ceil(pedido / cantidad_base)` en la unidad de compra: `lista.ts` calcula `precio × cantidad`, con el precio por presentación del producto (verificado el 31-oct-2026). Si la unidad pedida es de otra familia que la del producto (peso contra unidades) no se convierte: la fila queda en revisión con "unidad distinta" y la persona fija la cantidad. Los "aprox." entre paréntesis y los amarrados/puñados solo viajan en `nota`; nunca se usan para calcular.
+- **Emparejamiento y revisión:** exacto, nunca por parecido, y en este orden: alias global, nombre normalizado. "Papas (Capira / Pastusa / Sabanera)" no empareja solo; en la revisión se elige el producto del catálogo, se crea uno nuevo (`crear_producto`, con los límites del paso 34) o se omite, y la elección queda en `producto_alias` para la próxima carga. Nada se carga sin pasar por la revisión; el cliente no escribe en el catálogo hasta confirmar.
+- **Hacer:**
+  - `src/lib/importar/lista.ts` (puro, sin React ni red): `leerListaCsv(texto)`, `aBase(cantidad, unidad)`, `itemDeProducto(producto, cantidad, unidad)` y `agruparPorLista(filas)`.
+  - `src/lib/importar/prompt-lista.ts`: el prompt como constante; `prompts/importar-lista.md` y la app muestran el mismo texto (una prueba compara ambos).
+  - `src/components/listas/cargar-lista.tsx` (`"use client"`): pegar o abrir `.csv` con `FileReader`, tabla de revisión editable (producto, cantidad, unidad, nota, omitir) por sección, y elegir qué hacer con cada sección: "Usar como mi lista" (reemplaza la activa, con confirmación), "Sumar a mi lista" o "Solo guardar".
+  - La lista cargada **queda como lista activa** y se ve en la pantalla principal con el total por tienda igual que cualquier otra. "Guardar" pide nombre (por defecto la sección) y reusa `leerLocales` / `guardarLocales` (`src/lib/listas/guardadas.ts`) y `persistir` (`src/components/listas/almacen.ts`) del paso 28: con sesión en `listas_guardadas`, sin sesión en `mercado-medellin:listas`, con los mismos topes (20 listas, 200 ítems) y el mismo aviso `nombre_repetido`.
+  - `src/app/listas/acciones.ts`: `registrarAliasLista` (zod, exige sesión) para las elecciones nuevas; sin sesión los alias solo viven en el dispositivo hasta iniciar sesión.
+  - `src/lib/avisos.ts`: `lista_cargada`, `lista_csv_invalido`, `lista_unidad_distinta` y `lista_limite_filas`.
+  - Tutorial (paso 33): agregar `data-tour="cargar-lista"` y un paso en el recorrido de `/listas`.
+- **Hecho cuando:**
+  - `tests/unit/lista-importar.test.ts`: con el ejemplo de papas, pepino, tomate, pimentón, cebolla morada y aguacate, `leerListaCsv` devuelve dos secciones; 8 lb → 4 kg; "aprox." no cambia el cálculo; una unidad de otra familia queda marcada; una cabecera distinta o una cantidad no numérica falla con el número de línea; un `.xlsx` se rechaza.
+  - Prueba de contrato: `prompts/importar-lista.md` y `prompt-lista.ts` tienen el mismo texto.
+  - E2E `tests/e2e/cargar-lista.spec.ts`: cargar el CSV de ejemplo → revisión → "Usar como mi lista" → la pantalla principal muestra los ítems y el total por tienda; sin sesión "Guardar" lo deja en `mercado-medellin:listas`; con sesión aparece en `/listas` desde otro navegador; repetir el nombre avisa `nombre_repetido`; el producto elegido en la revisión se empareja solo la segunda vez.
+  - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan.
+
 ## 11. Lanzamiento (manual, con tus cuentas)
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
@@ -1199,7 +2006,8 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 5. **Seguimiento:** a la semana, revisar en el panel de Supabase que el proyecto no se pausó.
 6. **Contexto del pronóstico:** después de la primera corrida, comprobar en `contexto_mercado` que hay hasta 13 filas con `ipc_alimentos` no nulo y el `mes` del último dato publicado. Si la descarga falló, la app muestra "sin contexto DANE", el pronóstico baja su confianza a "media" y el motivo queda en `corridas.notas`; no se escribe un valor a mano.
 7. **Tiendas retiradas:** en el proyecto de producción, comprobar que `select count(*) from tiendas` da 5 y que `precios_actuales` tiene 432 filas; que `listas` y `listas_guardadas` no conservan `tienda_preferida` de una tienda retirada; y que el encabezado dice "X/3 fuentes OK". Si alguna tienda reaparece, el filtro `TIENDAS_RETIRADAS` de `scripts/migrar.ts` no se aplicó en la carga.
-8. **Barrio y tutorial en un dispositivo real:** entrar desde un celular nuevo y comprobar que el tutorial aparece una sola vez, que la bombilla está abajo a la izquierda, que no tapa "Guardar lista" ni la barra del carrito, y que "Reiniciar tutorial" lo vuelve a mostrar. En `/anotados/barrio`, comprobar que el progreso arranca en "0/41 con precio" y que un precio anotado desde el celular se ve en la web.
+8. **Importación y catálogo compartido:** con una cuenta real, subir `tests/importar/varias-tiendas.csv`, revisar que aparecen las dos tiendas y sus precios en `/tiendas` y en `/anotados` desde otro navegador; repetir el mismo archivo y comprobar `importacion_duplicada`; deshacer y verificar que los precios vuelven y los gastos desaparecen, y que el mismo archivo se puede volver a importar; fusionar un producto duplicado en `/tiendas` y comprobar que el precio y los gastos quedan en el destino. Sin sesión, el mismo CSV debe quedar solo en el dispositivo.
+9. **Barrio y tutorial en un dispositivo real:** entrar desde un celular nuevo y comprobar que el tutorial aparece una sola vez, que la bombilla está abajo a la izquierda, que no tapa "Guardar lista" ni la barra del carrito, y que "Reiniciar tutorial" lo vuelve a mostrar. En `/anotados/barrio`, comprobar que el progreso arranca en "0/41 con precio" y que un precio anotado desde el celular se ve en la web.
 
 ## 12. Riesgos
 
@@ -1220,6 +2028,10 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 | Una corrección equivocada se propaga a toda la app | Queda con autor y fecha, solo su autor la quita, `precios_actuales` nunca se toca y al quitarla se borra la observación de hoy (las anteriores quedan) |
 | Dos personas corrigen el mismo producto y tienda el mismo día | `unique (producto_id, tienda_id, fecha)` + upsert: la última gana y no se duplica la fila; la UI muestra la fecha, no un nombre |
 | El pronóstico se lee como una promesa de precio | Rótulo "estimación estadística", rango y confianza siempre visibles, tope de 92 %, no entra en totales, alertas, PDF ni tablas de precios |
+| Un producto o tienda mal creado afecta a todos | Nombre normalizado único, topes diarios (5 tiendas, 50 productos), nacen "por revisar", nadie borra, `fusionar_productos` queda auditada en `fusiones_productos` |
+| Una factura importada cambia totales y alertas de todos | La revisión lo avisa antes de guardar, las promociones no pisan el precio ni el mínimo, no pisa un precio más nuevo, "deshacer" restaura solo si nadie lo cambió |
+| Un CSV mal formado o repetido | Cabecera exacta, error con número de línea, hash por usuario, límites de filas y tamaño validados otra vez en el servidor |
+| Una lista cargada desde texto trae un producto equivocado | Sin emparejamiento por parecido: revisión obligatoria, alias solo por elección de la persona, unidad de otra familia queda sin convertir |
 | El DANE cambia el formato o la URL del anexo del IPC | La corrida no se cae: conserva la última fila de `contexto_mercado`, anota el motivo en `corridas.notas` y el pronóstico baja a confianza "media" con el motivo "sin contexto DANE" |
 | La fusión al iniciar sesión pisa listas o planes del dispositivo | Gana la `actualizada` más reciente, lo local se respalda antes de reemplazarlo y `plan_restaurado` / "Deshacer" lo repone; topes de 20 listas, 200 ítems y 50 rubros |
 | Una tienda retirada reaparece al volver a migrar | `TIENDAS_RETIRADAS` filtra las 5 tiendas en todas las cargas de `scripts/migrar.ts`; el retiro se prueba corriendo `db reset && migrar` dos veces |
@@ -1229,3 +2041,14 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 | El catálogo de barrio se llena de precios inventados | No se siembra ningún precio, todos entran por `corregir_precio` con autor y fecha, y la UI dice "solo anotados" hasta que exista un dato real |
 | El tutorial tapa la app, se repite o estorba | Se muestra una vez por dispositivo, se cierra con `Esc` o "Saltar", el foco queda atrapado, no entra en rutas de auth, respeta `prefers-reduced-motion` y los tips no se suman encima |
 | El tutorial se desactualiza cuando cambia una pantalla | Los pasos se buscan por `data-tour`; si el objetivo no existe, el paso se salta, y el e2e recorre el general y una pantalla |
+| Una factura importada pisa precios que usa todo el mundo | Revisión obligatoria antes de guardar, interruptor "publicar precios", fecha de la factura, nunca pisa un anotado más nuevo, promociones fuera del precio vigente y de `historial_minimo`, y "deshacer" con foto del valor anterior |
+| El catálogo abierto se llena de tiendas y productos duplicados | Nombre normalizado único, `on conflict` que devuelve el existente, alias por tienda y código de barras, fusión en `/tiendas`, topes de 5 tiendas y 50 productos por usuario y día, y nada se borra sin fusionar |
+| Un mismo archivo se importa dos veces y duplica los gastos | Hash del lote + fecha con índice único `(user_id, hash) where deshecho is null`; sin sesión, la misma clave en `localStorage`. Se bloquea con un mensaje que dice cuándo se importó, y después de deshacer se puede repetir |
+| Deshacer una importación borra un precio que alguien ya corrigió | Solo restaura si el anotado sigue con el precio y la fecha del lote; si cambió, lo conserva y lo reporta en `conservados` |
+| Un CSV enorme o mal formado bloquea la app | Límites de 1 MB y 500 filas, parser con número de línea, rechazo de `.xlsx` y de columnas extra, y validación otra vez en el servidor |
+| Una importación masiva dispara alertas y cambia el pronóstico de todos | Los precios entran a `precio_efectivo` y a `historial_minimo`; la revisión lo advierte antes de guardar, las promociones quedan fuera de la serie y el lote no genera alertas por sí mismo |
+| Los nombres de tienda mezclan sucursales | El prompt pide la cadena sin dirección ni sucursal; una tienda es una cadena y el NIT o la dirección no se guardan |
+| Un producto fusionado reaparece en la siguiente factura | Los alias y códigos se mueven al producto destino; el nombre viejo sigue emparejando con el destino y el origen queda registrado en `fusiones_productos` |
+| Cualquier cuenta con sesión edita el catálogo que ven todos | El nombre es único, nada se borra sin fusionar, cada alta y cada edición deja `creado_por`/`creado`, la fusión queda auditada, los topes diarios frenan una carga masiva y la UI nunca ofrece "borrar" tiendas ni productos |
+| `fusionar_productos` es `security definer` y puede borrar un producto | Solo `authenticated` la ejecuta, mueve todas las filas hijas antes de borrar (una referencia inesperada aborta la transacción), la persona escribe el nombre del origen para confirmar y queda una fila en `fusiones_productos` con autor y fecha |
+| Un CSV repite el mismo producto en dos líneas o dos lotes el mismo día | El precio del día se pondera con la suma de cantidades y totales del lote; el gasto queda uno por línea; `importacion_cambios` guarda el valor anterior a todo el lote para que "deshacer" lo reponga completo |

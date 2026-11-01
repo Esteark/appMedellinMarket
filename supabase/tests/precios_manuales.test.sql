@@ -7,7 +7,7 @@ insert into tiendas (id, nombre, color) values ('t1', 'Tienda 1', '#000000');
 insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia)
   values ('p1', 'Producto 1', 'Frutas', 'kg', 'g', 1000, 'diaria');
 insert into precios_actuales (producto_id, tienda_id, precio, fecha, estado)
-  values ('p1', 't1', 5000, current_date, 'real');
+  values ('p1', 't1', 5000, (now() at time zone 'America/Bogota')::date, 'real');
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@prueba.co'),
   ('00000000-0000-0000-0000-00000000000b', 'b@prueba.co');
@@ -48,7 +48,7 @@ select results_eq($$select count(*)::int from anotados where producto_id = 'p1'$
 -- A la quita: el historial anterior se conserva
 reset role;
 insert into precios_manuales_historial (producto_id, tienda_id, precio, fecha, autor)
-  values ('p1', 't1', 3900, current_date - 1, '00000000-0000-0000-0000-00000000000a');
+  values ('p1', 't1', 3900, (now() at time zone 'America/Bogota')::date - 1, '00000000-0000-0000-0000-00000000000a');
 set local role authenticated;
 select set_config('request.jwt.claims',
   '{"sub": "00000000-0000-0000-0000-00000000000a", "role": "authenticated"}', true);

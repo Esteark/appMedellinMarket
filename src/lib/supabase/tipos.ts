@@ -139,17 +139,23 @@ isOneToOne: false
                   ]
                 },"gastos_reales": {
                   Row: {
-                    "created_at": string,"fecha": string,"id": string,"mes": string,"monto": number,"nota": string | null,"origen": string,"producto_id": string | null,"rubro": string,"tienda_id": string | null,"user_id": string
+                    "cantidad": number | null,"created_at": string,"descripcion": string | null,"fecha": string,"id": string,"lote_importacion": string | null,"mes": string,"monto": number,"nota": string | null,"origen": string,"producto_id": string | null,"rubro": string,"tienda_id": string | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"fecha"?: string,"id"?: string,"mes": string,"monto": number,"nota"?: string | null,"origen": string,"producto_id"?: string | null,"rubro": string,"tienda_id"?: string | null,"user_id": string
+                    "cantidad"?: number | null,"created_at"?: string,"descripcion"?: string | null,"fecha"?: string,"id"?: string,"lote_importacion"?: string | null,"mes": string,"monto": number,"nota"?: string | null,"origen": string,"producto_id"?: string | null,"rubro": string,"tienda_id"?: string | null,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"fecha"?: string,"id"?: string,"mes"?: string,"monto"?: number,"nota"?: string | null,"origen"?: string,"producto_id"?: string | null,"rubro"?: string,"tienda_id"?: string | null,"user_id"?: string
+                    "cantidad"?: number | null,"created_at"?: string,"descripcion"?: string | null,"fecha"?: string,"id"?: string,"lote_importacion"?: string | null,"mes"?: string,"monto"?: number,"nota"?: string | null,"origen"?: string,"producto_id"?: string | null,"rubro"?: string,"tienda_id"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "gastos_reales_lote_importacion_fkey"
+      columns: ["lote_importacion"]
+isOneToOne: false
+      referencedRelation: "importaciones_gastos"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "gastos_reales_producto_id_fkey"
       columns: ["producto_id"]
 isOneToOne: false
@@ -162,6 +168,52 @@ isOneToOne: false
       referencedRelation: "tiendas"
       referencedColumns: ["id"]
     }
+                  ]
+                },"importacion_cambios": {
+                  Row: {
+                    "anotado_fecha": string | null,"anotado_precio": number | null,"creado": string,"fecha": string,"historial_origen": string | null,"historial_precio": number | null,"historial_promocion": boolean | null,"id": number,"importacion_id": string,"precio_nuevo": number,"producto_id": string,"promocion": boolean,"tienda_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "anotado_fecha"?: string | null,"anotado_precio"?: number | null,"creado"?: string,"fecha": string,"historial_origen"?: string | null,"historial_precio"?: number | null,"historial_promocion"?: boolean | null,"id"?: number,"importacion_id": string,"precio_nuevo": number,"producto_id": string,"promocion"?: boolean,"tienda_id": string
+                  }
+                  Update: {
+                    "anotado_fecha"?: string | null,"anotado_precio"?: number | null,"creado"?: string,"fecha"?: string,"historial_origen"?: string | null,"historial_precio"?: number | null,"historial_promocion"?: boolean | null,"id"?: number,"importacion_id"?: string,"precio_nuevo"?: number,"producto_id"?: string,"promocion"?: boolean,"tienda_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "importacion_cambios_importacion_id_fkey"
+      columns: ["importacion_id"]
+isOneToOne: false
+      referencedRelation: "importaciones_gastos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "importacion_cambios_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "importacion_cambios_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"importaciones_gastos": {
+                  Row: {
+                    "archivo": string | null,"creado": string,"deshecho": string | null,"fecha_lote": string,"filas": number,"hash": string,"id": string,"total": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "archivo"?: string | null,"creado"?: string,"deshecho"?: string | null,"fecha_lote": string,"filas": number,"hash": string,"id"?: string,"total"?: number,"user_id": string
+                  }
+                  Update: {
+                    "archivo"?: string | null,"creado"?: string,"deshecho"?: string | null,"fecha_lote"?: string,"filas"?: number,"hash"?: string,"id"?: string,"total"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    
                   ]
                 },"listas": {
                   Row: {
@@ -271,17 +323,23 @@ isOneToOne: false
                   ]
                 },"precios_manuales_historial": {
                   Row: {
-                    "autor": string | null,"creado": string,"fecha": string,"id": number,"precio": number,"producto_id": string,"tienda_id": string
+                    "autor": string | null,"cantidad": number | null,"creado": string,"fecha": string,"id": number,"importacion_id": string | null,"origen": string,"precio": number,"producto_id": string,"promocion": boolean,"tienda_id": string,"total": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "autor"?: string | null,"creado"?: string,"fecha"?: string,"id"?: number,"precio": number,"producto_id": string,"tienda_id": string
+                    "autor"?: string | null,"cantidad"?: number | null,"creado"?: string,"fecha"?: string,"id"?: number,"importacion_id"?: string | null,"origen"?: string,"precio": number,"producto_id": string,"promocion"?: boolean,"tienda_id": string,"total"?: number | null
                   }
                   Update: {
-                    "autor"?: string | null,"creado"?: string,"fecha"?: string,"id"?: number,"precio"?: number,"producto_id"?: string,"tienda_id"?: string
+                    "autor"?: string | null,"cantidad"?: number | null,"creado"?: string,"fecha"?: string,"id"?: number,"importacion_id"?: string | null,"origen"?: string,"precio"?: number,"producto_id"?: string,"promocion"?: boolean,"tienda_id"?: string,"total"?: number | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "precios_manuales_historial_importacion_id_fkey"
+      columns: ["importacion_id"]
+isOneToOne: false
+      referencedRelation: "importaciones_gastos"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "precios_manuales_historial_producto_id_fkey"
       columns: ["producto_id"]
 isOneToOne: false
@@ -337,6 +395,52 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"producto_alias": {
+                  Row: {
+                    "alias_norm": string,"creado": string,"creado_por": string | null,"id": number,"producto_id": string,"tienda_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alias_norm": string,"creado"?: string,"creado_por"?: string | null,"id"?: number,"producto_id": string,"tienda_id"?: string | null
+                  }
+                  Update: {
+                    "alias_norm"?: string,"creado"?: string,"creado_por"?: string | null,"id"?: number,"producto_id"?: string,"tienda_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "producto_alias_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "producto_alias_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"producto_codigo": {
+                  Row: {
+                    "codigo": string,"creado": string,"creado_por": string | null,"producto_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "codigo": string,"creado"?: string,"creado_por"?: string | null,"producto_id": string
+                  }
+                  Update: {
+                    "codigo"?: string,"creado"?: string,"creado_por"?: string | null,"producto_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "producto_codigo_producto_id_fkey"
+      columns: ["producto_id"]
+isOneToOne: false
+      referencedRelation: "productos"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"producto_fuente": {
                   Row: {
                     "activo": boolean,"factor": number | null,"producto_id": string,"sku": string | null,"termino": string | null,"tienda_id": string,"url": string | null
@@ -365,17 +469,37 @@ isOneToOne: false
                   ]
                 },"productos": {
                   Row: {
-                    "cantidad_base": number,"emoji": string | null,"frecuencia": string,"grupo": string,"id": string,"nombre": string,"unidad": string,"unidad_base": string
+                    "cantidad_base": number,"creado": string,"creado_por": string | null,"emoji": string | null,"frecuencia": string,"grupo": string,"id": string,"nombre": string,"nombre_norm": string | null,"origen": string,"revisado": boolean,"unidad": string,"unidad_base": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "cantidad_base": number,"emoji"?: string | null,"frecuencia": string,"grupo": string,"id": string,"nombre": string,"unidad": string,"unidad_base": string
+                    "cantidad_base": number,"creado"?: string,"creado_por"?: string | null,"emoji"?: string | null,"frecuencia": string,"grupo": string,"id": string,"nombre": string,"nombre_norm"?: never,"origen"?: string,"revisado"?: boolean,"unidad": string,"unidad_base": string
                   }
                   Update: {
-                    "cantidad_base"?: number,"emoji"?: string | null,"frecuencia"?: string,"grupo"?: string,"id"?: string,"nombre"?: string,"unidad"?: string,"unidad_base"?: string
+                    "cantidad_base"?: number,"creado"?: string,"creado_por"?: string | null,"emoji"?: string | null,"frecuencia"?: string,"grupo"?: string,"id"?: string,"nombre"?: string,"nombre_norm"?: never,"origen"?: string,"revisado"?: boolean,"unidad"?: string,"unidad_base"?: string
                   }
                   Relationships: [
                     
+                  ]
+                },"tienda_alias": {
+                  Row: {
+                    "alias_norm": string,"creado": string,"creado_por": string | null,"tienda_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alias_norm": string,"creado"?: string,"creado_por"?: string | null,"tienda_id": string
+                  }
+                  Update: {
+                    "alias_norm"?: string,"creado"?: string,"creado_por"?: string | null,"tienda_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tienda_alias_tienda_id_fkey"
+      columns: ["tienda_id"]
+isOneToOne: false
+      referencedRelation: "tiendas"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"tienda_estado": {
                   Row: {
@@ -399,14 +523,14 @@ isOneToOne: true
                   ]
                 },"tiendas": {
                   Row: {
-                    "color": string,"id": string,"manual": boolean,"nombre": string,"nota": string | null
+                    "color": string,"creado": string,"creado_por": string | null,"id": string,"manual": boolean,"nombre": string,"nombre_norm": string | null,"nota": string | null,"origen": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "color": string,"id": string,"manual"?: boolean,"nombre": string,"nota"?: string | null
+                    "color": string,"creado"?: string,"creado_por"?: string | null,"id": string,"manual"?: boolean,"nombre": string,"nombre_norm"?: never,"nota"?: string | null,"origen"?: string
                   }
                   Update: {
-                    "color"?: string,"id"?: string,"manual"?: boolean,"nombre"?: string,"nota"?: string | null
+                    "color"?: string,"creado"?: string,"creado_por"?: string | null,"id"?: string,"manual"?: boolean,"nombre"?: string,"nombre_norm"?: never,"nota"?: string | null,"origen"?: string
                   }
                   Relationships: [
                     
@@ -444,8 +568,34 @@ isOneToOne: true
             "corregir_precio":
 { Args: { "p_precio": number,"p_producto": string,"p_tienda": string }; Returns: undefined
                            },
+"crear_producto":
+{ Args: { "p_cantidad_base"?: number,"p_frecuencia"?: string,"p_grupo"?: string,"p_nombre": string,"p_unidad"?: string }; Returns: string
+                           },
+"crear_tienda":
+{ Args: { "p_nombre": string }; Returns: string
+                           },
+"deshacer_importacion":
+{ Args: { "p_id": string }; Returns: Json
+                           },
+"emparejar_producto":
+{ Args: { "p_codigo": string,"p_nombre": string,"p_tienda": string }; Returns: string
+                           },
+"importar_compra":
+{ Args: { "p_archivo": string,"p_fecha": string,"p_filas": Json,"p_hash": string,"p_publicar": boolean }; Returns: Json
+                           },
+"normalizar_nombre":
+{ Args: { "p_texto": string }; Returns: string
+                           },
+"previsualizar_compra":
+{ Args: { "p_filas": Json }; Returns: {
+              "aviso": string,"grupo": string,"linea": number,"precio": number,"producto_id": string,"producto_nombre": string,"producto_nuevo": boolean,"producto_texto": string,"tienda_id": string,"tienda_nueva": boolean,"tienda_texto": string
+            }[]
+                           },
 "quitar_correccion":
 { Args: { "p_producto": string,"p_tienda": string }; Returns: boolean
+                           },
+"slug_tienda":
+{ Args: { "p_nombre": string }; Returns: string
                            }
           }
           Enums: {
