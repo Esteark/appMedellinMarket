@@ -76,8 +76,8 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 5. **PostgREST devuelve máx. 1000 filas:** toda lectura que pueda pasar de 1000 pagina con `.range()`.
 6. **Fechas en Bogotá:** `hoyBogota()` de `src/lib/fecha.ts`; nunca `toISOString().slice(0, 10)`.
 7. **Nunca inventar un precio ni una causa.** Sin hallazgo no se toca `precios_actuales`; sin coincidencia climática explícita la UI dice "causa no reportada". Una corrección a mano es un anotado con autor y fecha: se escribe con `corregir_precio`, nunca borra el automático y deja su fila en `precios_manuales_historial`.
-8. **Componentes ≤ 250 líneas.** Más largo → partir por responsabilidad.
-9. **Sin dependencias nuevas** salvo las de `blueprint.md` §11.
+8. **Componentes ≤ 250 líneas.** Más largo → partir por responsabilidad. Excepción registrada: `presupuesto-cliente.tsx` (más de 800 líneas heredadas; no debe crecer más de lo que ya tiene hasta que se parta).
+9. **Sin dependencias nuevas** salvo las de `blueprint.md` §2.
 10. **El pronóstico no es un precio.** Sale de `pronostico.ts` (estadística determinista, sin IA/LLM ni red), no se guarda en tablas de precios y no entra en totales, óptimo dividido, alertas ni PDF. Siempre se muestra como rango con probabilidad y confianza, rotulado "estimación estadística".
 
 ## Sistema de diseño

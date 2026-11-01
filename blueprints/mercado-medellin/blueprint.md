@@ -82,7 +82,7 @@ src/components/          catalogo/, carrito/, detalle/, graficos/, planes/, pres
 src/lib/                 supabase/{server,client,tipos}.ts,
                          precios/{lista,etiquetas,pronostico,planes,secciones,exportar}.ts,
                          listas/guardadas.ts, planes/config.ts, tutorial/*, alertas/reglas.ts,
-                         presupuesto/*, importar/{csv,hash,emparejar,prompt,tipos,lista,prompt-lista}.ts,
+                         presupuesto/*, importar/{csv,hash,emparejar,prompt,tipos,lista,prompt-lista,grupos,factura}.ts,
                          tiendas/fusion.ts, unidades.ts, fecha.ts, datos.ts
 src/corrida/             orquestador.ts, normalizar.ts, admin.ts, alertas-usuario.ts, correo.ts,
                          contexto.ts, adaptadores/{vtex,sipsa,vaquita}.ts
@@ -515,8 +515,8 @@ B="ruta/a/blueprints/mercado-medellin"            # ← ruta real de este bundle
 [ "$(pnpm -v 2>/dev/null)" = "12.15.0" ] || npm install -g pnpm@12.15.0
 # 1) scaffold (solo si aún no existe package.json)
 [ -f package.json ] || {
-  pnpm create next-app@16.4.2 _tmp --ts --app --tailwind --biome --src-dir --use-pnpm --yes
-  (shopt -s dotglob; mv _tmp/* . ); rmdir _tmp
+  pnpm create next-app@16.4.2 tmp-scaffold --ts --app --tailwind --biome --src-dir --use-pnpm --yes
+  (shopt -s dotglob; mv tmp-scaffold/* . ); rmdir tmp-scaffold
 }
 # 2) copiar workspace/ sin pisar nada que ya exista (re-ejecutable, exit 0)
 (cd "$B/workspace" && find . -type f) | while read -r f; do
@@ -585,7 +585,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 
 **3. Migración de datos.**
 - **Hacer:** `scripts/migrar.ts` con las reglas de la sección 4, más `pnpm gen:tipos`.
-- **Hecho cuando:** CUANDO corre `pnpm migrar`, EL SISTEMA DEBE imprimir `productos=144 precios=1152 tiendas=10` y salir con 0. El script compara él mismo cada conteo contra el JSON de origen y aborta si no coincide. **El paso 31 baja los tres números a `precios=432 tiendas=4`** (los productos no cambian); ese paso actualiza el mensaje y el conteo esperado, no este.
+- **Hecho cuando:** CUANDO corre `pnpm migrar`, EL SISTEMA DEBE imprimir `productos=144 precios=1152 tiendas=10` y salir con 0. El script compara él mismo cada conteo contra el JSON de origen y aborta si no coincide. **El paso 31 baja los dos números a `precios=432 tiendas=4`** (los productos no cambian); ese paso actualiza el mensaje y el conteo esperado, no este.
 
 **4. Lógica pura.**
 - **Hacer:** `lista.ts`, `etiquetas.ts`, `reglas.ts`, `unidades.ts`, `fecha.ts`, con sus pruebas en `tests/unit/`.
@@ -1217,7 +1217,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - `tests/unit/tutorial.test.ts`: `leerProgreso` devuelve "no visto" con JSON corrupto o sin clave; `marcarVisto("general")` es idempotente; `reiniciar` borra la marca; `pasosPara("general")` no repite ids y todos los pasos tienen título, texto y objetivo no vacíos.
   - E2E `tests/e2e/tutorial.spec.ts`: la primera visita a `/` abre el tutorial y oscurece la pantalla; "Siguiente" avanza el contador; `Esc` lo cierra; recargar **no** lo vuelve a abrir; la bombilla abre el menú y "Tutorial general" lo repite; "Reiniciar tutorial" hace que vuelva en la próxima visita; `?tutorial=1` lo abre aunque ya esté visto; en `/ingresar` no aparece; con `reducedMotion: "reduce"` los pasos cambian sin animación.
   - E2E de accesibilidad: con el tutorial abierto, el foco no sale de la tarjeta, `Esc` lo cierra, el foco vuelve a la bombilla y axe no reporta violaciones `serious` ni `critical`.
-  - Mientras el tutorial está abierto o completado, `TipsNoInvisivos` no muestra tips; los tips siguen saliendo para quien saltó el tutorial.
+  - Mientras el tutorial está abierto o completado, `TipsNoInvasivos` no muestra tips; los tips siguen saliendo para quien saltó el tutorial.
   - El gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan sin dependencias nuevas.
 
 **34. Importar una factura en CSV y abrir el catálogo de tiendas y productos.** *(pedido del 31-oct-2026: cargar lo que se compra sin digitar producto por producto)*
@@ -1811,7 +1811,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 - **Hecho cuando:**
   - `tests/unit/importar.test.ts`: BOM y CRLF no cambian las filas; `;` con coma decimal lee `12500,50` como 12.500,5; una cabecera sin `tienda` falla con la línea 1; una fila con 4 columnas cuando se esperan 5 falla con su número; 501 filas se rechazan; `# TOTAL=48200` llena `total` y no crea una fila; `# DUDOSA: falta un renglón` llega a `notas` y no a `filas`; el hash es igual para el mismo texto y fecha y distinto al cambiar la fecha; `grupoARubro("Proteínas") === "Carnes"`, `("Tubérculos") === "Verduras"` y `("Gourmet") === "Despensa"`; dos nombres con tilde y sin tilde emparejan con el mismo producto; `PROMPT_FACTURA` está contenido en `prompts/importar-gastos.md` (comparando sin CRLF).
   - pgTAP (`supabase/tests/importar_compras.test.sql`): `anon` no puede insertar en `tiendas` ni en `productos` y no ejecuta `importar_compra`; con sesión `crear_tienda('OLIMPICA')` y `crear_tienda('Olímpica')` devuelven el mismo id; la sexta tienda nueva del día falla con `limite_tiendas`; un producto nuevo nace con `grupo = 'Otros'`, `unidad = 'u'`, `unidad_base = 'u'`, `cantidad_base = 1`, `frecuencia = 'semanal'` y `revisado = false`; `importar_compra` crea gastos con `lote_importacion`, `cantidad`, `descripcion`, `mes = to_char(fecha,'YYYY-MM')` y `origen = 'importado'`; el precio queda con la **fecha de la factura** y no pisa un anotado más nuevo; dos líneas del mismo producto, tienda y fecha ponderan el precio con la suma de cantidades y totales; una línea con el mismo `codigo` de barras que un producto existente, o con el nombre ya usado en otra tienda, no crea un producto nuevo (y deja el alias de la tienda); una promoción no escribe `anotados` ni entra en `historial_minimo`; el mismo `p_hash` repetido falla con `importacion_duplicada` mientras el lote siga vigente y vuelve a entrar después de deshacerlo, y un hash que no es de 64 hex falla con `hash_invalido`; `deshacer_importacion` repone el anotado anterior, borra los gastos del lote y deja intacto un precio corregido después (lo reporta en `conservados`); el usuario B no puede deshacer el lote de A.
-  - E2E `tests/e2e/importar.spec.ts`: elegir un `.xlsx` muestra "guárdalo como CSV" y no lee nada; pegar `varias-tiendas.csv` muestra dos grupos tienda+fecha; editar el precio de una fila y el rubro de otra se refleja en el resumen; guardar deja los gastos en `/presupuesto` y la tienda nueva en `/tiendas`; repetir el mismo CSV muestra `importacion_duplicada`; "Deshacer" borra los gastos, restaura el precio y deja volver a importar el mismo archivo; sin sesión la importación queda en el dispositivo y no aparece en `/tiendas`.
+  - E2E `tests/e2e/importar.spec.ts`: elegir un `.xlsx` muestra "guárdalo como CSV" y no lee nada; pegar `varias-tiendas.csv` muestra dos grupos tienda+fecha; editar el precio de una fila y el rubro de otra se refleja en el resumen; guardar deja los gastos en `/presupuesto` y la tienda nueva en `/anotados` (en `/tiendas` llega con el paso 35); repetir el mismo CSV muestra `importacion_duplicada`; "Deshacer" borra los gastos, restaura el precio y deja volver a importar el mismo archivo; sin sesión la importación queda en el dispositivo y no aparece en `/tiendas`.
   - `pnpm migrar` sigue imprimiendo `precios=432 tiendas=4`; `select count(*) from productos` sigue en 144 y todos conservan su `nombre_norm`.
   - El gate (`pnpm typecheck && pnpm lint && pnpm test`) pasa.
 

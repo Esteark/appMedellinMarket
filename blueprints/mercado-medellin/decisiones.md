@@ -221,6 +221,11 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 
 - **Cargar una lista desde texto (paso 36).** La persona pega su listado ("Papas: 4 kg (aprox. 8 libras)") en una IA con el prompt de `prompts/importar-lista.md` y pega el CSV resultante (`lista,producto,cantidad,unidad,nota`). La app lo lee con código determinista, sin IA. Una lista por sección ("1 semana", "2 semanas"), libras y kilos convertidos a la unidad del catálogo, "aprox." solo como nota. Revisión obligatoria antes de cargar; el emparejamiento es exacto y la elección queda como alias. La lista queda activa en la pantalla principal y se guarda con nombre en el dispositivo o, con sesión, en la cuenta (paso 28). Sin migración y sin dependencias nuevas.
 
+### Deuda conocida tras la auditoría del 1-nov-2026
+- El blueprint no sigue las 20 secciones del template y los epics 34–35 no copian criterios ni verify de `tasks.json`. No se reestructura: el proyecto ya está construido hasta el paso 36.
+- Solo importa si se reconstruye desde cero: el Bootstrap deja `B="ruta/a/…"` como placeholder; los `tsconfig.json`/`.gitignore` de `workspace/` no pisan los del scaffold; `@axe-core/playwright`, `jspdf` y `jspdf-autotable` no tienen paso que los instale; varios gates con `grep` recorren el propio bundle; los pasos 5, 7, 8, 9, 17, 18, 21 y 26 no nombran comando de verify; el epic 23 está huérfano.
+- `presupuesto-cliente.tsx` excede las 250 líneas (excepción registrada en CLAUDE.md).
+
 ### Decisiones que quedan abiertas
 - **PriceSmart:** se mantiene. Si el usuario tampoco merca allí, se retira con el mismo patrón del paso 31 (una línea más en `TIENDAS_RETIRADAS` y en la migración).
 - **La Mayorista Medellín:** sigue pendiente de decisión desde el paso 21.

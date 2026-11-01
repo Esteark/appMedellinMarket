@@ -27,7 +27,7 @@ Los mismos del epic 34. **Gate:** `pnpm typecheck && pnpm lint && pnpm test`. Su
 `page.tsx`, `vista.tsx`, `tabla-productos.tsx`, `dialogo-fusion.tsx` y el enlace «Tiendas» en el encabezado. Nunca un botón «Borrar». Cada componente ≤ 250 líneas.
 
 ### E35-T4 — Probar de punta a punta /tiendas y la fusión · `paso-35d` · p1
-`tests/e2e/tiendas.spec.ts`; `pnpm migrar` sigue en `precios=432 tiendas=5`.
+`tests/e2e/tiendas.spec.ts`; `pnpm migrar` sigue en `precios=432 tiendas=4`.
 
 ### E35-T5 — Leer el CSV de una lista y convertir unidades · `paso-36a` · p1
 `src/lib/importar/lista.ts` y `prompt-lista.ts` (puros). Contrato `lista,producto,cantidad,unidad,nota`; `lb` = 500 g; el ítem es `ceil(pedido / cantidad_base)`; «aprox.» solo viaja en la nota. Prompt en `prompts/importar-lista.md`.

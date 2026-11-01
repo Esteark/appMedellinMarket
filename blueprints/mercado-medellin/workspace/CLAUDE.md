@@ -76,8 +76,8 @@ Next.js 16 App Router · React 19 · TypeScript 6 · Tailwind v4 + shadcn (radix
 5. **PostgREST devuelve máx. 1000 filas:** toda lectura que pueda pasar de 1000 pagina con `.range()`.
 6. **Fechas en Bogotá:** `hoyBogota()` de `src/lib/fecha.ts`; nunca `toISOString().slice(0, 10)`.
 7. **Nunca inventar un precio ni una causa.** Sin hallazgo no se toca `precios_actuales`; sin coincidencia climática explícita la UI dice "causa no reportada". La corrección a mano va por `corregir_precio`, con autor, y no borra el automático.
-8. **Componentes ≤ 250 líneas.** Más largo → partir por responsabilidad.
-9. **Sin dependencias nuevas** salvo las de `blueprint.md` §11.
+8. **Componentes ≤ 250 líneas.** Más largo → partir por responsabilidad. Excepción registrada: `presupuesto-cliente.tsx` (más de 800 líneas heredadas; no debe crecer más de lo que ya tiene hasta que se parta).
+9. **Sin dependencias nuevas** salvo las de `blueprint.md` §2.
 10. **El pronóstico no es un precio.** Estadística determinista (sin IA/LLM ni red), no se guarda en tablas de precios y no entra en totales, óptimo, alertas ni PDF; se muestra como rango con probabilidad y confianza.
 
 ## Sistema de diseño
@@ -102,7 +102,7 @@ Tokens en `src/app/globals.css` (claro / oscuro por `prefers-color-scheme` y `[d
 
 - **Tipo:** Inter (`next/font/google`) 400/500/600/700; números con `tabular-nums`.
 - **Radio:** tarjetas 14 px, controles 10–12 px, chips 999 px.
-- **Grilla catálogo:** 2 col < 760 px, 3 col ≥ 900 px, 4 col ≥ 1140 px; carrito lateral sticky 340 px ≥ 900 px, barra inferior + hoja en móvil.
+- **Grilla catálogo:** puntos de quiebre `sm` 640 / `lg` 1024. 2 col < 640 px, 3 col ≥ 640 px; carrito lateral sticky 340 px ≥ 1024 px; debajo, barra inferior (toda la barra abre la hoja). Filas horizontales con `src/components/deslizador.tsx`; con `pointer: coarse` todo control mide ≥ 44 px (`globals.css`).
 - **Movimiento:** GSAP, solo `transform`/`opacity`, 150–400 ms, todo dentro de `gsap.matchMedia()`; con `prefers-reduced-motion: reduce` la duración es 0. Helpers en `src/lib/animaciones.ts`.
 
 ## Entorno

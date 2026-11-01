@@ -46,4 +46,4 @@ Migración `supabase/migrations/<ts>_importar_compras.sql` con el SQL del paso 3
 Componentes `importar-factura`, `revision`, `resultado`, `prompt` y la pestaña en `presupuesto-cliente.tsx`. Cada archivo ≤ 250 líneas. Solo `.csv`; nada se sube.
 
 ### E34-T6 — Probar de punta a punta la importación de facturas · `paso-34f` · p0
-`tests/e2e/importar.spec.ts` con el flujo pegar → revisar → guardar → repetir → deshacer, y `pnpm migrar` sigue en `precios=432 tiendas=5`.
+`tests/e2e/importar.spec.ts` con el flujo pegar → revisar → guardar → repetir → deshacer, y `pnpm migrar` sigue en `precios=432 tiendas=4`.
