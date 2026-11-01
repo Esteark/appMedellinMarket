@@ -55,7 +55,7 @@
       "tests/importar/*.csv",
       "tests/unit/importar.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E34-T3",

@@ -1,0 +1,6 @@
+# Entrada sintética de prueba, escrita a mano: no es una respuesta capturada de un sitio.
+producto,cantidad,precio_total,tienda,fecha,codigo
+Leche entera 1 L,3,12750,D1,2026-10-30,7702001234567
+Arroz Diana 500 g,2,6400,D1,2026-10-30,
+Huevos AA x30,1,21900,D1,2026-10-30,
+# TOTAL=41050

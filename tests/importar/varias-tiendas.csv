@@ -1,0 +1,6 @@
+# Entrada sintética de prueba, escrita a mano: no es una respuesta capturada de un sitio.
+producto,cantidad,precio_total,tienda,fecha,codigo
+Leche entera 1 L,3,12750,D1,2026-10-30,7702001234567
+Lentejas 500 g,1,3900,D1,2026-10-30,
+Papa criolla,1.25,18750,Plaza Minorista,2026-10-29,
+Cebolla cabezona,2,5200,Plaza Minorista,2026-10-29,
