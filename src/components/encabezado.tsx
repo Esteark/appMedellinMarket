@@ -114,13 +114,6 @@ export async function Encabezado() {
             </>
           )}
         </span>
-        <Link
-          href="/tiendas"
-          data-tour="tiendas"
-          className="font-medium underline decoration-dotted underline-offset-2"
-        >
-          Tiendas
-        </Link>
         <Cuenta u={u} />
       </div>
     </header>

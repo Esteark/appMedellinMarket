@@ -124,7 +124,11 @@ test("con sesión: un producto por revisar sale del filtro al darle grupo, y fus
   await filaOrigen.getByLabel("Grupo").fill("Despensa");
   await filaOrigen.getByRole("button", { name: "Guardar" }).click();
   await expect(filaOrigen).toHaveCount(0);
-  await expect(fila(page, destino)).toBeVisible();
+  // Un producto que sí va en «Otros» sale del filtro con «Marcar revisado».
+  await fila(page, destino)
+    .getByRole("button", { name: "Marcar revisado" })
+    .click();
+  await expect(fila(page, destino)).toHaveCount(0);
   await page.getByLabel(/^Solo por revisar/).uncheck();
   await expect(filaOrigen).toBeVisible();
   expect(

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { editarProducto } from "@/app/tiendas/acciones";
+import { editarProducto, marcarRevisado } from "@/app/tiendas/acciones";
 import { CorregirPrecio } from "@/components/precios/corregir-precio";
 import { avisar } from "@/lib/avisos";
 import type { ProductoGestion } from "@/lib/datos";
@@ -25,6 +25,18 @@ type Borrador = Pick<
   ProductoGestion,
   "nombre" | "grupo" | "unidad" | "emoji" | "frecuencia"
 >;
+
+const Boton = ({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: string;
+}) => (
+  <button type="button" className={boton} onClick={onClick}>
+    {children}
+  </button>
+);
 
 /** Por revisar = nació de una factura y todavía está en Otros. */
 export const porRevisar = (p: ProductoGestion) =>
@@ -65,6 +77,13 @@ export function TablaProductos({
     } catch {
       avisar("sin_conexion");
     }
+  };
+
+  const revisar = async (p: ProductoGestion) => {
+    const r = await marcarRevisado(p.id);
+    if (!r.ok) return avisar(claveAviso(r.error));
+    avisar("producto_revisado", { nombre: p.nombre });
+    router.refresh();
   };
 
   const cambiar = (parche: Partial<Borrador>) =>
@@ -175,44 +194,21 @@ export function TablaProductos({
                   <td className="whitespace-nowrap px-3 py-2 text-right">
                     {abierta ? (
                       <>
-                        <button
-                          type="button"
-                          className={boton}
-                          onClick={() => guardar(p.id)}
-                        >
-                          Guardar
-                        </button>{" "}
-                        <button
-                          type="button"
-                          className={boton}
-                          onClick={() => setEditando(null)}
-                        >
+                        <Boton onClick={() => guardar(p.id)}>Guardar</Boton>{" "}
+                        <Boton onClick={() => setEditando(null)}>
                           Cancelar
-                        </button>
+                        </Boton>
                       </>
                     ) : (
                       <>
-                        <button
-                          type="button"
-                          className={boton}
-                          onClick={() => editar(p)}
-                        >
-                          Editar
-                        </button>{" "}
-                        <button
-                          type="button"
-                          className={boton}
-                          onClick={() => setPrecio(p)}
-                        >
-                          Precio
-                        </button>{" "}
-                        <button
-                          type="button"
-                          className={boton}
-                          onClick={() => onFusionar(p)}
-                        >
-                          Fusionar
-                        </button>
+                        <Boton onClick={() => editar(p)}>Editar</Boton>{" "}
+                        <Boton onClick={() => setPrecio(p)}>Precio</Boton>{" "}
+                        <Boton onClick={() => onFusionar(p)}>Fusionar</Boton>
+                        {porRevisar(p) && (
+                          <Boton onClick={() => revisar(p)}>
+                            Marcar revisado
+                          </Boton>
+                        )}
                       </>
                     )}
                   </td>
