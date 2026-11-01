@@ -1939,7 +1939,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
     where items ? p_origen;
 
     update planes_usuario set config = jsonb_set(config, '{items}',
-        (config->'items' - p_origen) || jsonb_build_object(p_destino,
+        ((config->'items') - p_origen) || jsonb_build_object(p_destino,
           coalesce((config->'items'->>p_destino)::numeric, 0)
             + (config->'items'->>p_origen)::numeric)),
       actualizada = now()

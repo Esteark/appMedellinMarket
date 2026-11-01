@@ -199,7 +199,7 @@
       "supabase/tests/tiendas.test.sql",
       "src/lib/supabase/tipos.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E35-T2",

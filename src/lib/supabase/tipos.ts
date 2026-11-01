@@ -137,6 +137,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"fusiones_productos": {
+                  Row: {
+                    "autor": string | null,"creado": string,"destino": string,"id": number,"origen": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "autor"?: string | null,"creado"?: string,"destino": string,"id"?: number,"origen": string
+                  }
+                  Update: {
+                    "autor"?: string | null,"creado"?: string,"destino"?: string,"id"?: number,"origen"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"gastos_reales": {
                   Row: {
                     "cantidad": number | null,"created_at": string,"descripcion": string | null,"fecha": string,"id": string,"lote_importacion": string | null,"mes": string,"monto": number,"nota": string | null,"origen": string,"producto_id": string | null,"rubro": string,"tienda_id": string | null,"user_id": string
@@ -579,6 +593,9 @@ isOneToOne: true
                            },
 "emparejar_producto":
 { Args: { "p_codigo": string,"p_nombre": string,"p_tienda": string }; Returns: string
+                           },
+"fusionar_productos":
+{ Args: { "p_destino": string,"p_origen": string }; Returns: Json
                            },
 "importar_compra":
 { Args: { "p_archivo": string,"p_fecha": string,"p_filas": Json,"p_hash": string,"p_publicar": boolean }; Returns: Json
