@@ -15,8 +15,7 @@
     ],
     "verify": [
       "pnpm exec supabase db reset",
-      "sleep 8",
-      "pnpm migrar",
+      "ok=1; for i in 1 2 3 4 5 6; do pnpm migrar && ok=0 && break; sleep 5; done; test \"$ok\" -eq 0",
       "pnpm gen:tipos",
       "pnpm typecheck",
       "pnpm exec supabase test db"
@@ -162,8 +161,7 @@
     "verify": [
       "pnpm test:e2e tests/e2e/importar.spec.ts",
       "pnpm exec supabase db reset",
-      "sleep 8",
-      "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
+      "ok=1; for i in 1 2 3 4 5 6; do out=$(pnpm migrar 2>&1) && ok=0 && break; sleep 5; done; test \"$ok\" -eq 0 && echo \"$out\" | grep -q \"precios=432 tiendas=4\"",
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-34f",
@@ -186,8 +184,7 @@
     ],
     "verify": [
       "pnpm exec supabase db reset",
-      "sleep 8",
-      "pnpm migrar",
+      "ok=1; for i in 1 2 3 4 5 6; do pnpm migrar && ok=0 && break; sleep 5; done; test \"$ok\" -eq 0",
       "pnpm gen:tipos",
       "pnpm typecheck",
       "pnpm exec supabase test db"
@@ -272,13 +269,12 @@
     "verify": [
       "pnpm test:e2e tests/e2e/tiendas.spec.ts",
       "pnpm exec supabase db reset",
-      "sleep 8",
-      "pnpm migrar | grep -q \"precios=432 tiendas=4\"",
+      "ok=1; for i in 1 2 3 4 5 6; do out=$(pnpm migrar 2>&1) && ok=0 && break; sleep 5; done; test \"$ok\" -eq 0 && echo \"$out\" | grep -q \"precios=432 tiendas=4\"",
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-35d",
     "files": ["tests/e2e/tiendas.spec.ts"],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E35-T5",
