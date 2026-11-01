@@ -354,6 +354,6 @@
     ],
     "checkpoint": "paso-36c",
     "files": ["tests/e2e/cargar-lista.spec.ts"],
-    "status": "pending"
+    "status": "done"
   }
 ]
