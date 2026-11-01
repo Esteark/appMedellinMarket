@@ -99,6 +99,13 @@ export const PASOS_PANTALLA: Record<string, Paso[]> = {
         "Carga una lista para reemplazar la actual, súmala sin bajar cantidades, renómbrala, duplícala o expórtala.",
       objetivo: "listas",
     },
+    {
+      id: "cargar-lista",
+      titulo: "Cargar una lista desde texto",
+      texto:
+        "Pega tu listado en tu IA con el prompt, pega aquí el CSV y revisa antes de usarlo como tu lista.",
+      objetivo: "cargar-lista",
+    },
   ],
   "/hogar": [
     {

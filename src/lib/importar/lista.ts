@@ -117,3 +117,26 @@ export function itemDeProducto(
     item: Math.max(1, Math.ceil(valor / producto.cantidad_base)),
   };
 }
+
+const CLAVE_ALIAS = "mercado-medellin:alias-lista";
+
+/** Cómo se escribió cada producto en cargas anteriores (nombre normalizado → id), en el dispositivo. */
+export function leerAlias(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_ALIAS) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+export function guardarAlias(alias: Record<string, string>) {
+  try {
+    localStorage.setItem(CLAVE_ALIAS, JSON.stringify(alias));
+  } catch {
+    // sin almacenamiento: se vuelve a preguntar la próxima vez
+  }
+}
+
+/** Unidad con la que se crea un producto nuevo a partir de una línea de la lista. */
+export const unidadDeCompra = (u: UnidadLista) =>
+  u === "u" ? "unidad" : u === "l" || u === "ml" ? "1 L" : "kg";

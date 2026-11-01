@@ -1,7 +1,24 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Spinner } from "@/components/cargando";
+import { CargarLista } from "@/components/listas/cargar-lista";
 import { ListasGuardadas } from "@/components/listas/listas-guardadas";
+import { catalogo } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Mis listas · Mercado Medellín" };
+
+async function Cargar() {
+  const { productos } = await catalogo();
+  return (
+    <CargarLista
+      productos={productos.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        unidad: p.unidad,
+      }))}
+    />
+  );
+}
 
 export default function Listas() {
   return (
@@ -17,6 +34,19 @@ export default function Listas() {
       <div data-tour="listas">
         <ListasGuardadas />
       </div>
+      <Suspense
+        fallback={
+          <p
+            role="status"
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <Spinner />
+            Cargando catálogo…
+          </p>
+        }
+      >
+        <Cargar />
+      </Suspense>
     </main>
   );
 }

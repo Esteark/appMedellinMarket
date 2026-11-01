@@ -326,12 +326,14 @@
     "checkpoint": "paso-36b",
     "files": [
       "src/components/listas/cargar-lista.tsx",
+      "src/components/listas/seccion-lista.tsx",
       "src/app/listas/acciones.ts",
-      "src/lib/avisos.ts",
       "src/lib/tutorial/pasos.ts",
-      "src/app/listas/page.tsx"
+      "src/app/listas/page.tsx",
+      "src/lib/importar/lista.ts",
+      "tests/unit/lista-importar.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E35-T7",

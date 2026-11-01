@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { usuario } from "@/lib/datos";
+import { normalizarNombre } from "@/lib/importar/emparejar";
 import { MAX_ITEMS, MAX_LISTAS } from "@/lib/listas/guardadas";
 import { clienteServidor } from "@/lib/supabase/server";
 
@@ -64,4 +65,24 @@ export async function sincronizarListas(entrada: unknown): Promise<Resultado> {
     if (error) return { ok: false, error: error.message };
   }
   return { ok: true };
+}
+
+/** Recuerda cómo se escribió un producto en una lista cargada: el alias global sirve a la próxima carga. */
+export async function registrarAliasLista(
+  alias: unknown,
+  producto: unknown,
+): Promise<Resultado> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const a = z.string().trim().min(1).max(120).safeParse(alias);
+  const p = id.safeParse(producto);
+  if (!a.success || !p.success) return { ok: false, error: "invalido" };
+  const db = await clienteServidor();
+  const { error } = await db
+    .from("producto_alias")
+    .insert({ alias_norm: normalizarNombre(a.data), producto_id: p.data });
+  // 23505: ese alias ya existe, que es justo lo que se quería.
+  return error && error.code !== "23505"
+    ? { ok: false, error: "invalido" }
+    : { ok: true };
 }

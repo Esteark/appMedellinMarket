@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { aBase, itemDeProducto, leerListaCsv } from "@/lib/importar/lista";
 import { PROMPT_LISTA } from "@/lib/importar/prompt-lista";
 
@@ -88,5 +88,21 @@ describe("PROMPT_LISTA", () => {
       "utf-8",
     ).replace(/\r\n/g, "\n");
     expect(md).toContain(PROMPT_LISTA);
+  });
+});
+
+describe("registrarAliasLista", () => {
+  it("sin sesión responde sin_sesion y no toca la base", async () => {
+    const usuario = vi.fn().mockResolvedValue(null);
+    const clienteServidor = vi.fn();
+    vi.doMock("next/server", () => ({ connection: async () => {} }));
+    vi.doMock("@/lib/datos", () => ({ usuario }));
+    vi.doMock("@/lib/supabase/server", () => ({ clienteServidor }));
+    const { registrarAliasLista } = await import("@/app/listas/acciones");
+    expect(await registrarAliasLista("Papas", "p-papa")).toEqual({
+      ok: false,
+      error: "sin_sesion",
+    });
+    expect(clienteServidor).not.toHaveBeenCalled();
   });
 });
