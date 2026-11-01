@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { leerCsv } from "@/lib/importar/csv";
 import { hashLote } from "@/lib/importar/hash";
+import { PROMPT_FACTURA } from "@/lib/importar/prompt";
 
 const CABECERA = "producto,cantidad,precio_total,tienda,fecha";
 const csv = (nombre: string) =>
@@ -101,5 +102,20 @@ describe("hashLote", () => {
     const a = await hashLote("a,b\n1,2", "2026-10-30");
     expect(await hashLote("a,b\n1,2", "2026-10-31")).not.toBe(a);
     expect(await hashLote("a,b\n1,3", "2026-10-30")).not.toBe(a);
+  });
+});
+
+describe("PROMPT_FACTURA", () => {
+  it("su ejemplo de respuesta lo lee el importador tal cual", () => {
+    const ejemplo = PROMPT_FACTURA.split("Ejemplo de respuesta:\n")[1];
+    const r = leerCsv(ejemplo);
+    expect(r.errores).toEqual([]);
+    expect(r.filas.map((f) => f.producto)).toEqual([
+      "Leche entera 1 L",
+      "Arroz, blanco 500 g",
+      "Papa criolla",
+    ]);
+    expect(r.total).toBe(34700);
+    expect(r.filas.reduce((s, f) => s + f.precioTotal, 0)).toBe(r.total);
   });
 });
