@@ -108,9 +108,10 @@
       "src/lib/presupuesto/almacenamiento.ts",
       "src/lib/datos.ts",
       "src/lib/avisos.ts",
-      "tests/unit/importar-acciones.test.ts"
+      "tests/unit/importar-acciones.test.ts",
+      "src/lib/presupuesto/tipos.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E34-T5",

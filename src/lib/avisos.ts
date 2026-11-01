@@ -277,6 +277,96 @@ export const AVISOS = {
     emoji: "🔄",
     texto: "Unimos tu presupuesto y gastos de este dispositivo con tu cuenta.",
   },
+  importacion_lista: {
+    tipo: "exito",
+    emoji: "🧾",
+    texto: "Importamos {gastos} gastos y {precios} precios.",
+  },
+  importacion_duplicada: {
+    tipo: "aviso",
+    emoji: "🔁",
+    texto:
+      "Ese archivo ya se importó con esa fecha. Deshaz el lote si quieres repetirlo.",
+  },
+  importacion_error: {
+    tipo: "error",
+    emoji: "❌",
+    texto:
+      "No se pudo importar la factura. Revisa el archivo e intenta de nuevo.",
+  },
+  importacion_deshecha: {
+    tipo: "info",
+    emoji: "↩️",
+    texto:
+      "Deshicimos la importación: {restaurados} precios restaurados, {conservados} conservados.",
+  },
+  importacion_sin_cambios: {
+    tipo: "info",
+    emoji: "🟰",
+    texto: "La importación no cambió ningún precio.",
+  },
+  factura_total_no_cuadra: {
+    tipo: "aviso",
+    emoji: "🧮",
+    texto:
+      "La suma de las líneas no cuadra con el total impreso de la factura.",
+  },
+  tienda_creada: {
+    tipo: "info",
+    emoji: "🏪",
+    texto: "Creamos la tienda «{nombre}».",
+  },
+  producto_creado: {
+    tipo: "info",
+    emoji: "🆕",
+    texto: "Creamos el producto «{nombre}». Revísalo en Tiendas.",
+  },
+  precio_publicado: {
+    tipo: "info",
+    emoji: "📣",
+    texto: "Los precios de la factura serán visibles para todos.",
+  },
+  precio_no_publicado: {
+    tipo: "info",
+    emoji: "🔒",
+    texto: "Solo se guardan tus gastos; los precios no se publican.",
+  },
+  precio_mas_nuevo: {
+    tipo: "aviso",
+    emoji: "🕓",
+    texto: "Ya había un precio más nuevo en {tienda}; no lo cambiamos.",
+  },
+  gastos_sincronizados: {
+    tipo: "exito",
+    emoji: "☁️",
+    texto: "Subimos {n} gastos de este dispositivo a tu cuenta.",
+  },
+  gasto_editado: { tipo: "exito", emoji: "✏️", texto: "Gasto actualizado." },
+  archivo_no_csv: {
+    tipo: "aviso",
+    emoji: "📄",
+    texto: "Solo se leen archivos .csv. Abre el Excel y guárdalo como CSV.",
+  },
+  limite_tiendas: {
+    tipo: "aviso",
+    emoji: "🏪",
+    texto: "Hoy ya creaste 5 tiendas. Intenta mañana o usa una existente.",
+  },
+  limite_productos: {
+    tipo: "aviso",
+    emoji: "🆕",
+    texto: "Hoy ya creaste 50 productos. Intenta mañana o usa uno existente.",
+  },
+  nombre_invalido: {
+    tipo: "aviso",
+    emoji: "🔤",
+    texto: "El nombre de la tienda o del producto no es válido.",
+  },
+  precio_fuera_de_rango: {
+    tipo: "aviso",
+    emoji: "💲",
+    texto: "El precio queda fuera del rango permitido (100 a 10.000.000).",
+  },
 } as const satisfies Record<
   string,
   { tipo: TipoAviso; emoji: string; texto: string }

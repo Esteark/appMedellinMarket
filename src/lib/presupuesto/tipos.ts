@@ -15,7 +15,8 @@ export type OrigenGasto =
   | "manual"
   | "desde_lista"
   | "plan_hogar"
-  | "plan_dieta";
+  | "plan_dieta"
+  | "importado";
 
 export type PresupuestoRubro = {
   rubro: Rubro | string;
@@ -34,6 +35,9 @@ export type GastoReal = {
   producto_id: string | null;
   origen: OrigenGasto;
   nota: string | null;
+  /** Solo en gastos importados de una factura. */
+  cantidad?: number | null;
+  descripcion?: string | null;
   created_at: string;
 };
 

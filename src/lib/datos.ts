@@ -533,6 +533,53 @@ export async function alertasUsuario(): Promise<{
   };
 }
 
+export type TiendaConConteos = TiendaCatalogo & {
+  manual: boolean;
+  origen: string;
+  /** Productos con un precio efectivo en esta tienda. */
+  productos: number;
+  /** Filas de `precio_efectivo` de esta tienda, incluidas las sin dato. */
+  precios: number;
+  ultimaFecha: string | null;
+};
+
+/** Tiendas con cuántos productos tienen precio y la fecha más nueva; para /presupuesto y /tiendas. */
+export async function catalogoTiendas(): Promise<TiendaConConteos[]> {
+  await connection();
+  const db = await clienteServidor();
+  const [tiendas, efectivos] = await Promise.all([
+    db
+      .from("tiendas")
+      .select("id, nombre, color, manual, origen")
+      .order("nombre"),
+    todas(
+      (d, h) =>
+        db
+          .from("precio_efectivo")
+          .select("tienda_id, precio, fecha")
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "precio_efectivo",
+    ),
+  ]);
+  if (tiendas.error) throw new Error(tiendas.error.message);
+  const porTienda = agrupar(efectivos, (e) => e.tienda_id);
+  return (tiendas.data ?? []).map((t) => {
+    const filas = porTienda.get(t.id) ?? [];
+    const conPrecio = filas.filter((f) => f.precio != null);
+    const fechas = conPrecio
+      .map((f) => f.fecha)
+      .filter((f): f is string => !!f);
+    return {
+      ...t,
+      productos: conPrecio.length,
+      precios: filas.length,
+      ultimaFecha: fechas.sort().at(-1) ?? null,
+    };
+  });
+}
+
 export type FilaAnotados = {
   id: string;
   nombre: string;

@@ -2,9 +2,30 @@
 
 import { z } from "zod";
 import { usuario } from "@/lib/datos";
+import type {
+  ResultadoDeshacer,
+  ResultadoImportacion,
+} from "@/lib/importar/tipos";
 import { clienteServidor } from "@/lib/supabase/server";
 
 type Resultado = { ok: true } | { ok: false; error: string };
+
+/** Errores que lanza Postgres con `raise exception`; coinciden con claves del catálogo de avisos. */
+const ERRORES_IMPORTACION = [
+  "importacion_duplicada",
+  "limite_tiendas",
+  "limite_productos",
+  "nombre_invalido",
+  "precio_fuera_de_rango",
+  "sin_sesion",
+] as const;
+
+/** Nunca devuelve `error.message` crudo: o es una clave conocida o es `importacion_error`. */
+function claveDeError(mensaje: string): string {
+  return (
+    ERRORES_IMPORTACION.find((c) => mensaje.includes(c)) ?? "importacion_error"
+  );
+}
 
 const esquemaRubro = z.object({
   rubro: z.string().min(1).max(60),
@@ -17,15 +38,57 @@ const esquemaPresupuesto = z
   .max(50)
   .refine((r) => r.length > 0, "Debe haber al menos un rubro");
 
-const esquemaGasto = z.object({
-  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  mes: z.string().regex(/^\d{4}-\d{2}$/),
-  rubro: z.string().min(1).max(60),
-  monto: z.number().int().min(0).max(10_000_000),
-  origen: z.enum(["manual", "desde_lista", "plan_hogar", "plan_dieta"]),
-  nota: z.string().max(200).nullable().optional(),
-  tienda_id: z.string().nullable().optional(),
-  producto_id: z.string().nullable().optional(),
+const fechaIso = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine(
+    (f) => new Date(`${f}T00:00:00Z`).toISOString().startsWith(f),
+    "Fecha inválida",
+  );
+
+const esquemaGasto = z
+  .object({
+    fecha: fechaIso,
+    mes: z.string().regex(/^\d{4}-\d{2}$/),
+    rubro: z.string().min(1).max(60),
+    monto: z.number().int().min(0).max(50_000_000),
+    origen: z.enum([
+      "manual",
+      "desde_lista",
+      "plan_hogar",
+      "plan_dieta",
+      "importado",
+    ]),
+    nota: z.string().max(200).nullable().optional(),
+    tienda_id: z.string().nullable().optional(),
+    producto_id: z.string().nullable().optional(),
+    cantidad: z.number().positive().max(9999).nullable().optional(),
+    descripcion: z.string().max(200).nullable().optional(),
+  })
+  // El mes siempre sale de la fecha del gasto, no del mes abierto en pantalla.
+  .transform((g) => ({ ...g, mes: g.fecha.slice(0, 7) }));
+
+const esquemaFilaCompra = z.object({
+  producto: z.string().trim().min(1).max(120),
+  tienda: z.string().trim().min(1).max(60),
+  cantidad: z.number().min(0.001).max(9999),
+  precio_total: z.number().int().min(1).max(50_000_000),
+  fecha: z.union([fechaIso, z.literal("")]).optional(),
+  codigo: z.string().max(40).optional(),
+  rubro: z.string().max(60).optional(),
+  unidad: z.string().max(10).optional(),
+  publicar_precio: z.boolean().optional(),
+  promocion: z.boolean().optional(),
+});
+
+const esquemaFilasCompra = z.array(esquemaFilaCompra).min(1).max(500);
+
+const esquemaImportacion = z.object({
+  fecha: fechaIso,
+  archivo: z.string().max(120).optional(),
+  publicar: z.boolean(),
+  hash: z.string().regex(/^[a-f0-9]{64}$/),
+  filas: esquemaFilasCompra,
 });
 
 export async function guardarPresupuestoMensual(
@@ -273,4 +336,142 @@ export async function listarCierresPresupuesto(): Promise<
     .order("mes", { ascending: true });
   if (error) return { ok: false, error: error.message };
   return { ok: true, cierres: data ?? [] };
+}
+
+type FilaCompra = z.infer<typeof esquemaFilaCompra>;
+
+export type PrevisualizacionFila = {
+  linea: number;
+  tienda_texto: string;
+  producto_texto: string;
+  tienda_id: string | null;
+  producto_id: string | null;
+  producto_nombre: string | null;
+  grupo: string;
+  precio: number | null;
+  tienda_nueva: boolean;
+  producto_nuevo: boolean;
+  aviso: string | null;
+};
+
+/** Qué tienda y qué producto se usarían, sin escribir nada. */
+export async function previsualizarCompra(
+  filas: unknown,
+): Promise<
+  { ok: true; filas: PrevisualizacionFila[] } | { ok: false; error: string }
+> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const parsed = esquemaFilasCompra.safeParse(filas);
+  if (!parsed.success) return { ok: false, error: "importacion_error" };
+  const db = await clienteServidor();
+  const { data, error } = await db.rpc("previsualizar_compra", {
+    p_filas: parsed.data as FilaCompra[],
+  });
+  if (error) return { ok: false, error: claveDeError(error.message) };
+  return { ok: true, filas: (data ?? []) as unknown as PrevisualizacionFila[] };
+}
+
+export async function importarCompra(
+  entrada: unknown,
+): Promise<
+  ({ ok: true } & ResultadoImportacion) | { ok: false; error: string }
+> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const parsed = esquemaImportacion.safeParse(entrada);
+  if (!parsed.success) return { ok: false, error: "importacion_error" };
+  const { fecha, archivo, publicar, hash, filas } = parsed.data;
+  const db = await clienteServidor();
+  const { data, error } = await db.rpc("importar_compra", {
+    p_fecha: fecha,
+    p_archivo: archivo ?? "factura.csv",
+    p_publicar: publicar,
+    p_filas: filas as FilaCompra[],
+    p_hash: hash,
+  });
+  if (error) return { ok: false, error: claveDeError(error.message) };
+  const r = data as {
+    importacion_id: string;
+    gastos: number;
+    precios: number;
+    tiendas_creadas: number;
+    productos_creados: number;
+    avisos: { linea: number; aviso: string }[];
+  };
+  return {
+    ok: true,
+    importacionId: r.importacion_id,
+    gastos: r.gastos,
+    precios: r.precios,
+    tiendasCreadas: r.tiendas_creadas,
+    productosCreados: r.productos_creados,
+    avisos: r.avisos ?? [],
+  };
+}
+
+export type LoteImportado = {
+  id: string;
+  fecha_lote: string;
+  archivo: string | null;
+  filas: number;
+  total: number;
+  creado: string;
+  deshecho: string | null;
+};
+
+export async function listarImportaciones(): Promise<
+  { ok: true; lotes: LoteImportado[] } | { ok: false; error: string }
+> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const db = await clienteServidor();
+  const { data, error } = await db
+    .from("importaciones_gastos")
+    .select("id, fecha_lote, archivo, filas, total, creado, deshecho")
+    .order("creado", { ascending: false })
+    .limit(50);
+  if (error) return { ok: false, error: "importacion_error" };
+  return { ok: true, lotes: (data ?? []) as LoteImportado[] };
+}
+
+export async function deshacerImportacion(
+  id: unknown,
+): Promise<({ ok: true } & ResultadoDeshacer) | { ok: false; error: string }> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const parsed = z.string().uuid().safeParse(id);
+  if (!parsed.success) return { ok: false, error: "importacion_error" };
+  const db = await clienteServidor();
+  const { data, error } = await db.rpc("deshacer_importacion", {
+    p_id: parsed.data,
+  });
+  if (error) return { ok: false, error: claveDeError(error.message) };
+  const r = data as { restaurados: number; conservados: number };
+  return { ok: true, restaurados: r.restaurados, conservados: r.conservados };
+}
+
+const esquemaEdicion = z.object({
+  id: z.string().uuid(),
+  fecha: fechaIso,
+  rubro: z.string().min(1).max(60),
+  monto: z.number().int().min(0).max(50_000_000),
+  tienda_id: z.string().nullable().optional(),
+  nota: z.string().max(200).nullable().optional(),
+});
+
+/** Corrige fecha, rubro, monto, tienda y nota de un gasto propio; el mes se recalcula con la fecha. */
+export async function editarGasto(gasto: unknown): Promise<Resultado> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const parsed = esquemaEdicion.safeParse(gasto);
+  if (!parsed.success) return { ok: false, error: "Datos inválidos" };
+  const { id, ...campos } = parsed.data;
+  const db = await clienteServidor();
+  const { error } = await db
+    .from("gastos_reales")
+    .update({ ...campos, mes: campos.fecha.slice(0, 7) })
+    .eq("id", id)
+    .eq("user_id", u.id);
+  return error ? { ok: false, error: error.message } : { ok: true };
 }

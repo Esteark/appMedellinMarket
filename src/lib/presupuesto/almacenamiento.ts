@@ -1,4 +1,5 @@
 import type {
+  GastoReal,
   PresupuestoCierreSnapshot,
   PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
@@ -78,4 +79,62 @@ export function agregarCierreLocal(cierre: PresupuestoCierreSnapshot) {
   guardarCierresLocal(
     [...filtrados, cierre].sort((a, b) => a.mes.localeCompare(b.mes)),
   );
+}
+
+const CLAVE_IMPORTACIONES = "mercado-medellin:importaciones";
+
+export type LoteLocal = {
+  hash: string;
+  fecha: string;
+  filas: number;
+  creado: string;
+};
+
+export function leerGastosLocal(mes: string): GastoReal[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const p = JSON.parse(
+      localStorage.getItem(`mercado-medellin:gastos:${mes}`) ?? "[]",
+    );
+    return Array.isArray(p) ? (p as GastoReal[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function guardarGastosLocal(mes: string, gastos: GastoReal[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      `mercado-medellin:gastos:${mes}`,
+      JSON.stringify(gastos),
+    );
+  } catch {
+    // ignorar
+  }
+}
+
+/** Lotes importados sin sesión: el mismo hash también bloquea repetirlos después de iniciarla. */
+export function leerImportacionesLocal(): LoteLocal[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const p = JSON.parse(localStorage.getItem(CLAVE_IMPORTACIONES) ?? "null");
+    return p?.version === 1 && Array.isArray(p.lotes)
+      ? (p.lotes as LoteLocal[])
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function guardarImportacionesLocal(lotes: LoteLocal[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      CLAVE_IMPORTACIONES,
+      JSON.stringify({ version: 1, lotes }),
+    );
+  } catch {
+    // ignorar
+  }
 }
