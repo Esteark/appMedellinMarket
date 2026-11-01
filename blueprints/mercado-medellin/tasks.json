@@ -299,9 +299,10 @@
     "files": [
       "src/lib/importar/lista.ts",
       "src/lib/importar/prompt-lista.ts",
-      "tests/unit/lista-importar.test.ts"
+      "tests/unit/lista-importar.test.ts",
+      "src/lib/importar/csv.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E35-T6",

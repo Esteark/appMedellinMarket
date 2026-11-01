@@ -19,7 +19,7 @@ const sinAcentos = (t: string) =>
     .toLowerCase()
     .trim();
 
-function dividir(linea: string, delimitador: string): string[] {
+export function dividir(linea: string, delimitador: string): string[] {
   const campos: string[] = [];
   let actual = "";
   let entreComillas = false;
