@@ -107,6 +107,15 @@ export const PASOS_PANTALLA: Record<string, Paso[]> = {
       objetivo: "cargar-lista",
     },
   ],
+  "/tiendas": [
+    {
+      id: "tiendas",
+      titulo: "Tiendas y productos de todos",
+      texto:
+        "Crea, renombra y corrige tiendas y productos; lo que cambies lo ve todo el mundo. Los duplicados se fusionan, nada se borra.",
+      objetivo: "tiendas",
+    },
+  ],
   "/hogar": [
     {
       id: "hogar-presupuesto",

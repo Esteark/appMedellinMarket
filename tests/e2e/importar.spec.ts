@@ -134,3 +134,28 @@ test("sin sesión: la importación queda en el dispositivo y no toca el catálog
   await page.goto("/anotados");
   await expect(page.getByText("Tienda de Don Pedro")).toHaveCount(0);
 });
+
+test("al iniciar sesión se suben los gastos importados sin sesión", async ({
+  page,
+}) => {
+  await abrirImportar(page);
+  await pegarYRevisar(page, csv("barrio.csv"));
+  await page.getByRole("button", { name: "Guardar importación" }).click();
+  await expect(page.getByTestId("importar-resultado")).toContainText(
+    "en este dispositivo",
+  );
+
+  await crearCuenta(page);
+  await expect(
+    page.getByRole("status").filter({ hasText: "Subimos 2 gastos" }),
+  ).toBeVisible();
+  const pendientes = await page.evaluate(() =>
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("mercado-medellin:gastos:"))
+      .flatMap(
+        (k) => JSON.parse(localStorage.getItem(k) ?? "[]") as { id: string }[],
+      )
+      .filter((g) => g.id.startsWith("local-")),
+  );
+  expect(pendientes).toHaveLength(0);
+});

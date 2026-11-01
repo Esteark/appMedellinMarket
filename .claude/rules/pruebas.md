@@ -15,3 +15,6 @@ paths:
 - Las aserciones afirman propiedades (tipo, monto, tienda, conteos derivados del export), nunca textos con formato de moneda o fecha del runtime.
 - E2E: correos únicos por corrida (`e2e-<timestamp>@ejemplo.test`); Supabase local tiene la confirmación por correo desactivada.
 - Los specs e2e no importan nada de `src/`.
+- Los e2e crean datos permanentes en la base compartida: nombres únicos por corrida (`E2E … <timestamp>`) y que no contengan palabras que otros specs buscan por texto parcial (p. ej. «Precio»).
+- Los CSV de entrada de `tests/importar/` son sintéticos y se escriben a mano (no pasan por `pnpm capturar`); llevan una línea `#` que lo dice.
+- Tras `supabase db reset`, `pnpm migrar` puede fallar mientras PostgREST recarga el esquema: reintentar, no esperar un tiempo fijo.

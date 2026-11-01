@@ -40,7 +40,11 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
   const tienda = tiendas.find((t) => t.id === tiendaId) ?? tiendas[0];
 
   return (
-    <div className="flex flex-col gap-4" data-testid="vista-tiendas">
+    <div
+      className="flex flex-col gap-4"
+      data-testid="vista-tiendas"
+      data-tour="tiendas"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"

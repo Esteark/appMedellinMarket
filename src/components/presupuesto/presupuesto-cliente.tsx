@@ -13,9 +13,11 @@ import { pesos } from "@/lib/formato";
 import {
   agregarCierreLocal,
   fusionarGastos,
+  guardarGastosLocal as guardarGastosMes,
   guardarPresupuestoDieta,
   guardarPresupuestoHogar,
   leerCierresLocal,
+  leerGastosLocal as leerGastosMes,
   leerPresupuestoDieta,
   leerPresupuestoHogar,
 } from "@/lib/presupuesto/almacenamiento";
@@ -211,7 +213,7 @@ export function PresupuestoCliente({ productos = [] }: Props) {
       id: `local-${Date.now()}`,
       user_id: "local",
       fecha: form.fecha,
-      mes,
+      mes: form.fecha.slice(0, 7),
       rubro: form.rubro,
       monto: Math.floor(monto),
       tienda_id: null,
@@ -222,7 +224,9 @@ export function PresupuestoCliente({ productos = [] }: Props) {
       created_at: new Date().toISOString(),
     };
     const nuevos = [gasto, ...gastos];
-    guardarGastosLocal(nuevos);
+    // Un gasto de otro mes se guarda en ese mes, no en el que está abierto en pantalla.
+    if (gasto.mes === mes) guardarGastosLocal(nuevos);
+    else guardarGastosMes(gasto.mes, [gasto, ...leerGastosMes(gasto.mes)]);
     setForm((f) => ({
       ...f,
       monto: "",

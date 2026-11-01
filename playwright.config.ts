@@ -38,6 +38,7 @@ export default defineConfig({
                   "/presupuesto",
                   "/anotados",
                   "/anotados/barrio",
+                  "/tiendas",
                   "/alertas",
                   "/producto/[id]",
                 ],

@@ -26,3 +26,6 @@ paths:
 - Nunca más de un gráfico Recharts montado por vista: pestañas que montan uno a la vez.
 - Notificaciones: solo con `avisar(clave)` de `src/lib/avisos.ts` (catálogo del paso 14 del blueprint); nunca un texto de toast suelto ni un toast como único lugar de la información. Nada de overlays que bloqueen la app mientras algo carga: el estado de carga va dentro del botón que lo inició.
 - Selectores estables para e2e: `data-testid`, y `data-origen` / `data-minimo` en las celdas de precio (blueprint §6).
+- `/tiendas` (pestaña propia) gestiona el catálogo compartido: crear y renombrar tiendas, editar productos, corregir precios con la hoja del paso 27 y fusionar duplicados. Nunca hay un botón «Borrar»; el chip «Por revisar» sale con un grupo real o con «Marcar revisado».
+- Los CSV (factura en `/presupuesto`, lista en `/listas`) se leen en el cliente, pasan siempre por una pantalla de revisión y el emparejamiento es exacto; nada se crea ni se publica sin confirmar.
+- Un gasto local (`local-…`) se sube a la cuenta al iniciar sesión (`SincronizarGastos`) y el mes de un gasto sale de su fecha.
