@@ -362,6 +362,42 @@ export const AVISOS = {
     emoji: "🔤",
     texto: "El nombre de la tienda o del producto no es válido.",
   },
+  tienda_renombrada: {
+    tipo: "exito",
+    emoji: "✏️",
+    texto: "Tienda renombrada a «{nombre}».",
+  },
+  tienda_nombre_repetido: {
+    tipo: "aviso",
+    emoji: "🔁",
+    texto:
+      "Ya existe una tienda con ese nombre (sin importar tildes ni mayúsculas).",
+  },
+  producto_editado: {
+    tipo: "exito",
+    emoji: "✏️",
+    texto: "Producto actualizado.",
+  },
+  producto_revisado: {
+    tipo: "exito",
+    emoji: "✅",
+    texto: "Marcaste «{nombre}» como revisado.",
+  },
+  producto_fusionado: {
+    tipo: "exito",
+    emoji: "🧩",
+    texto: "Fusionamos «{origen}» en «{destino}».",
+  },
+  fusion_sin_datos: {
+    tipo: "aviso",
+    emoji: "🧩",
+    texto: "Elige el producto de origen y el de destino para fusionar.",
+  },
+  fusion_no_permitida: {
+    tipo: "aviso",
+    emoji: "🚫",
+    texto: "No se puede fusionar un producto consigo mismo.",
+  },
   precio_fuera_de_rango: {
     tipo: "aviso",
     emoji: "💲",

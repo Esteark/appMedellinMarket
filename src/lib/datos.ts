@@ -617,8 +617,15 @@ export async function tablaAnotados(): Promise<{
   for (const r of [productos, tiendas])
     if (r.error) throw new Error(r.error.message);
   const porProducto = agrupar(efectivos, (e) => e.producto_id);
+  // Una tienda manual sin ningún precio no agrega una columna vacía a 144 filas;
+  // las automáticas se muestran siempre para que una fuente caída no borre su columna.
+  const conPrecio = new Set(
+    efectivos.filter((e) => e.precio != null).map((e) => e.tienda_id),
+  );
   return {
-    tiendas: tiendas.data ?? [],
+    tiendas: (tiendas.data ?? []).filter(
+      (t) => !t.manual || conPrecio.has(t.id),
+    ),
     filas: (productos.data ?? []).map((p) => ({
       ...p,
       celdas: Object.fromEntries(
