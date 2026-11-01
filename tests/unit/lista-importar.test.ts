@@ -106,3 +106,19 @@ describe("registrarAliasLista", () => {
     expect(clienteServidor).not.toHaveBeenCalled();
   });
 });
+
+describe("PROMPT_LISTA (ejemplo)", () => {
+  it("su ejemplo de respuesta lo lee el importador tal cual", () => {
+    const ejemplo = PROMPT_LISTA.split("Ejemplo de respuesta:\n")[1].split(
+      "\n\nListado:",
+    )[0];
+    const r = leerListaCsv(ejemplo);
+    expect(r.errores).toEqual([]);
+    expect(r.listas.map((l) => [l.nombre, l.filas.length])).toEqual([
+      ["1 semana", 5],
+      ["2 semanas", 3],
+    ]);
+    expect(r.listas[0].filas[2]).toMatchObject({ cantidad: 0.5, unidad: "lb" });
+    expect(r.listas[1].filas[1].nota).toContain("12 y 14 unidades, compra");
+  });
+});
