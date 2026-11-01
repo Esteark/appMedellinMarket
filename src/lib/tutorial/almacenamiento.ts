@@ -18,7 +18,7 @@ export function leerProgreso(): Progreso {
     const crudo = localStorage.getItem(CLAVE_TUTORIAL);
     if (!crudo) return VACIO;
     const p = JSON.parse(crudo) as Partial<Progreso> | null;
-    if (!p || p.version !== 1 || !Array.isArray(p.pantallas)) return VACIO;
+    if (p?.version !== 1 || !Array.isArray(p.pantallas)) return VACIO;
     return {
       version: 1,
       general: p.general === true,

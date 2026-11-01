@@ -37,7 +37,13 @@ const campo = "rounded-[10px] border bg-card px-2 py-1 text-sm";
 const boton = "rounded-[10px] border px-3 py-1.5 text-sm";
 
 /** Carga una lista desde el CSV que devuelve la IA; revisión obligatoria antes de tocar la lista. */
-export function CargarLista({ productos }: { productos: Producto[] }) {
+export function CargarLista({
+  productos,
+  aliasNube = {},
+}: {
+  productos: Producto[];
+  aliasNube?: Record<string, string>;
+}) {
   const [texto, setTexto] = useState("");
   const [errores, setErrores] = useState<string[]>([]);
   const [secciones, setSecciones] = useState<Seccion[] | null>(null);
@@ -58,7 +64,7 @@ export function CargarLista({ productos }: { productos: Producto[] }) {
       r.errores.map((e) => `Línea ${e.linea}: ${e.mensaje.replace(/_/g, " ")}`),
     );
     if (r.errores.length || !r.listas.length) return setSecciones(null);
-    const alias = leerAlias();
+    const alias = { ...aliasNube, ...leerAlias() };
     setSecciones(
       r.listas.map((l) => ({
         nombre: l.nombre,

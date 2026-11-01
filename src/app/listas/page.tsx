@@ -3,14 +3,18 @@ import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
 import { CargarLista } from "@/components/listas/cargar-lista";
 import { ListasGuardadas } from "@/components/listas/listas-guardadas";
-import { catalogo } from "@/lib/datos";
+import { aliasGlobales, catalogo } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Mis listas · Mercado Medellín" };
 
 async function Cargar() {
-  const { productos } = await catalogo();
+  const [{ productos }, alias] = await Promise.all([
+    catalogo(),
+    aliasGlobales(),
+  ]);
   return (
     <CargarLista
+      aliasNube={alias}
       productos={productos.map((p) => ({
         id: p.id,
         nombre: p.nombre,

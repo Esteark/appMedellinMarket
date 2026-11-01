@@ -265,6 +265,7 @@ export const AVISOS = {
   gasto_agregado: {
     tipo: "exito",
     emoji: "🧾",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: "$" es el peso y {monto} el marcador
     texto: "Gasto agregado: ${monto} en {rubro}.",
   },
   gasto_eliminado: {

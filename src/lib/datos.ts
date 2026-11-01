@@ -633,6 +633,23 @@ export async function productosGestion(): Promise<ProductoGestion[]> {
   }));
 }
 
+/** Alias globales de producto (nombre normalizado → id) que dejaron las cargas anteriores, de cualquier persona. */
+export async function aliasGlobales(): Promise<Record<string, string>> {
+  await connection();
+  const db = await clienteServidor();
+  const filas = await todas(
+    (d, h) =>
+      db
+        .from("producto_alias")
+        .select("alias_norm, producto_id")
+        .is("tienda_id", null)
+        .order("id")
+        .range(d, h),
+    "producto_alias",
+  );
+  return Object.fromEntries(filas.map((f) => [f.alias_norm, f.producto_id]));
+}
+
 export type FilaAnotados = {
   id: string;
   nombre: string;

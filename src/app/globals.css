@@ -398,10 +398,13 @@
     display: none;
   }
   .react-hot-toast > div {
+    /* biome-ignore lint/complexity/noImportantStyles: gana a los estilos en línea de react-hot-toast (movimiento reducido) */
     animation: none !important;
   }
   .react-hot-toast > div[data-visible="false"] {
+    /* biome-ignore lint/complexity/noImportantStyles: idem */
     animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: idem */
     opacity: 0 !important;
   }
 }

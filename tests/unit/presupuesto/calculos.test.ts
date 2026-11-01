@@ -12,9 +12,9 @@ describe("presupuesto/calculos", () => {
   it("acumula por rubro solo del mes", () => {
     const mapa = acumuladoPorRubro(
       [
-        { id: "1", mes: "2026-10", rubro: "Carnes", monto: 100000 } as any,
-        { id: "2", mes: "2026-09", rubro: "Carnes", monto: 50000 } as any,
-        { id: "3", mes: "2026-10", rubro: "Granos", monto: 20000 } as any,
+        { id: "1", mes: "2026-10", rubro: "Carnes", monto: 100000 } as never,
+        { id: "2", mes: "2026-09", rubro: "Carnes", monto: 50000 } as never,
+        { id: "3", mes: "2026-10", rubro: "Granos", monto: 20000 } as never,
       ],
       "2026-10",
     );
@@ -46,8 +46,8 @@ describe("presupuesto/calculos", () => {
         { rubro: "Granos", monto: 100000, orden: 1 },
       ],
       [
-        { mes: "2026-10", rubro: "Carnes", monto: 80000 } as any,
-        { mes: "2026-10", rubro: "Granos", monto: 40000 } as any,
+        { mes: "2026-10", rubro: "Carnes", monto: 80000 } as never,
+        { mes: "2026-10", rubro: "Granos", monto: 40000 } as never,
       ],
       "2026-10-10",
       "2026-10",
