@@ -466,7 +466,7 @@
     "files": [
       "tests/e2e/listas-editar.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E36-T5",
