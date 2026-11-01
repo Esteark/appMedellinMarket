@@ -74,3 +74,27 @@ export function guardarLocales(listas: ListaGuardada[]) {
     // sin almacenamiento: la lista vive solo en esta sesión
   }
 }
+
+/** Sube o baja la cantidad de un producto de la lista sin salirse de 1–999. */
+export function ajustarItem(items: Items, id: string, delta: number): Items {
+  if (!(id in items)) return items;
+  return { ...items, [id]: Math.min(999, Math.max(1, items[id] + delta)) };
+}
+
+export function quitarItem(items: Items, id: string): Items {
+  return Object.fromEntries(Object.entries(items).filter(([k]) => k !== id));
+}
+
+/** Agrega un producto con cantidad 1; `null` si la lista ya tiene `MAX_ITEMS`. Si ya estaba, no cambia nada. */
+export function agregarItem(items: Items, id: string): Items | null {
+  if (id in items) return items;
+  return Object.keys(items).length >= MAX_ITEMS ? null : { ...items, [id]: 1 };
+}
+
+/** Misma lista con otros productos; el nombre no cambia y `actualizada` decide quién gana al sincronizar. */
+export function actualizarLista(
+  lista: ListaGuardada,
+  items: Items,
+): ListaGuardada {
+  return { ...lista, items, actualizada: new Date().toISOString() };
+}

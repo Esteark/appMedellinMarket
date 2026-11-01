@@ -409,7 +409,7 @@
       "src/lib/listas/guardadas.ts",
       "tests/unit/listas-editar.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E36-T3",
