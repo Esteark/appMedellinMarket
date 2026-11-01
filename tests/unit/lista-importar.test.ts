@@ -122,3 +122,68 @@ describe("PROMPT_LISTA (ejemplo)", () => {
     expect(r.listas[1].filas[1].nota).toContain("12 y 14 unidades, compra");
   });
 });
+
+describe("sección «Casos» del prompt", () => {
+  const md = readFileSync(
+    "blueprints/mercado-medellin/prompts/importar-lista.md",
+    "utf-8",
+  ).replace(/\r\n/g, "\n");
+  const casos = [
+    ...md.split("## Casos")[1].matchAll(/```csv\n([\s\S]*?)\n```/g),
+  ].map((m) => leerListaCsv(m[1]));
+  const plano = (i: number) =>
+    casos[i].listas.flatMap((l) =>
+      l.filas.map((f) => [f.producto, f.cantidad, f.unidad]),
+    );
+
+  it("cada respuesta de ejemplo se lee sin errores", () => {
+    expect(casos).toHaveLength(6);
+    for (const c of casos) expect(c.errores).toEqual([]);
+  });
+
+  it("secciones por período: dos listas", () => {
+    expect(casos[0].listas.map((l) => [l.nombre, l.filas.length])).toEqual([
+      ["semana 1", 2],
+      ["semana 2", 1],
+    ]);
+  });
+
+  it("lista plana sin cantidades: una fila por producto con 1 u", () => {
+    expect(plano(1)).toEqual([
+      ["Leche", 1, "u"],
+      ["Huevos", 1, "u"],
+      ["Pan", 1, "u"],
+      ["Arroz", 1, "u"],
+    ]);
+  });
+
+  it("cantidad coloquial, viñetas y marca: se leen como pide el prompt", () => {
+    expect(plano(2)).toEqual([
+      ["Papa", 2, "kg"],
+      ["Leche", 2, "u"],
+      ["Ajo", 0.5, "lb"],
+      ["Huevos", 30, "u"],
+      ["Queso", 0.25, "lb"],
+    ]);
+    expect(plano(3)).toEqual([
+      ["Arroz", 2, "kg"],
+      ["Aceite", 1, "l"],
+      ["Sal", 1, "u"],
+    ]);
+    expect(casos[5].listas[0].filas[0].nota).toContain("Colanta");
+  });
+
+  it("las categorías van a la nota y la lista es una sola", () => {
+    expect(casos[4].listas).toHaveLength(1);
+    expect(casos[4].listas[0].filas.map((f) => f.nota)).toEqual([
+      "Carnes",
+      "Aseo",
+    ]);
+  });
+
+  it("una fila sin cantidad ni unidad vale 1 u", () => {
+    const r = leerListaCsv("lista,producto,cantidad,unidad,nota\n,Pan,,,");
+    expect(r.errores).toEqual([]);
+    expect(r.listas[0].filas[0]).toMatchObject({ cantidad: 1, unidad: "u" });
+  });
+});

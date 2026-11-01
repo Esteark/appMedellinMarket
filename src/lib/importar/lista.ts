@@ -69,10 +69,13 @@ export function leerListaCsv(texto: string): LecturaLista {
       continue;
     }
     const [lista, producto, cant, u, nota] = campos;
-    const cantidad = /^\d+([.,]\d+)?$/.test(cant)
-      ? Number(cant.replace(",", "."))
-      : NaN;
-    const unidad = u.toLowerCase() as UnidadLista;
+    // Una IA que deja la celda en blanco no debe romper la carga: sin cantidad es 1 y sin unidad, u.
+    const cantidad = !cant
+      ? 1
+      : /^\d+([.,]\d+)?$/.test(cant)
+        ? Number(cant.replace(",", "."))
+        : NaN;
+    const unidad = (u.toLowerCase() || "u") as UnidadLista;
     if (!producto || producto.length > 120) error(linea, "producto_invalido");
     else if (!(cantidad > 0 && cantidad <= 9999))
       error(linea, "cantidad_invalida");

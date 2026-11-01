@@ -355,5 +355,198 @@
     "checkpoint": "paso-36c",
     "files": ["tests/e2e/cargar-lista.spec.ts"],
     "status": "done"
+  },
+  {
+    "id": "E36-T1",
+    "title": "Prompt de listas para varios tipos y lector tolerante",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E35-T7"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN una fila trae la cantidad vacía THE SYSTEM SHALL leerla como 1, y como `u` si la unidad también está vacía.",
+      "WHEN se lee cada ejemplo de la sección «Casos» de `prompts/importar-lista.md` THE SYSTEM SHALL producir los productos, cantidades y unidades esperados sin errores.",
+      "WHEN una lista plana sin cantidades se lee THE SYSTEM SHALL dar una fila por producto con `1 u`.",
+      "WHEN un ejemplo trae títulos de categoría THE SYSTEM SHALL producir una sola lista con la categoría en la nota.",
+      "WHEN se compara `prompts/importar-lista.md` con `PROMPT_LISTA` THE SYSTEM SHALL contener el mismo texto."
+    ],
+    "verify": [
+      "pnpm test tests/unit/lista-importar.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-39a",
+    "files": [
+      "prompts/importar-lista.md",
+      "src/lib/importar/prompt-lista.ts",
+      "src/lib/importar/lista.ts",
+      "tests/unit/lista-importar.test.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E36-T2",
+    "title": "Funciones puras para editar una lista guardada",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T1"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `ajustarItem` baja una cantidad de 1 THE SYSTEM SHALL dejarla en 1, y en 999 si se sube de 999.",
+      "WHEN `quitarItem` recibe un id THE SYSTEM SHALL borrar solo ese producto.",
+      "WHEN `agregarItem` recibe un producto con 200 ya en la lista THE SYSTEM SHALL rechazarlo.",
+      "WHEN `actualizarLista` recibe nuevos items THE SYSTEM SHALL cambiar `actualizada` y no el nombre."
+    ],
+    "verify": [
+      "pnpm test tests/unit/listas-editar.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-37a",
+    "files": [
+      "src/lib/listas/guardadas.ts",
+      "tests/unit/listas-editar.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E36-T3",
+    "title": "Ver y editar los productos dentro de la tarjeta de lista",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T2"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0.",
+      "WHEN se cuentan las líneas de `contenido-lista.tsx` y `tarjeta-lista.tsx` THE SYSTEM SHALL dar 250 o menos cada una.",
+      "WHEN se revisa `src/lib/tutorial/pasos.ts` THE SYSTEM SHALL incluir el paso `contenido-lista`.",
+      "WHEN `lista_actualizada` se busca en `src/lib/avisos.ts` THE SYSTEM SHALL existir."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "for f in src/components/listas/contenido-lista.tsx src/components/listas/tarjeta-lista.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done",
+      "grep -q \"contenido-lista\" src/lib/tutorial/pasos.ts",
+      "grep -q \"lista_actualizada\" src/lib/avisos.ts"
+    ],
+    "checkpoint": "paso-37b",
+    "files": [
+      "src/components/listas/contenido-lista.tsx",
+      "src/components/listas/tarjeta-lista.tsx",
+      "src/components/listas/listas-guardadas.tsx",
+      "src/app/listas/page.tsx",
+      "src/lib/avisos.ts",
+      "src/lib/tutorial/pasos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E36-T4",
+    "title": "Probar de punta a punta la edición desde /listas",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T3"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se pulsa «Ver productos» THE SYSTEM SHALL listar los productos de la lista guardada.",
+      "WHEN se sube una cantidad, se quita un producto, se agrega otro y se pulsa «Guardar cambios» THE SYSTEM SHALL conservar el cambio tras recargar.",
+      "WHEN se pulsa «Descartar» THE SYSTEM SHALL dejar la lista como estaba.",
+      "WHEN hay sesión THE SYSTEM SHALL mostrar el cambio desde otro navegador con la misma cuenta."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/listas-editar.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-37c",
+    "files": [
+      "tests/e2e/listas-editar.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E36-T5",
+    "title": "Recordar de qué lista guardada salió la lista activa",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T3"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se carga una lista guardada THE SYSTEM SHALL guardar su nombre como origen de la lista activa.",
+      "WHEN la lista se vacía, se carga otra o se guarda como nueva THE SYSTEM SHALL borrar el origen.",
+      "WHEN `cambiado` compara la lista activa con la guardada THE SYSTEM SHALL ignorar el orden de los productos.",
+      "WHEN el almacenamiento está corrupto o no existe THE SYSTEM SHALL devolver «sin origen» sin lanzar."
+    ],
+    "verify": [
+      "pnpm test tests/unit/listas-origen.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-38a",
+    "files": [
+      "src/lib/listas/origen.ts",
+      "src/components/carrito/use-lista.ts",
+      "tests/unit/listas-origen.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E36-T6",
+    "title": "Guardar cambios en la lista de origen desde la lista principal",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T5"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0.",
+      "WHEN se cuentan las líneas de `boton-guardar.tsx` y `lista-vista.tsx` THE SYSTEM SHALL dar 250 o menos cada una.",
+      "WHEN se revisa el código de `boton-guardar.tsx` THE SYSTEM SHALL ofrecer «Guardar cambios en» solo si el origen existe entre las listas guardadas."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "for f in src/components/listas/boton-guardar.tsx src/components/carrito/lista-vista.tsx; do test \"$(wc -l < \"$f\")\" -le 250 || exit 1; done",
+      "grep -q \"Guardar cambios en\" src/components/listas/boton-guardar.tsx"
+    ],
+    "checkpoint": "paso-38b",
+    "files": [
+      "src/components/listas/boton-guardar.tsx",
+      "src/components/carrito/lista-vista.tsx",
+      "src/components/listas/listas-guardadas.tsx",
+      "src/components/listas/cargar-lista.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E36-T7",
+    "title": "Probar de punta a punta guardar cambios desde la lista principal",
+    "epic": "36-listas-editables",
+    "dependencies": [
+      "E36-T6",
+      "E36-T4"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se carga «Quincena» y se cambia una cantidad en el catálogo THE SYSTEM SHALL mostrar «cambios sin guardar».",
+      "WHEN se pulsa «Guardar cambios en «Quincena»» THE SYSTEM SHALL mostrar la cantidad nueva en `/listas`.",
+      "WHEN la lista se vacía THE SYSTEM SHALL quitar el chip de origen.",
+      "WHEN la lista de origen se elimina THE SYSTEM SHALL dejar solo «Guardar como nueva»."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/listas-editar.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-38c",
+    "files": [
+      "tests/e2e/listas-editar.spec.ts"
+    ],
+    "status": "pending"
   }
 ]
