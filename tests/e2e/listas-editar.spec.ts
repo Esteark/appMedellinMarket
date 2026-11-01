@@ -123,3 +123,64 @@ test("con sesión: el cambio se ve desde otro navegador con la misma cuenta", as
   ).toHaveText("3");
   await otro.close();
 });
+
+test("guardar cambios desde la lista principal sobre la lista de origen", async ({
+  page,
+}) => {
+  await crearLista(page, "Quincena");
+  const origen = page.getByTestId("lista-origen");
+  const guardarCambios = page.getByTestId("guardar-cambios");
+
+  // «Guardar como nueva» deja la recién guardada como origen, sin cambios pendientes.
+  await expect(origen).toContainText("Viene de «Quincena»");
+  await expect(origen).not.toContainText("cambios sin guardar");
+  await expect(guardarCambios).toBeDisabled();
+
+  // Cargar «Quincena» desde /listas y cambiar una cantidad en el catálogo.
+  await page.goto("/listas");
+  await esperarContenido(page);
+  await page
+    .getByTestId("lista-guardada-Quincena")
+    .getByRole("button", { name: "Cargar" })
+    .click();
+  await page.goto("/");
+  await expect(origen).toContainText("Viene de «Quincena»");
+  await page
+    .getByTestId("tarjeta-aceite")
+    .getByRole("button", { name: /^Agregar/ })
+    .click();
+  await expect(origen).toContainText("cambios sin guardar");
+  await expect(guardarCambios).toBeEnabled();
+
+  // Guardar sobre la misma lista: el cambio se ve en /listas.
+  await guardarCambios.click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "«Quincena» actualizada" }),
+  ).toBeVisible();
+  await expect(origen).not.toContainText("cambios sin guardar");
+  const tarjeta = await abrir(page, "Quincena");
+  await expect(
+    cantidad(tarjeta.getByTestId("contenido-lista"), "Aceite de girasol"),
+  ).toHaveText("3");
+
+  // Vaciar la lista quita el origen.
+  await page.goto("/");
+  await page.getByRole("button", { name: "Vaciar lista" }).click();
+  await expect(origen).toHaveCount(0);
+
+  // Si la lista de origen se elimina, solo queda «Guardar como nueva» (que vuelve a llamarse «Guardar lista»).
+  await page.goto("/listas");
+  await esperarContenido(page);
+  await page
+    .getByTestId("lista-guardada-Quincena")
+    .getByRole("button", { name: "Cargar" })
+    .click();
+  await page
+    .getByTestId("lista-guardada-Quincena")
+    .getByRole("button", { name: "Eliminar" })
+    .click();
+  await page.goto("/");
+  await expect(origen).toHaveCount(0);
+  await expect(guardarCambios).toHaveCount(0);
+  await expect(page.getByTestId("guardar-lista")).toHaveText("Guardar lista");
+});
