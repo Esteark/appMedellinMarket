@@ -394,6 +394,12 @@ export const AVISOS = {
     emoji: "☁️",
     texto: "Subimos {n} gastos de este dispositivo a tu cuenta.",
   },
+  gasto_edicion_invalida: {
+    tipo: "error",
+    emoji: "❌",
+    texto:
+      "No se pudo guardar el gasto: revisa la fecha, el rubro, el monto, el producto y la cantidad.",
+  },
   gasto_editado: { tipo: "exito", emoji: "✏️", texto: "Gasto actualizado." },
   archivo_no_csv: {
     tipo: "aviso",

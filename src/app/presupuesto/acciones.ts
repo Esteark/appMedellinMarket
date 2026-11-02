@@ -458,20 +458,33 @@ const esquemaEdicion = z.object({
   monto: z.number().int().min(0).max(50_000_000),
   tienda_id: z.string().nullable().optional(),
   nota: z.string().max(200).nullable().optional(),
+  producto_id: z.string().min(1).max(80).nullable().optional(),
+  // `gastos_reales.cantidad` exige > 0; null la borra, ausente la deja como está.
+  cantidad: z.number().gt(0).max(100_000).nullable().optional(),
+  descripcion: z.string().max(200).nullable().optional(),
 });
 
-/** Corrige fecha, rubro, monto, tienda y nota de un gasto propio; el mes se recalcula con la fecha. */
+/**
+ * Corrige un gasto propio: fecha, rubro, monto, tienda, nota, producto, cantidad y descripción.
+ * El mes se recalcula con la fecha. Un campo ausente no se toca; `null` lo borra. Editar un gasto de
+ * una factura no lo saca de su lote.
+ */
 export async function editarGasto(gasto: unknown): Promise<Resultado> {
   const u = await usuario();
   if (!u) return { ok: false, error: "sin_sesion" };
   const parsed = esquemaEdicion.safeParse(gasto);
-  if (!parsed.success) return { ok: false, error: "Datos inválidos" };
+  if (!parsed.success) return { ok: false, error: "gasto_edicion_invalida" };
   const { id, ...campos } = parsed.data;
   const db = await clienteServidor();
-  const { error } = await db
+  const { data, error } = await db
     .from("gastos_reales")
     .update({ ...campos, mes: campos.fecha.slice(0, 7) })
     .eq("id", id)
-    .eq("user_id", u.id);
-  return error ? { ok: false, error: error.message } : { ok: true };
+    .eq("user_id", u.id)
+    .select("id");
+  // Un producto que no existe, una cantidad fuera de rango, etc. rebotan en la base.
+  if (error) return { ok: false, error: "gasto_edicion_invalida" };
+  // Sin filas: el gasto no existe o es de otra persona.
+  if (!data?.length) return { ok: false, error: "ajeno" };
+  return { ok: true };
 }

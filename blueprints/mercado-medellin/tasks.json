@@ -1205,7 +1205,7 @@
       "src/lib/avisos.ts",
       "tests/integracion/editar-gasto.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E46-T4",
