@@ -227,6 +227,67 @@ test.describe("tabla de gastos editable", () => {
     ).toContainText("5.000");
   });
 
+  test("el producto se busca dentro de la lista desplegable y se elige con ratón o teclado", async ({
+    page,
+  }) => {
+    const nota = `gasto ${Date.now()}`;
+    const fila = await agregarGastoManual(page, "6000", nota);
+    await fila.getByRole("button", { name: /^Editar / }).click();
+    const t = tabla(page);
+    const producto = t.getByRole("combobox", { name: "Producto" });
+    // Solo las opciones de esta lista (la página tiene otros desplegables con sus propias <option>).
+    const lista = page.getByRole("listbox", { name: "Productos" });
+    const opciones = lista.getByRole("option");
+
+    // Al enfocarlo se abre con todos; al escribir se filtra (sin tildes ni mayúsculas).
+    await producto.click();
+    await expect(opciones.first()).toHaveText("Manual (sin producto)");
+    const todos = await opciones.count();
+    expect(todos).toBeGreaterThan(50);
+    await producto.fill("LECHE");
+    const leche = opciones.filter({ hasText: /leche/i });
+    await expect(leche.first()).toBeVisible();
+    expect(await opciones.count()).toBeLessThan(todos);
+    await expect(opciones.filter({ hasText: /Aceite/ })).toHaveCount(0);
+
+    // Un texto sin coincidencias lo dice y deja la opción manual.
+    await producto.fill("zzzz");
+    await expect(page.getByText("Ningún producto coincide")).toBeVisible();
+
+    // ↓ y Enter eligen sin enviar el formulario de la fila.
+    await producto.fill("arroz");
+    await producto.press("ArrowDown");
+    await producto.press("Enter");
+    await expect(producto).toHaveValue(/Arroz/);
+    await expect(t.getByRole("button", { name: "Guardar" })).toBeVisible();
+
+    // El primer Esc cierra la lista; el segundo cancela la edición de la fila.
+    await producto.click();
+    await expect(lista).toBeVisible();
+    await producto.press("Escape");
+    await expect(lista).toHaveCount(0);
+    await expect(t.getByRole("button", { name: "Guardar" })).toBeVisible();
+    await producto.press("Escape");
+    await expect(t.getByRole("button", { name: "Guardar" })).toHaveCount(0);
+    // Lo elegido no se guardó porque se canceló.
+    await expect(t.getByRole("row").filter({ hasText: nota })).toContainText(
+      "Manual",
+    );
+
+    // Elegir con el ratón y guardar.
+    await t
+      .getByRole("row")
+      .filter({ hasText: nota })
+      .getByRole("button", { name: /^Editar / })
+      .click();
+    await producto.fill("arroz");
+    await opciones.filter({ hasText: /Arroz/ }).first().click();
+    await t.getByRole("button", { name: "Guardar" }).click();
+    await expect(t.getByRole("row").filter({ hasText: nota })).toContainText(
+      "Arroz",
+    );
+  });
+
   test("monto vacío o cantidad sobre el tope no se guardan y lo dicen", async ({
     page,
   }) => {
@@ -335,7 +396,12 @@ test("con sesión: tras importar una factura se edita el producto y la cantidad 
   await expect(fila).toHaveCount(1);
   await fila.getByRole("button", { name: /^Editar / }).click();
 
-  await tabla(page).getByLabel("Producto").selectOption("arroz");
+  await tabla(page).getByLabel("Producto").fill("arroz");
+  await page
+    .getByRole("listbox", { name: "Productos" })
+    .getByRole("option", { name: /Arroz/ })
+    .first()
+    .click();
   await tabla(page).getByLabel("Cantidad").fill("4");
   await tabla(page).getByRole("button", { name: "Guardar" }).click();
   const editada = tabla(page).getByRole("row").filter({ hasText: "×4" });

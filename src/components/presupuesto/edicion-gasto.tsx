@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { CampoMoneda } from "@/components/campo-moneda";
+import { SelectorProducto } from "@/components/selector-producto";
 import { textoAviso } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import type { GastoReal } from "@/lib/presupuesto/tipos";
@@ -38,7 +39,6 @@ const CAMPO =
 /** El gasto abierto para editar: todos sus campos en una fila que ocupa todo el ancho. */
 export function EdicionGasto(props: Props) {
   const { gasto: g, productos, tiendas, rubros } = props;
-  const producto = productos.find((p) => p.id === g.producto_id);
   const [campos, setCampos] = useState({
     fecha: g.fecha,
     productoId: g.producto_id ?? "",
@@ -118,22 +118,12 @@ export function EdicionGasto(props: Props) {
             </div>
             <div>
               <label htmlFor={id("producto")}>Producto</label>
-              <select
+              <SelectorProducto
                 id={id("producto")}
-                value={campos.productoId}
-                onChange={(e) => poner({ productoId: e.target.value })}
-                className={CAMPO}
-              >
-                <option value="">Manual (sin producto)</option>
-                {g.producto_id && !producto && (
-                  <option value={g.producto_id}>{g.producto_id}</option>
-                )}
-                {productos.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.emoji} {p.nombre}
-                  </option>
-                ))}
-              </select>
+                valor={campos.productoId}
+                productos={productos}
+                onChange={(v) => poner({ productoId: v })}
+              />
             </div>
             <div>
               <label htmlFor={id("rubro")}>Rubro</label>
