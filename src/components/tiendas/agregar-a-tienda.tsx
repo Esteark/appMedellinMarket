@@ -68,6 +68,18 @@ export function AgregarATienda({
     }
   };
 
+  if (!tienda)
+    return (
+      <Hoja titulo={titulo} alCerrar={alCerrar}>
+        <h2 id={titulo} className="pr-20 text-lg font-bold">
+          Agregar a una tienda
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Todavía no hay tiendas. Crea una desde «Tiendas».
+        </p>
+      </Hoja>
+    );
+
   return (
     <Hoja titulo={titulo} alCerrar={alCerrar}>
       <div className="flex flex-col gap-3" data-testid="agregar-a-tienda">

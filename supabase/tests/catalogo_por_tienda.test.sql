@@ -70,7 +70,7 @@ select results_eq($$select activo from catalogo_tienda where producto_id = 'q3' 
 insert into anotados (producto_id, tienda_id, precio, fecha, autor)
   values ('q3', 'tx', 2000, (now() at time zone 'America/Bogota')::date, '00000000-0000-0000-0000-00000000000a');
 update catalogo_tienda set activo = false where producto_id = 'q3' and tienda_id = 'tx';
-update anotados set fecha = fecha where producto_id = 'q3' and tienda_id = 'tx';
+update anotados set precio = precio where producto_id = 'q3' and tienda_id = 'tx';
 select results_eq($$select activo from catalogo_tienda where producto_id = 'q3' and tienda_id = 'tx'$$,
   array[false], 'tocar un anotado sin cambiar su precio no reactiva el producto');
 update anotados set precio = 2100 where producto_id = 'q3' and tienda_id = 'tx';

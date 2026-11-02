@@ -5,8 +5,9 @@ create function precio_en_catalogo() returns trigger
 language plpgsql security invoker set search_path = public as $$
 begin
   if new.precio is not null then
-    insert into catalogo_tienda (producto_id, tienda_id)
-      values (new.producto_id, new.tienda_id)
+    insert into catalogo_tienda (producto_id, tienda_id, orden)
+      values (new.producto_id, new.tienda_id,
+        coalesce((select max(orden) from catalogo_tienda where tienda_id = new.tienda_id), 0) + 1)
       on conflict (producto_id, tienda_id) do nothing;
   end if;
   return new;
@@ -22,8 +23,10 @@ begin
   if tg_op = 'UPDATE' and old.precio is not distinct from new.precio then
     return new;
   end if;
-  insert into catalogo_tienda (producto_id, tienda_id, activo, autor)
-    values (new.producto_id, new.tienda_id, true, auth.uid())
+  insert into catalogo_tienda (producto_id, tienda_id, activo, orden, autor)
+    values (new.producto_id, new.tienda_id, true,
+      coalesce((select max(orden) from catalogo_tienda where tienda_id = new.tienda_id), 0) + 1,
+      auth.uid())
     on conflict (producto_id, tienda_id) do update
       set activo = true, autor = coalesce(auth.uid(), catalogo_tienda.autor)
       where not catalogo_tienda.activo;

@@ -115,9 +115,9 @@ export async function crearProducto(
   });
   if (error || !data)
     return { ok: false, error: traducir(error?.message ?? "") };
-  // `crear_producto` devuelve el existente si el nombre ya estaba. Solo se completa un producto que
-  // esta misma persona acaba de crear (origen «compra»): el de otra persona o el sembrado no se pisa, y
-  // si el paso siguiente falla, reintentar sigue completándolo.
+  // `crear_producto` devuelve el existente si el nombre ya estaba. Solo se completa un producto de esta
+  // persona que aún no se revisó (origen «compra»): el de otra persona o el sembrado no se pisa. Se marca
+  // «manual» al final, después de agregarlo a las tiendas: si algo falla antes, reintentar lo completa.
   const u = await usuario();
   const { data: fila } = await db
     .from("productos")
@@ -125,8 +125,12 @@ export async function crearProducto(
     .eq("id", data)
     .maybeSingle();
   const nuevo = !!u && fila?.creado_por === u.id && fila.origen === "compra";
-  if (nuevo)
-    await db
+  if (p.data.tiendas.length) {
+    const r = await agregar(data, p.data.tiendas);
+    if (!r.ok) return r;
+  }
+  if (nuevo) {
+    const { error: falla } = await db
       .from("productos")
       .update({
         unidad: p.data.unidad,
@@ -137,9 +141,7 @@ export async function crearProducto(
       })
       .eq("id", data)
       .eq("origen", "compra");
-  if (p.data.tiendas.length) {
-    const r = await agregar(data, p.data.tiendas);
-    if (!r.ok) return r;
+    if (falla) return { ok: false, error: traducir(falla.message) };
   }
   return { ok: true, id: data, existente: !nuevo };
 }

@@ -6,7 +6,8 @@ select plan(16);
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@prueba.co'),
   ('00000000-0000-0000-0000-00000000000b', 'b@prueba.co');
-insert into tiendas (id, nombre, color) values ('t1', 'Tienda 1', '#000000'), ('t2', 'Tienda 2', '#111111');
+insert into tiendas (id, nombre, color) values ('t1', 'Tienda 1', '#000000'), ('t2', 'Tienda 2', '#111111'),
+  ('t3', 'Tienda 3', '#222222');
 insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia) values
   ('p1', 'Origen', 'Frutas', 'kg', 'g', 1000, 'diaria'),
   ('p2', 'Destino', 'Frutas', 'kg', 'g', 1000, 'diaria'),
@@ -23,8 +24,8 @@ insert into precios_manuales_historial (producto_id, tienda_id, precio, fecha, a
 insert into anotados (producto_id, tienda_id, precio, fecha, autor)
   values ('p1', 't2', 4500, '2026-10-30', '00000000-0000-0000-0000-00000000000a');
 insert into producto_fuente (producto_id, tienda_id, url) values ('p1', 't2', 'https://ejemplo.test/p1');
--- el disparador de precios_actuales ya la creó; se deja explícita por claridad.
-insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't1') on conflict do nothing;
+-- t3 no tiene precio: esta fila solo existe porque se sembró a propósito (t1 y t2 las crean los disparadores).
+insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't3');
 insert into clima_causas (producto_id, fecha, texto, es_clima) values ('p1', '2026-10-30', 'lluvias', true);
 insert into producto_alias (alias_norm, tienda_id, producto_id) values
   ('alias unico', null, 'p1'), ('alias de tienda', 't1', 'p1'), ('alias propio', null, 'p2');
@@ -73,8 +74,8 @@ select results_eq(
     (select count(*) from clima_causas where producto_id = 'p2')::int,
     (select count(*) from gastos_reales where producto_id = 'p2')::int,
     (select count(*) from alertas where producto_id = 'p2')::int$$,
-  -- el catálogo trae 2: la fila explícita (t1) y la que el anotado de t2 reactiva (paso 44).
-  $$values (1, 1, 1, 2, 1, 1, 1)$$,
+  -- el catálogo trae 3: t3 (sembrada), t1 (precio del origen) y t2 (precio y anotado del origen).
+  $$values (1, 1, 1, 3, 1, 1, 1)$$,
   'historial, manuales, anotados, catálogo, clima, gastos y alertas pasan al destino');
 select results_eq(
   $$select (select count(*) from producto_alias where producto_id = 'p2')::int,
