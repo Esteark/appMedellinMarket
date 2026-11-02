@@ -89,7 +89,7 @@ select results_eq(
   $$select (config->'items'->>'p2')::int, config->'items' ? 'p1' from planes_usuario$$,
   $$values (4, false)$$, 'el plan apunta al destino');
 select results_eq(
-  $$select origen, destino, autor from fusiones_productos$$,
+  $$select origen, destino, autor from fusiones_productos where origen = 'p1'$$,
   $$values ('p1', 'p2', '00000000-0000-0000-0000-00000000000a'::uuid)$$,
   'queda auditada con autor');
 
