@@ -17,10 +17,10 @@ Fuente de detalle: `blueprint.md` paso 45. **Gate:** `pnpm typecheck && pnpm lin
 `src/lib/planes/rubros.ts` (puro) con agregar, renombrar, quitar, mover, asignar grupo, `rubroDeProducto` y los grupos de fábrica; `configPlan` gana `orden` y `grupos` opcionales y tolerantes.
 
 ### E45-T2 — La comparación usa los rubros del plan · `paso-45b`
-`ComparaPresupuesto` reparte el gasto con `rubroDeProducto(config, p)`; `gruposDeProductos()` para conocer los grupos del catálogo.
+`gastoPorRubro` (puro, en `rubros.ts`) y `ComparaPresupuesto` reparte el gasto con `rubroDeProducto(config, p)`; las filas siguen el orden de los rubros del plan.
 
 ### E45-T3 — Editor de rubros · `paso-45c`
-`presupuesto-editable.tsx` partido en `rubro-fila.tsx`, `rubro-nuevo.tsx` y `rubro-grupos.tsx`: agregar, renombrar, quitar con «Deshacer», ↑ ↓ y chips de grupos, más los avisos nuevos.
+`presupuesto-editable.tsx` partido en `rubro-fila.tsx`, `rubro-nuevo.tsx` y `rubro-grupos.tsx`: agregar, renombrar, quitar con «Deshacer», ↑ ↓ y chips de grupos, más los avisos nuevos. Aquí se agrega `gruposDeProductos()` (la lista de grupos del catálogo), porque aquí se usa.
 
 ### E45-T4 — E2E y documentación · `paso-45d`
 `tests/e2e/rubros.spec.ts` (Hogar y Dieta, con y sin sesión, axe y móvil 390 px) y `CLAUDE.md` con la nueva fuente única.

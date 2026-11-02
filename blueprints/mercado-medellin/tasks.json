@@ -1069,12 +1069,11 @@
     ],
     "checkpoint": "paso-45b",
     "files": [
+      "src/lib/planes/rubros.ts",
       "src/components/planes/compara-presupuesto.tsx",
-      "src/lib/datos.ts",
-      "src/app/hogar/page.tsx",
-      "src/app/dieta/page.tsx"
+      "tests/unit/rubros.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E45-T3",
@@ -1101,7 +1100,8 @@
       "src/components/planes/rubro-fila.tsx",
       "src/components/planes/rubro-nuevo.tsx",
       "src/components/planes/rubro-grupos.tsx",
-      "src/lib/avisos.ts"
+      "src/lib/avisos.ts",
+      "src/lib/datos.ts"
     ],
     "status": "pending"
   },

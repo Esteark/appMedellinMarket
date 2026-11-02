@@ -4,6 +4,7 @@ import { type ConfigPlan, configPlan, planSugerido } from "@/lib/planes/config";
 import {
   agregarRubro,
   asignarGrupo,
+  gastoPorRubro,
   moverRubro,
   quitarGrupo,
   quitarRubro,
@@ -237,5 +238,50 @@ describe("pureza", () => {
     asignarGrupo(base, "Carnes", "Mecato");
     quitarGrupo(base, "Verduras", "Verduras");
     expect(JSON.stringify(base)).toBe(foto);
+  });
+});
+
+describe("gastoPorRubro", () => {
+  const productos = [
+    { id: "papas", grupo: "Mecato", precios: { d1: 5000, otra: 6000 } },
+    { id: "pollo", grupo: "Proteínas", precios: { d1: 8000, otra: 7000 } },
+    { id: "trufa", grupo: "Gourmet", precios: { d1: 20000, otra: null } },
+    { id: "sin", grupo: "Frutas", precios: { d1: null, otra: null } },
+  ];
+  const lista = { papas: 2, pollo: 1, trufa: 1, sin: 3 };
+  // Óptimo dividido ya calculado: cada producto en su tienda más barata (sin precio, ninguna).
+  const tiendaDe = { papas: "d1", pollo: "otra", trufa: "d1" };
+
+  it("sin personalizar reparte como siempre", () => {
+    const g = gastoPorRubro(base, productos, lista, tiendaDe);
+    expect(g.get("Mecato")).toBe(10000);
+    expect(g.get("Carnes")).toBe(7000);
+    expect(g.get("Otros")).toBe(20000);
+    expect(g.has("Frutas")).toBe(false);
+  });
+
+  it("un rubro nuevo con el grupo Mecato recibe ese gasto y Mecato ya no", () => {
+    const c0 = ok(agregarRubro(base, "Mascotas", 50000));
+    const r = asignarGrupo(c0, "Mascotas", "Mecato");
+    if (!r.ok) throw new Error("debía poder");
+    const g = gastoPorRubro(r.config, productos, lista, tiendaDe);
+    expect(g.get("Mascotas")).toBe(10000);
+    expect(g.has("Mecato")).toBe(false);
+  });
+
+  it("lo que ningún rubro cuenta va a «Otros»", () => {
+    const c = ok(quitarRubro(base, "Carnes"));
+    const g = gastoPorRubro(c, productos, lista, tiendaDe);
+    expect(g.has("Carnes")).toBe(false);
+    expect(g.get("Otros")).toBe(27000);
+  });
+
+  it("la suma repartida es la misma sin importar los rubros", () => {
+    const suma = (m: Map<string, number>) =>
+      [...m.values()].reduce((a, b) => a + b, 0);
+    const c = ok(quitarRubro(base, "Carnes"));
+    expect(suma(gastoPorRubro(c, productos, lista, tiendaDe))).toBe(
+      suma(gastoPorRubro(base, productos, lista, tiendaDe)),
+    );
   });
 });

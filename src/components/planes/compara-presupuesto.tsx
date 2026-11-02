@@ -1,10 +1,10 @@
 "use client";
 
 import { useLista } from "@/components/carrito/use-lista";
-import { rubroDe } from "@/data/planes";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { comprasDelMes } from "@/lib/planes/compras";
+import { gastoPorRubro, rubrosOrdenados } from "@/lib/planes/rubros";
 import { optimoDividido } from "@/lib/precios/lista";
 import { usePlan } from "./plan-provider";
 import { ValorAnimado } from "./valor-animado";
@@ -40,19 +40,11 @@ export function ComparaPresupuesto({
 
   const precios = Object.fromEntries(productos.map((p) => [p.id, p.precios]));
   const optimo = optimoDividido(lista, precios, tiendas);
-  const porRubro = new Map<string, number>();
-  for (const p of productos) {
-    const tienda = optimo.tiendaDe[p.id];
-    const precio = tienda ? p.precios[tienda] : null;
-    if (precio != null)
-      porRubro.set(
-        rubroDe(p),
-        (porRubro.get(rubroDe(p)) ?? 0) + precio * (lista[p.id] ?? 0),
-      );
-  }
+  // El gasto se reparte por los rubros del plan: los grupos que la persona asignó a cada uno.
+  const porRubro = gastoPorRubro(config, productos, lista, optimo.tiendaDe);
 
   const nombres = [
-    ...Object.keys(config.rubros),
+    ...rubrosOrdenados(config),
     ...[...porRubro.keys()].filter((n) => !(n in config.rubros)),
   ];
   const filas: Fila[] = nombres

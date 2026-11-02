@@ -1,4 +1,5 @@
 import { normalizarNombre } from "@/lib/importar/emparejar";
+import type { Lista } from "@/lib/precios/lista";
 import { RUBROS_SUGERIDOS } from "@/lib/presupuesto/defaults";
 import type { ConfigPlan } from "./config";
 
@@ -223,4 +224,27 @@ export function rubroDeProducto(
   for (const r of rubrosOrdenados(config))
     if (r !== OTROS && gruposDe(config, r).includes(g)) return r;
   return OTROS;
+}
+
+/** Lo gastado por rubro: cada producto de la lista, a su precio en la tienda del óptimo dividido, en el rubro que le toca. */
+export function gastoPorRubro(
+  config: ConfigPlan,
+  productos: {
+    id: string;
+    grupo: string;
+    precios: Record<string, number | null>;
+  }[],
+  lista: Lista,
+  tiendaDe: Record<string, string>,
+): Map<string, number> {
+  const gasto = new Map<string, number>();
+  for (const p of productos) {
+    const cantidad = lista[p.id] ?? 0;
+    const tienda = tiendaDe[p.id];
+    const precio = tienda ? p.precios[tienda] : null;
+    if (!cantidad || precio == null) continue;
+    const rubro = rubroDeProducto(config, p);
+    gasto.set(rubro, (gasto.get(rubro) ?? 0) + precio * cantidad);
+  }
+  return gasto;
 }
