@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { AgregarProducto } from "@/components/tiendas/agregar-producto";
 import type { FilaAnotados, TiendaCatalogo } from "@/lib/datos";
 import { Celda } from "./celda";
+import { EdicionProductoAnotados } from "./edicion-producto";
+import { EncabezadoTienda } from "./encabezado-tienda";
 
 const normal = (s: string) =>
   s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
@@ -19,6 +21,11 @@ type Props = {
 export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState<string | null>(null);
+  const [productoAbierto, setProductoAbierto] = useState<string | null>(null);
+  const grupos = useMemo(
+    () => [...new Set(filas.map((f) => f.grupo))].sort(),
+    [filas],
+  );
   const visibles = useMemo(() => {
     const q = normal(busqueda.trim());
     return q ? filas.filter((f) => normal(f.nombre).includes(q)) : filas;
@@ -78,19 +85,7 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
                   scope="col"
                   className="sticky top-0 z-20 bg-card px-2 py-2.5 text-right font-semibold whitespace-nowrap shadow-[inset_0_-1px_0_var(--border)]"
                 >
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      aria-hidden="true"
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: t.color }}
-                    />
-                    {t.nombre}
-                  </span>
-                  {t.manual && (
-                    <span className="block text-[10.5px] font-normal">
-                      solo anotados
-                    </span>
-                  )}
+                  <EncabezadoTienda tienda={t} conSesion={conSesion} />
                 </th>
               ))}
             </tr>
@@ -101,6 +96,16 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
                 .map((c) => c.precio)
                 .filter((p): p is number => p != null);
               const minimo = precios.length ? Math.min(...precios) : null;
+              if (productoAbierto === f.id)
+                return (
+                  <EdicionProductoAnotados
+                    key={f.id}
+                    fila={f}
+                    grupos={grupos}
+                    columnas={tiendas.length + 1}
+                    alCancelar={() => setProductoAbierto(null)}
+                  />
+                );
               return (
                 <tr key={f.id} className="border-b last:border-0">
                   <th
@@ -115,6 +120,16 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
                           {f.unidad}
                         </span>
                       </span>
+                      {conSesion && (
+                        <button
+                          type="button"
+                          aria-label={`Editar ${f.nombre}`}
+                          onClick={() => setProductoAbierto(f.id)}
+                          className="ml-auto rounded-[10px] px-1 text-xs text-muted-foreground hover:bg-secondary"
+                        >
+                          ✎
+                        </button>
+                      )}
                     </span>
                   </th>
                   {tiendas.map((t) => {

@@ -731,6 +731,7 @@ export type FilaAnotados = {
   emoji: string | null;
   unidad: string;
   grupo: string;
+  frecuencia: string;
   /** Precio efectivo y su origen por tienda (real, anotado, estimado…), solo de las tiendas que lo siguen. */
   celdas: Record<string, { precio: number | null; estado: string | null }>;
   /** Tiendas que siguen este producto; en las demás la celda no se anota. */
@@ -747,7 +748,7 @@ export async function tablaAnotados(): Promise<{
   const [productos, tiendas, efectivos, seguidos] = await Promise.all([
     db
       .from("productos")
-      .select("id, nombre, emoji, unidad, grupo")
+      .select("id, nombre, emoji, unidad, grupo, frecuencia")
       .order("nombre"),
     db.from("tiendas").select("id, nombre, color, manual").order("nombre"),
     todas(
