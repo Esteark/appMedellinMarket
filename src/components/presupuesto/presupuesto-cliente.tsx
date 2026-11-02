@@ -14,7 +14,6 @@ import { avisar, textoAviso } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { hoyBogota } from "@/lib/fecha";
 import { pesos } from "@/lib/formato";
-import { claveAviso } from "@/lib/importar/factura";
 import {
   agregarCierreLocal,
   fusionarGastos,
@@ -42,6 +41,7 @@ import {
 } from "@/lib/presupuesto/unidades-gasto";
 import type { CambiosGasto } from "./fila-gasto";
 import {
+  avisoDeCreacion,
   crearProductoDeGasto,
   PRODUCTO_NUEVO_VACIO,
   ProductoNuevo,
@@ -227,11 +227,9 @@ export function PresupuestoCliente({
         nuevo,
       );
       if (!r.ok)
-        return avisar(
-          r.error === "tienda_requerida"
-            ? "gasto_producto_sin_tienda"
-            : claveAviso(r.error),
-        );
+        return r.error === "en_curso"
+          ? undefined
+          : avisar(avisoDeCreacion(r.error));
       creado = { id: r.id, tienda: nuevo.tiendaId };
       avisar(r.existente ? "producto_existente_agregado" : "producto_creado", {
         nombre: form.productoNombre.trim(),

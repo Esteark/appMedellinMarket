@@ -2,6 +2,7 @@
 
 import { crearProducto } from "@/app/tiendas/acciones";
 import { EmojiSelector } from "@/components/emoji-selector";
+import { claveAviso } from "@/lib/importar/factura";
 
 export type DatosProductoNuevo = {
   grupo: string;
@@ -90,6 +91,15 @@ export function ProductoNuevo({
   );
 }
 
+/** Qué aviso corresponde a un error al crear el producto de un gasto. */
+export const avisoDeCreacion = (error: string) =>
+  error === "tienda_requerida"
+    ? "gasto_producto_sin_tienda"
+    : claveAviso(error);
+
+// Un segundo clic mientras se crea el producto no lo repite (ni repite el gasto).
+let enCurso = false;
+
 /** Crea el producto (o reutiliza el de ese nombre) en la tienda elegida; sin tienda no se crea. */
 export async function crearProductoDeGasto(
   nombre: string,
@@ -99,12 +109,18 @@ export async function crearProductoDeGasto(
   { ok: true; id: string; existente: boolean } | { ok: false; error: string }
 > {
   if (!d.tiendaId) return { ok: false, error: "tienda_requerida" };
-  return crearProducto({
-    nombre,
-    grupo: d.grupo,
-    unidad: unidad.trim() || "u",
-    frecuencia: "semanal",
-    emoji: d.emoji || null,
-    tiendas: [d.tiendaId],
-  });
+  if (enCurso) return { ok: false, error: "en_curso" };
+  enCurso = true;
+  try {
+    return await crearProducto({
+      nombre,
+      grupo: d.grupo,
+      unidad: unidad.trim() || "u",
+      frecuencia: "semanal",
+      emoji: d.emoji || null,
+      tiendas: [d.tiendaId],
+    });
+  } finally {
+    enCurso = false;
+  }
 }

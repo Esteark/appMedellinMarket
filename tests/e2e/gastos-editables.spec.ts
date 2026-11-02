@@ -253,6 +253,12 @@ test.describe("tabla de gastos editable", () => {
     // Un texto sin coincidencias lo dice y deja la opción manual.
     await producto.fill("zzzz");
     await expect(page.getByText("Ningún producto coincide")).toBeVisible();
+    // Pulsar dentro de la lista fuera de una opción (barra de desplazamiento, mensaje, relleno)
+    // no saca el foco del campo ni cierra la lista.
+    await page.getByText("Ningún producto coincide").click();
+    await expect(lista).toBeVisible();
+    // Con el campo vacío, el producto elegido se ve como pista al abrir.
+    await expect(producto).toHaveAttribute("placeholder", /Buscar producto/);
 
     // ↓ y Enter eligen sin enviar el formulario de la fila.
     await producto.fill("arroz");
@@ -502,6 +508,30 @@ test.describe("«Agregar producto nuevo» en un gasto", () => {
     await expect(
       page.getByRole("row").filter({ hasText: `${nombre} editado` }),
     ).toBeVisible();
+  });
+
+  test("un doble clic en «Agregar gasto» no crea el producto ni el gasto dos veces", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
+    await page.getByLabel("Correo").fill(`e2e-dc-${Date.now()}@ejemplo.test`);
+    await page.getByLabel(/^Contraseña/).fill("clave-e2e-segura");
+    await page.getByRole("button", { name: "Crear cuenta" }).click();
+    await expect(page.getByTestId("usuario")).toBeVisible();
+
+    const nombre = `E2E Doble Clic ${Date.now()}`;
+    await elegirNuevo(page, nombre);
+    await page.getByLabel("Monto total").pressSequentially("2500");
+    const nuevo = page.getByTestId("producto-nuevo");
+    await nuevo
+      .getByLabel("Tienda donde lo compraste")
+      .selectOption({ label: "La Minorista" });
+    await page.getByRole("button", { name: "Agregar gasto" }).last().dblclick();
+
+    const filas = tabla(page).getByRole("row").filter({ hasText: nombre });
+    await expect(filas.first()).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(filas).toHaveCount(1);
   });
 
   test("sin sesión avisa que solo queda como texto y lo guarda en la nota", async ({

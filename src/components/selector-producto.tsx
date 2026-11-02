@@ -87,7 +87,7 @@ export function SelectorProducto({
         aria-autocomplete="list"
         aria-activedescendant={abierto ? `${lista}-${activo}` : undefined}
         autoComplete="off"
-        placeholder="Buscar producto…"
+        placeholder={abierto && valor ? etiquetaElegido : "Buscar producto…"}
         value={abierto ? texto : etiquetaElegido}
         onFocus={abrir}
         onClick={() => !abierto && abrir()}
@@ -120,6 +120,8 @@ export function SelectorProducto({
           id={lista}
           role="listbox"
           aria-label="Productos"
+          // Pulsar la barra de desplazamiento o el relleno no debe sacar el foco del campo (cerraría la lista).
+          onMouseDown={(e) => e.preventDefault()}
           className="max-h-48 overflow-y-auto rounded-[10px] border bg-card text-sm"
         >
           {opciones.map((o, i) => (
