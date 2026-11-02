@@ -1262,6 +1262,6 @@
       "tests/e2e/gastos-editables.spec.ts",
       "CLAUDE.md"
     ],
-    "status": "pending"
+    "status": "done"
   }
 ]

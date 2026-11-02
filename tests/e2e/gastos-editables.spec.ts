@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./ayuda";
 
@@ -276,4 +278,79 @@ test.describe("tabla de gastos editable", () => {
       tabla(page).getByRole("row").filter({ hasText: "compra grande" }),
     ).toContainText("×2.5");
   });
+});
+
+test("con sesión: tras importar una factura se edita el producto y la cantidad de un gasto importado", async ({
+  page,
+}) => {
+  await page.goto("/registro");
+  await page.getByLabel("Correo").fill(`e2e-imp-${Date.now()}@ejemplo.test`);
+  await page.getByLabel(/^Contraseña/).fill("clave-e2e-segura");
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await expect(page.getByTestId("usuario")).toBeVisible();
+
+  // Importar la factura de D1 (3 gastos de 2026-10-30).
+  await page.goto("/presupuesto");
+  await page.getByRole("button", { name: "Importar factura" }).click();
+  await page
+    .getByTestId("importar-texto")
+    .fill(readFileSync("tests/importar/d1.csv", "utf-8"));
+  await page.getByRole("button", { name: "Revisar" }).click();
+  await expect(page.getByText("Publicar los precios para todos")).toBeVisible();
+  const confirmar = page.getByLabel(/confirmo que se creen/);
+  if (await confirmar.isVisible()) await confirmar.check();
+  await page.getByRole("button", { name: "Guardar importación" }).click();
+  await expect(page.getByTestId("importar-resultado")).toContainText(
+    "Importación lista",
+  );
+
+  // Abajo quedan los gastos del mes de la factura, con su cantidad.
+  const verOctubre = async () => {
+    await page.goto("/presupuesto");
+    await page.getByRole("button", { name: "Agregar gasto" }).first().click();
+    await page.locator('input[type="month"]').fill("2026-10");
+  };
+  await verOctubre();
+  const fila = tabla(page).getByRole("row").filter({ hasText: "×3" });
+  await expect(fila).toHaveCount(1);
+  await fila.getByRole("button", { name: /^Editar / }).click();
+
+  await tabla(page).getByLabel("Producto").selectOption("arroz");
+  await tabla(page).getByLabel("Cantidad").fill("4");
+  await tabla(page).getByRole("button", { name: "Guardar" }).click();
+  const editada = tabla(page).getByRole("row").filter({ hasText: "×4" });
+  await expect(editada).toContainText("Arroz");
+
+  // Lo editado vuelve de la cuenta al recargar.
+  await verOctubre();
+  const recargada = tabla(page).getByRole("row").filter({ hasText: "×4" });
+  await expect(recargada).toContainText("Arroz");
+  await expect(
+    tabla(page).getByRole("row").filter({ hasText: "×3" }),
+  ).toHaveCount(0);
+});
+
+test("/presupuesto con una fila en edición: axe sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const fila = await agregarGastoManual(page, "9000", `gasto ${Date.now()}`);
+  await fila.getByRole("button", { name: /^Editar / }).click();
+  await expect(tabla(page).getByLabel("Monto", { exact: true })).toBeVisible();
+
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  const graves = violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+  expect(
+    graves.map((v) => ({ id: v.id, nodos: v.nodes.map((n) => n.target) })),
+  ).toEqual([]);
 });
