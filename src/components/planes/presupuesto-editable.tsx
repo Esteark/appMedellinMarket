@@ -1,34 +1,74 @@
 "use client";
 
-import { RUBROS_SUGERIDOS } from "@/lib/presupuesto/defaults";
-import type { PresupuestoRubro } from "@/lib/presupuesto/tipos";
+import { useRef } from "react";
+import { avisar } from "@/lib/avisos";
+import type { ConfigPlan } from "@/lib/planes/config";
+import {
+  gruposDe,
+  moverRubro,
+  OTROS,
+  quitarRubro,
+  renombrarRubro,
+  rubrosOrdenados,
+} from "@/lib/planes/rubros";
 import { usePlan } from "./plan-provider";
+import { RubroFila } from "./rubro-fila";
+import { RubroGrupos } from "./rubro-grupos";
+import { RubroNuevo } from "./rubro-nuevo";
 import { ValorAnimado } from "./valor-animado";
 
-/** Rubros del plan en el orden sugerido; los que agregó la persona van al final. */
-function comoLista(rubros: Record<string, number>): PresupuestoRubro[] {
-  const orden = (r: string) => {
-    const i = (RUBROS_SUGERIDOS as readonly string[]).indexOf(r);
-    return i < 0 ? RUBROS_SUGERIDOS.length : i;
-  };
-  return Object.entries(rubros)
-    .sort(([x], [y]) => orden(x) - orden(y))
-    .map(([rubro, monto], i) => ({ rubro, monto, orden: i }));
-}
+/** Lo que cambia al editar rubros: sus montos, su orden y sus grupos. */
+const soloRubros = (c: ConfigPlan) => ({
+  rubros: c.rubros,
+  orden: c.orden,
+  grupos: c.grupos,
+});
 
-const MAX_MONTO = 10_000_000;
-
-export function PresupuestoEditable() {
+/** Rubros del plan: montos, orden, nombres y los grupos de producto que cuenta cada uno. */
+export function PresupuestoEditable({ grupos }: { grupos: string[] }) {
   const { config, cambiar } = usePlan();
-  const rubros = comoLista(config.rubros);
-  const total = rubros.reduce((t, r) => t + r.monto, 0);
+  // «Deshacer» corre más tarde: debe usar el plan de ese momento, no el de cuando se quitó el rubro.
+  const cambiarActual = useRef(cambiar);
+  cambiarActual.current = cambiar;
 
-  const poner = (rubro: string, valor: string) => {
-    const n = Number(valor);
-    const monto = Number.isFinite(n)
-      ? Math.min(MAX_MONTO, Math.max(0, Math.round(n)))
-      : 0;
-    cambiar({ rubros: { ...config.rubros, [rubro]: monto } });
+  const nombres = rubrosOrdenados(config);
+  const total = nombres.reduce((t, r) => t + config.rubros[r], 0);
+
+  const resumen = (r: string) => {
+    if (r === OTROS) return "Recibe lo que ningún rubro cuenta";
+    const g = gruposDe(config, r);
+    return g.length
+      ? `Cuenta: ${g.join(", ")}`
+      : "Sin grupos: no cuenta productos";
+  };
+
+  const mover = (r: string, delta: 1 | -1) => {
+    const res = moverRubro(config, r, delta);
+    if (res.ok) cambiar(soloRubros(res.config));
+  };
+
+  const renombrar = (de: string, a: string) => {
+    const res = renombrarRubro(config, de, a);
+    if (!res.ok) return res.error;
+    if (res.config === config) return null;
+    cambiar(soloRubros(res.config));
+    avisar("rubro_renombrado", { de, a: a.trim().replace(/\s+/g, " ") });
+    return null;
+  };
+
+  const quitar = (r: string) => {
+    const antes = config;
+    const res = quitarRubro(config, r);
+    if (!res.ok) return;
+    cambiar(soloRubros(res.config));
+    avisar(
+      "rubro_quitado",
+      { nombre: r },
+      {
+        texto: "Deshacer",
+        alPulsar: () => cambiarActual.current(soloRubros(antes)),
+      },
+    );
   };
 
   return (
@@ -36,58 +76,41 @@ export function PresupuestoEditable() {
       <div>
         <h2 className="text-lg font-bold">Rubros del plan</h2>
         <p className="text-xs text-muted-foreground">
-          Escribe el monto de cada rubro. Es el plan que quieres gastar; los
-          gastos reales se registran en Presupuesto.
+          Escribe el monto de cada rubro, agrega los tuyos y elige qué grupos de
+          productos cuenta cada uno. Es el plan que quieres gastar; los gastos
+          reales se registran en Presupuesto.
         </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground">
-              <th className="py-1.5 pr-3 font-medium">Rubro</th>
-              <th className="px-3 text-right font-medium">
-                Presupuesto mensual
-              </th>
-            </tr>
-          </thead>
-          <tbody className="tabular-nums">
-            {rubros.map((r, idx) => (
-              <tr
-                key={r.rubro}
-                className="border-t transition-colors duration-150 hover:bg-muted/40 motion-reduce:transition-none"
-                style={{ animationDelay: `${idx * 20}ms` }}
-              >
-                <td className="py-1.5 pr-3">{r.rubro}</td>
-                <td className="px-3 py-1 text-right">
-                  <span className="flex items-center justify-end gap-1">
-                    <span className="text-muted-foreground">$</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={MAX_MONTO}
-                      step={1000}
-                      value={r.monto}
-                      onChange={(e) => poner(r.rubro, e.target.value)}
-                      aria-label={`Presupuesto de ${r.rubro}`}
-                      className="w-32 rounded-[10px] border border-input bg-background px-2 py-1 text-right tabular-nums sm:w-40"
-                    />
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t">
-              <td className="py-2 pr-3 font-semibold">Total del plan</td>
-              <td className="px-3 py-2 text-right text-lg font-bold">
-                <ValorAnimado valor={total} />
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      <ul className="tabular-nums">
+        {nombres.map((r, i) => (
+          <RubroFila
+            key={r}
+            nombre={r}
+            monto={config.rubros[r]}
+            primero={i === 0}
+            ultimo={i === nombres.length - 1}
+            fijo={r === OTROS}
+            resumen={resumen(r)}
+            onMonto={(monto) =>
+              cambiar({ rubros: { ...config.rubros, [r]: monto } })
+            }
+            onMover={(d) => mover(r, d)}
+            onRenombrar={(a) => renombrar(r, a)}
+            onQuitar={() => quitar(r)}
+          >
+            <RubroGrupos rubro={r} grupos={grupos} />
+          </RubroFila>
+        ))}
+      </ul>
+      <p className="flex items-center justify-between border-t pt-2">
+        <span className="font-semibold">Total del plan</span>
+        <span className="text-lg font-bold tabular-nums">
+          <ValorAnimado valor={total} />
+        </span>
+      </p>
+
+      <RubroNuevo />
     </div>
   );
 }

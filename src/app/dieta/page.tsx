@@ -7,7 +7,7 @@ import { Semanas } from "@/components/planes/dieta/semanas";
 import { MisPresupuestos } from "@/components/planes/mis-presupuestos";
 import { PlanConDatos } from "@/components/planes/plan-con-datos";
 import { PlanEditable } from "@/components/planes/plan-editable";
-import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
+import { PresupuestoConGrupos } from "@/components/planes/presupuesto-con-grupos";
 import { RepartoInteractivo } from "@/components/planes/reparto-interactivo";
 import { Consejos } from "@/components/planes/tabla";
 import { PLANES } from "@/data/planes";
@@ -76,7 +76,7 @@ export default function Dieta() {
         <PlanConDatos tipo="dieta">
           <RepartoInteractivo />
           <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
-            <PresupuestoEditable />
+            <PresupuestoConGrupos />
           </section>
           <MisPresupuestos />
           <Suspense

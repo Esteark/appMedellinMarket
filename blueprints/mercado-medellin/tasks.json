@@ -1101,9 +1101,11 @@
       "src/components/planes/rubro-nuevo.tsx",
       "src/components/planes/rubro-grupos.tsx",
       "src/lib/avisos.ts",
-      "src/lib/datos.ts"
+      "src/lib/datos.ts",
+      "src/components/planes/presupuesto-con-grupos.tsx",
+      "tests/e2e/rubros.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E45-T4",

@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { cache } from "react";
+import { ANTOJOS, BASICOS } from "@/data/grupos";
 import { alertasFuenteCaida, ordenarAlertas } from "@/lib/alertas/reglas";
 import { diasEntre, hoyBogota, restarDias } from "@/lib/fecha";
 import type { ListaGuardada } from "@/lib/listas/guardadas";
@@ -672,6 +673,25 @@ export async function productosGestion(): Promise<ProductoGestion[]> {
     ),
   }));
 }
+
+/** Grupos de producto que existen (los de fábrica y los que alguien creó), sin «Otros»; para asignarlos a un rubro. */
+export const gruposDeProductos = cache(async (): Promise<string[]> => {
+  await connection();
+  const db = await clienteServidor();
+  const filas = await todas(
+    (d, h) =>
+      db
+        .from("productos")
+        .select("grupo")
+        .order("grupo")
+        .order("id")
+        .range(d, h),
+    "productos",
+  );
+  return [...new Set([...BASICOS, ...ANTOJOS, ...filas.map((f) => f.grupo)])]
+    .filter((g) => g && g !== "Otros")
+    .sort((a, b) => a.localeCompare(b, "es"));
+});
 
 /** Alias globales de producto (nombre normalizado → id) que dejaron las cargas anteriores, de cualquier persona. */
 export async function aliasGlobales(): Promise<Record<string, string>> {

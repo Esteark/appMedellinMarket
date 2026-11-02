@@ -437,6 +437,27 @@ export const AVISOS = {
     texto:
       "«{nombre}» ya existía: se agregó a {tienda} con su ícono, unidad y grupo de siempre.",
   },
+  rubro_agregado: {
+    tipo: "exito",
+    emoji: "➕",
+    texto:
+      "Rubro «{nombre}» agregado. Asígnale grupos para que cuente productos.",
+  },
+  rubro_renombrado: {
+    tipo: "exito",
+    emoji: "✏️",
+    texto: "«{de}» ahora se llama «{a}».",
+  },
+  rubro_quitado: {
+    tipo: "info",
+    emoji: "🗑️",
+    texto: "Rubro «{nombre}» quitado. Sus grupos cuentan en «Otros».",
+  },
+  rubro_grupo_movido: {
+    tipo: "info",
+    emoji: "🔀",
+    texto: "El grupo «{grupo}» pasó de «{desde}» a «{a}».",
+  },
   producto_quitado_de_tienda: {
     tipo: "info",
     emoji: "🏪",

@@ -248,3 +248,19 @@ export function gastoPorRubro(
   }
   return gasto;
 }
+
+/** Qué decirle a la persona cuando una operación de rubros se rechaza. */
+export function textoErrorRubro(error: ErrorRubro): string {
+  switch (error) {
+    case "nombre_invalido":
+      return "Escribe un nombre de 2 a 40 caracteres.";
+    case "repetido":
+      return "Ya tienes un rubro con ese nombre.";
+    case "reservado":
+      return "«Otros» es el rubro de lo que nadie cuenta: no se agrega, renombra ni quita.";
+    case "limite":
+      return "Ya hay 50 rubros: quita uno para agregar otro.";
+    case "no_existe":
+      return "Ese rubro ya no existe.";
+  }
+}
