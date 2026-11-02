@@ -10,6 +10,10 @@ insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, fr
 insert into producto_fuente (producto_id, tienda_id, url) values ('p1', 't1', 'https://ejemplo.co/p1');
 insert into precios_actuales (producto_id, tienda_id, precio, fecha, estado)
   values ('p1', 't1', 5000, current_date, 'real');
+-- Las dos tiendas siguen el producto: el historial solo cuenta las del catálogo.
+-- (p1, t1) ya la creó el disparador de precios_actuales.
+insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't1'), ('p1', 't2')
+  on conflict do nothing;
 insert into precios_historial (producto_id, tienda_id, fecha, precio, estado) values
   ('p1', 't1', current_date, 5000, 'real'), ('p1', 't2', current_date, 4000, 'real');
 insert into auth.users (id, email) values

@@ -7,6 +7,8 @@ insert into tiendas (id, nombre, color) values ('t1', 'Tienda 1', '#000000');
 insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia)
   values ('p1', 'Producto 1', 'Frutas', 'kg', 'g', 1000, 'diaria');
 insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000a', 'a@prueba.co');
+-- La tienda sigue el producto (el historial solo cuenta las tiendas del catálogo).
+insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't1');
 -- 70 días de historial automático a 5000; el día de hoy hay además una corrección a mano de 4000
 insert into precios_historial (producto_id, tienda_id, fecha, precio, estado)
   select 'p1', 't1', (now() at time zone 'America/Bogota')::date - g, 5000, 'real' from generate_series(0, 69) g;

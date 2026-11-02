@@ -388,42 +388,53 @@ export async function detalle(id: string): Promise<Detalle | null> {
   await connection();
   const hoy = hoyBogota();
   const db = await clienteServidor();
-  const [producto, tiendas, efectivos, historial, causas, serie, contexto] =
-    await Promise.all([
-      db
-        .from("productos")
-        .select("id, nombre, grupo, unidad, emoji, frecuencia")
-        .eq("id", id)
-        .maybeSingle(),
-      db.from("tiendas").select("id, nombre, color").order("nombre"),
-      db
-        .from("precio_catalogo")
-        .select(COLUMNAS_EFECTIVO)
-        .eq("producto_id", id),
-      // ≤ 10 tiendas × 31 días: por debajo del tope de 1000.
-      db
-        .from("precios_historial")
-        .select("producto_id, tienda_id, fecha, precio")
-        .eq("producto_id", id)
-        .gte("fecha", restarDias(hoy, 30))
-        .not("precio", "is", null)
-        .order("fecha"),
-      db
-        .from("clima_causas")
-        .select("producto_id, fecha, es_clima, texto")
-        .eq("producto_id", id)
-        .gte("fecha", restarDias(hoy, 7)),
-      db
-        .from("serie_pronostico")
-        .select("puntos")
-        .eq("producto_id", id)
-        .maybeSingle(),
-      db
-        .from("contexto_mercado")
-        .select("ipc_alimentos, actualizado")
-        .order("mes", { ascending: false })
-        .limit(1),
-    ]);
+  const [
+    producto,
+    tiendas,
+    efectivos,
+    historial,
+    causas,
+    serie,
+    contexto,
+    siguen,
+  ] = await Promise.all([
+    db
+      .from("productos")
+      .select("id, nombre, grupo, unidad, emoji, frecuencia")
+      .eq("id", id)
+      .maybeSingle(),
+    db.from("tiendas").select("id, nombre, color").order("nombre"),
+    db.from("precio_catalogo").select(COLUMNAS_EFECTIVO).eq("producto_id", id),
+    // ≤ 10 tiendas × 31 días: por debajo del tope de 1000.
+    db
+      .from("precios_historial")
+      .select("producto_id, tienda_id, fecha, precio")
+      .eq("producto_id", id)
+      .gte("fecha", restarDias(hoy, 30))
+      .not("precio", "is", null)
+      .order("fecha"),
+    db
+      .from("clima_causas")
+      .select("producto_id, fecha, es_clima, texto")
+      .eq("producto_id", id)
+      .gte("fecha", restarDias(hoy, 7)),
+    db
+      .from("serie_pronostico")
+      .select("puntos")
+      .eq("producto_id", id)
+      .maybeSingle(),
+    db
+      .from("contexto_mercado")
+      .select("ipc_alimentos, actualizado")
+      .order("mes", { ascending: false })
+      .limit(1),
+    // Las tiendas que hoy siguen el producto: el historial solo se dibuja para ellas.
+    db
+      .from("catalogo_tienda")
+      .select("tienda_id")
+      .eq("producto_id", id)
+      .eq("activo", true),
+  ]);
   for (const r of [
     producto,
     tiendas,
@@ -432,6 +443,7 @@ export async function detalle(id: string): Promise<Detalle | null> {
     causas,
     serie,
     contexto,
+    siguen,
   ])
     if (r.error) throw new Error(r.error.message);
   if (!producto.data) return null;
@@ -441,7 +453,10 @@ export async function detalle(id: string): Promise<Detalle | null> {
   const efectivo = new Map(
     (efectivos.data ?? []).map((e) => [`${e.producto_id}|${e.tienda_id}`, e]),
   );
-  const filas = historial.data ?? [];
+  const delCatalogo = new Set((siguen.data ?? []).map((c) => c.tienda_id));
+  const filas = (historial.data ?? []).filter(
+    (h) => h.tienda_id && delCatalogo.has(h.tienda_id),
+  );
   const previos = previosDe(
     filas.filter((h) => h.fecha >= restarDias(hoy, 7) && h.fecha < hoy),
   );
