@@ -9,14 +9,24 @@ import {
   MIN_SEMANAS,
   quitarSemana,
 } from "@/lib/planes/semanas";
+import type { Precios } from "@/lib/precios/lista";
 import { usePlan } from "../plan-provider";
+import { ComprasSemana } from "./compras-semana";
 import type { ProductoPlan } from "./lista-comida";
 import { SemanaEditor } from "./semana-editor";
 
 const CHIP = "rounded-full px-3 py-1.5 text-sm font-medium border";
 
 /** Planificador de 4 a 5 semanas; cada una con desayuno, almuerzo, cena y despensa. */
-export function Semanas({ productos }: { productos: ProductoPlan[] }) {
+export function Semanas({
+  productos,
+  precios,
+  tiendas,
+}: {
+  productos: ProductoPlan[];
+  precios: Precios;
+  tiendas: string[];
+}) {
   const { config, cambiar } = usePlan();
   const [sel, setSel] = useState(0);
   const [quitando, setQuitando] = useState(false);
@@ -119,6 +129,13 @@ export function Semanas({ productos }: { productos: ProductoPlan[] }) {
           ))}
       </fieldset>
       <SemanaEditor semana={semanas[i]} indice={i} productos={productos} />
+      <ComprasSemana
+        semana={semanas[i]}
+        indice={i}
+        productos={productos}
+        precios={precios}
+        tiendas={tiendas}
+      />
     </section>
   );
 }

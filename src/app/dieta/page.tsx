@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
+import { ComparaPresupuesto } from "@/components/planes/compara-presupuesto";
 import { Semanas } from "@/components/planes/dieta/semanas";
 import { DietaTablas } from "@/components/planes/dieta-tablas";
 import { PlanConDatos } from "@/components/planes/plan-con-datos";
@@ -14,10 +15,15 @@ import { catalogo } from "@/lib/datos";
 export const metadata: Metadata = { title: "Dieta · Mercado Medellín" };
 
 async function Datos() {
-  const { productos } = await catalogo();
+  const { productos, tiendas } = await catalogo();
+  const idsTienda = tiendas.map((t) => t.id);
   return (
     <>
-      <Semanas productos={productos} />
+      <Semanas
+        productos={productos}
+        precios={Object.fromEntries(productos.map((p) => [p.id, p.precios]))}
+        tiendas={idsTienda}
+      />
       <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
         <h2 className="text-lg font-bold">Cargar el plan en tu lista</h2>
         <BotonesPlan
@@ -51,6 +57,7 @@ async function Datos() {
           </div>
         </details>
       </section>
+      <ComparaPresupuesto productos={productos} tiendas={idsTienda} />
     </>
   );
 }

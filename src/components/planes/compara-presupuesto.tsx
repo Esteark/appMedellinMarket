@@ -4,6 +4,7 @@ import { useLista } from "@/components/carrito/use-lista";
 import { rubroDe } from "@/data/planes";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
+import { comprasDelMes } from "@/lib/planes/compras";
 import { optimoDividido } from "@/lib/precios/lista";
 import { usePlan } from "./plan-provider";
 import { ValorAnimado } from "./valor-animado";
@@ -18,8 +19,11 @@ export function ComparaPresupuesto({
   productos: Pick<ProductoCatalogo, "id" | "grupo" | "precios">[];
   tiendas: string[];
 }) {
-  const [lista] = useLista();
+  const [listaActiva] = useLista();
   const { config } = usePlan();
+  // Con semanas planeadas se compara el plan del mes, no la lista del dispositivo.
+  const conSemanas = !!config.semanas;
+  const lista = conSemanas ? comprasDelMes(config.semanas) : listaActiva;
 
   if (!Object.keys(lista).length)
     return (
@@ -27,8 +31,9 @@ export function ComparaPresupuesto({
         className="rounded-[14px] border border-dashed bg-card p-4 text-sm text-muted-foreground"
         data-testid="sin-lista"
       >
-        Tu lista está vacía. Carga el plan de arriba para compararlo con tus
-        rubros.
+        {conSemanas
+          ? "Las semanas aún no tienen productos. Agrégalos arriba para compararlos con tus rubros."
+          : "Tu lista está vacía. Carga el plan de arriba para compararlo con tus rubros."}
       </p>
     );
 
@@ -62,7 +67,9 @@ export function ComparaPresupuesto({
   return (
     <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
       <div>
-        <h2 className="text-lg font-bold">Tu lista vs. el presupuesto</h2>
+        <h2 className="text-lg font-bold">
+          {conSemanas ? "Compras del mes" : "Tu lista"} vs. el presupuesto
+        </h2>
         <p className="text-xs text-muted-foreground">
           Comprando dividido en las tiendas con mejor precio de hoy.
         </p>
@@ -73,7 +80,9 @@ export function ComparaPresupuesto({
             <tr className="text-left text-xs text-muted-foreground">
               <th className="py-1.5 pr-3 font-medium">Rubro</th>
               <th className="px-3 text-right font-medium">Presupuesto</th>
-              <th className="px-3 text-right font-medium">Tu lista</th>
+              <th className="px-3 text-right font-medium">
+                {conSemanas ? "Compras" : "Tu lista"}
+              </th>
               <th className="pl-3 text-right font-medium">Diferencia</th>
             </tr>
           </thead>

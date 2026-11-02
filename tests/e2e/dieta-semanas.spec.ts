@@ -75,3 +75,26 @@ test("en móvil se ve una comida a la vez y no hay desplazamiento horizontal", a
   );
   expect(ancho).toBeLessThanOrEqual(0);
 });
+
+test("compras de la semana: usar como mi lista, sumar y comparar con los rubros", async ({
+  page,
+}) => {
+  await page.goto("/dieta");
+  await page.getByRole("button", { name: "Empezar el planificador" }).click();
+  const almuerzo = page.getByTestId("comida-almuerzo");
+  await almuerzo
+    .getByLabel(/^Producto para agregar a Almuerzo/)
+    .selectOption({ index: 1 });
+  await almuerzo.getByRole("button", { name: /^Agregar a Almuerzo/ }).click();
+
+  const compras = page.getByTestId("compras-semana");
+  await expect(
+    compras.getByRole("heading", { name: "Compras de la semana 1" }),
+  ).toBeVisible();
+  await compras.getByRole("button", { name: "Usar como mi lista" }).click();
+  await compras.getByRole("button", { name: "Sumar a mi lista" }).click();
+
+  // Con semanas, la comparación usa las compras del mes y no la lista.
+  await expect(page.getByTestId("compara")).toBeVisible();
+  await expect(page.getByTestId("sin-lista")).toHaveCount(0);
+});
