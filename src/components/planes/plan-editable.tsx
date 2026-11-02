@@ -3,24 +3,16 @@
 import { useState } from "react";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { PlanExtras } from "./plan-extras";
-import { type EstadoGuardado, usePlan } from "./plan-provider";
+import { usePlan } from "./plan-provider";
 
 type Producto = Pick<ProductoCatalogo, "id" | "nombre" | "emoji" | "unidad">;
-
-const TEXTO: Record<EstadoGuardado, string> = {
-  cuenta: "Guardado en tu cuenta",
-  dispositivo: "Guardado en este dispositivo",
-  guardando: "Guardando…",
-  sin_guardar: "Sin guardar",
-};
 
 const PASO =
   "grid size-9 place-items-center rounded-[10px] border bg-background text-lg disabled:opacity-35";
 
-/** Ítems del plan con stepper, productos propios, nota y «Volver al sugerido», con la banda de guardado. */
+/** Ítems del plan con stepper, productos propios y nota. */
 export function PlanEditable({ productos }: { productos: Producto[] }) {
-  const { tipo, config, estado, cambiar, volverAlSugerido } = usePlan();
-  const [confirmando, setConfirmando] = useState(false);
+  const { tipo, config, cambiar } = usePlan();
   const [agregar, setAgregar] = useState("");
   const porId = new Map(productos.map((p) => [p.id, p]));
   const libres = productos.filter((p) => !(p.id in config.items));
@@ -33,50 +25,7 @@ export function PlanEditable({ productos }: { productos: Producto[] }) {
   };
 
   return (
-    <div
-      className="flex flex-col gap-3"
-      data-testid="plan-editable"
-      data-tour={tipo === "dieta" ? "dieta-plan" : undefined}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p
-          role="status"
-          data-testid="estado-guardado"
-          className="rounded-full bg-secondary px-3 py-1 text-xs font-medium"
-        >
-          {TEXTO[estado]}
-        </p>
-        {confirmando ? (
-          <span className="flex items-center gap-1.5 text-sm">
-            ¿Volver al plan sugerido?
-            <button
-              type="button"
-              onClick={() => {
-                volverAlSugerido();
-                setConfirmando(false);
-              }}
-              className="rounded-[10px] bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground"
-            >
-              Sí, volver
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmando(false)}
-              className="rounded-[10px] border px-3 py-1 text-sm font-medium"
-            >
-              No
-            </button>
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmando(true)}
-            className="text-sm font-medium text-muted-foreground underline underline-offset-2"
-          >
-            Volver al sugerido
-          </button>
-        )}
-      </div>
+    <div className="flex flex-col gap-3" data-testid="plan-editable">
       <ul
         className="grid gap-x-4 gap-y-1.5 text-sm sm:grid-cols-2 lg:grid-cols-3"
         data-testid={`items-${tipo === "hogar" ? "hogar" : "semana"}`}

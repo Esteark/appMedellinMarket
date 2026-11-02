@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
 import { ComparaPresupuesto } from "@/components/planes/compara-presupuesto";
-import { HogarTablas } from "@/components/planes/hogar-tablas";
+import { MisPresupuestos } from "@/components/planes/mis-presupuestos";
 import { PlanConDatos } from "@/components/planes/plan-con-datos";
 import { PlanEditable } from "@/components/planes/plan-editable";
 import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
@@ -16,20 +16,12 @@ async function Datos() {
   const { productos, tiendas } = await catalogo();
   return (
     <>
-      <section className="flex flex-col gap-2 rounded-[14px] border bg-card p-3.5">
-        <h2 className="text-lg font-bold">Tu lista vs. el presupuesto</h2>
-        <ComparaPresupuesto
-          productos={productos}
-          tiendas={tiendas.map((t) => t.id)}
-        />
-      </section>
       <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
         <div>
-          <h2 className="text-lg font-bold">Mercado sugerido del mes</h2>
-          <p className="text-sm text-muted-foreground">
-            El plan no trae cantidades de verduras: estas se calcularon para que
-            sumen cerca de $110.000 por semana. Ajústalas en la lista después de
-            cargarlas.
+          <h2 className="text-lg font-bold">Productos del plan</h2>
+          <p className="text-xs text-muted-foreground">
+            Ajusta las cantidades que necesita tu hogar. Después puedes cargar
+            el plan completo en tu lista.
           </p>
         </div>
         <PlanEditable productos={productos} />
@@ -46,6 +38,10 @@ async function Datos() {
           ]}
         />
       </section>
+      <ComparaPresupuesto
+        productos={productos}
+        tiendas={tiendas.map((t) => t.id)}
+      />
     </>
   );
 }
@@ -72,6 +68,7 @@ export default function Hogar() {
           >
             <PresupuestoEditable />
           </section>
+          <MisPresupuestos />
           <Suspense
             fallback={
               <p
@@ -85,7 +82,6 @@ export default function Hogar() {
           >
             <Datos />
           </Suspense>
-          <HogarTablas />
         </PlanConDatos>
       </Suspense>
     </main>

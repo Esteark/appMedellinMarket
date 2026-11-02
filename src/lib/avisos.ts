@@ -107,6 +107,32 @@ export const AVISOS = {
     emoji: "↩️",
     texto: "Restauramos el plan {plan} que tenías en este dispositivo.",
   },
+  planes_fusionados: {
+    tipo: "exito",
+    emoji: "🗂️",
+    texto: "Unimos tus presupuestos guardados con tu cuenta ({n}).",
+  },
+  plan_guardado: {
+    tipo: "exito",
+    emoji: "💾",
+    texto: "Presupuesto «{nombre}» guardado.",
+  },
+  plan_cargado: {
+    tipo: "info",
+    emoji: "📂",
+    texto: "«{nombre}» es ahora tu presupuesto activo.",
+  },
+  plan_eliminado: {
+    tipo: "info",
+    emoji: "🗑️",
+    texto: "Presupuesto «{nombre}» eliminado.",
+  },
+  limite_planes: {
+    tipo: "aviso",
+    emoji: "🗂️",
+    texto:
+      "Ya tienes 20 presupuestos guardados. Elimina uno para guardar otro.",
+  },
   lista_guardada: {
     tipo: "exito",
     emoji: "💾",

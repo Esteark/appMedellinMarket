@@ -709,20 +709,31 @@ export async function tablaAnotados(): Promise<{
 }
 
 /** Plan editable de Hogar/Dieta del usuario con sesión (crudo: el cliente lo valida); sin sesión, `conSesion: false`. */
-export async function planGuardado(
-  tipo: "hogar" | "dieta",
-): Promise<{ conSesion: boolean; config: unknown }> {
+export async function planGuardado(tipo: "hogar" | "dieta"): Promise<{
+  conSesion: boolean;
+  config: unknown;
+  guardados: unknown;
+}> {
   const u = await usuario();
-  if (!u) return { conSesion: false, config: null };
+  if (!u) return { conSesion: false, config: null, guardados: [] };
   const db = await clienteServidor();
-  const { data, error } = await db
-    .from("planes_usuario")
-    .select("config")
-    .eq("tipo", tipo)
-    .maybeSingle();
+  const [{ data, error }, { data: guardados, error: e2 }] = await Promise.all([
+    db.from("planes_usuario").select("config").eq("tipo", tipo).maybeSingle(),
+    db
+      .from("planes_guardados")
+      .select("nombre, config, actualizada")
+      .eq("tipo", tipo)
+      .order("actualizada", { ascending: false })
+      .limit(20),
+  ]);
   // Si la base falla, el plan sigue funcionando en el dispositivo.
   if (error) console.error("planGuardado:", error.message);
-  return { conSesion: true, config: data?.config ?? null };
+  if (e2) console.error("planGuardado guardados:", e2.message);
+  return {
+    conSesion: true,
+    config: data?.config ?? null,
+    guardados: guardados ?? [],
+  };
 }
 
 export type FilaBarrio = {

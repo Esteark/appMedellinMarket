@@ -53,11 +53,10 @@ describe("aplicarPlan", () => {
 
 describe("rubroDe", () => {
   it("clasifica por rubro del presupuesto", () => {
-    expect(rubroDe({ id: "huevos", grupo: "Proteínas" })).toBe("Huevos");
+    expect(rubroDe({ id: "huevos", grupo: "Proteínas" })).toBe("Carnes");
     expect(rubroDe({ id: "pollo", grupo: "Proteínas" })).toBe("Carnes");
-    expect(rubroDe({ id: "papa", grupo: "Tubérculos" })).toBe(
-      "Verduras y frutas",
-    );
-    expect(rubroDe({ id: "papas_fritas", grupo: "Mecato" })).toBe("Antojos");
+    expect(rubroDe({ id: "papa", grupo: "Tubérculos" })).toBe("Verduras");
+    expect(rubroDe({ id: "papas_fritas", grupo: "Mecato" })).toBe("Mecato");
+    expect(rubroDe({ id: "aceite_oliva", grupo: "Gourmet" })).toBe("Otros");
   });
 });

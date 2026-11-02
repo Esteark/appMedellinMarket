@@ -11,9 +11,14 @@ export async function PlanConDatos({
   tipo: TipoPlan;
   children: ReactNode;
 }) {
-  const { conSesion, config } = await planGuardado(tipo);
+  const { conSesion, config, guardados } = await planGuardado(tipo);
   return (
-    <PlanProvider tipo={tipo} conSesion={conSesion} nube={config}>
+    <PlanProvider
+      tipo={tipo}
+      conSesion={conSesion}
+      nube={config}
+      guardadosNube={guardados}
+    >
       {children}
     </PlanProvider>
   );

@@ -269,6 +269,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"planes_guardados": {
+                  Row: {
+                    "actualizada": string,"config": NonNullable<Json>,"id": string,"nombre": string,"nombre_clave": string | null,"tipo": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actualizada"?: string,"config": NonNullable<Json>,"id"?: string,"nombre": string,"nombre_clave"?: never,"tipo": string,"user_id": string
+                  }
+                  Update: {
+                    "actualizada"?: string,"config"?: NonNullable<Json>,"id"?: string,"nombre"?: string,"nombre_clave"?: never,"tipo"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"planes_usuario": {
                   Row: {
                     "actualizada": string,"config": NonNullable<Json>,"tipo": string,"user_id": string

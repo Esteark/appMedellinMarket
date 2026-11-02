@@ -117,22 +117,6 @@ export const PLANES: Record<IdPlan, Plan> = {
   },
 };
 
-/** Escenarios del presupuesto del hogar (total mensual, en pesos). */
-export const ESC = {
-  basico: { n: "Básico", t: 1425000 },
-  medio: { n: "Medio", t: 1633300 },
-  ideal: { n: "Ideal", t: 1825000 },
-} as const;
-/** Presupuesto mensual por rubro, escenario medio. */
-export const RUBROS: [string, number][] = [
-  ["Carnes", 400000],
-  ["Huevos", 300000],
-  ["Lácteos", 207000],
-  ["Verduras y frutas", 476300],
-  ["Despensa", 150000],
-];
-export const COLCHON = 100000;
-
 /** Lista base semanal de la dieta: [producto, cantidad, precio del PDF]. */
 export const BASE: [string, string, number][] = [
   ["Canastas de 30 huevos", "4 canastas", 60000],
@@ -188,15 +172,22 @@ export const PROT: [string, number][] = [
   ["Res desmechar 100 g", 15000],
 ];
 
-const ANTOJOS = ["Mecato", "Bebidas", "Gourmet"];
-
-/** Rubro del presupuesto al que pertenece un producto. */
+/**
+ * Rubro del presupuesto al que pertenece un producto. Usa los mismos nombres
+ * que los rubros editables del plan (`PRESUPUESTO_SUGERIDO_HOGAR`), para que la
+ * comparación de la lista nunca invente una categoría distinta.
+ */
 export function rubroDe(p: { id: string; grupo: string }): string {
-  if (p.id === "huevos") return "Huevos";
+  if (p.id === "huevos") return "Carnes";
   if (p.grupo === "Proteínas") return "Carnes";
   if (p.grupo === "Lácteos") return "Lácteos";
-  if (["Frutas", "Verduras", "Tubérculos"].includes(p.grupo))
-    return "Verduras y frutas";
-  if (["Granos", "Despensa", "Panadería"].includes(p.grupo)) return "Despensa";
-  return ANTOJOS.includes(p.grupo) ? "Antojos" : "Aseo";
+  if (["Verduras", "Tubérculos"].includes(p.grupo)) return "Verduras";
+  if (p.grupo === "Frutas") return "Frutas";
+  if (p.grupo === "Granos") return "Granos";
+  if (p.grupo === "Panadería") return "Panadería";
+  if (p.grupo === "Despensa") return "Despensa";
+  if (p.grupo === "Aseo") return "Aseo";
+  if (p.grupo === "Bebidas") return "Bebidas";
+  if (p.grupo === "Mecato") return "Mecato";
+  return "Otros";
 }

@@ -1,12 +1,16 @@
 "use client";
 
 import { useLista } from "@/components/carrito/use-lista";
-import { ESC, RUBROS, rubroDe } from "@/data/planes";
+import { rubroDe } from "@/data/planes";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { optimoDividido } from "@/lib/precios/lista";
+import { usePlan } from "./plan-provider";
+import { ValorAnimado } from "./valor-animado";
 
-/** Tu lista (comprando dividido, a precios de hoy) frente al presupuesto mensual del hogar. */
+type Fila = { nombre: string; tope: number; gasto: number };
+
+/** Tu lista (comprando dividido, a precios de hoy) frente a los rubros editables del plan. */
 export function ComparaPresupuesto({
   productos,
   tiendas,
@@ -15,11 +19,16 @@ export function ComparaPresupuesto({
   tiendas: string[];
 }) {
   const [lista] = useLista();
+  const { config } = usePlan();
+
   if (!Object.keys(lista).length)
     return (
-      <p className="text-sm text-muted-foreground" data-testid="sin-lista">
-        Tu lista está vacía: agrégale productos o carga el plan de abajo para
-        compararla con el presupuesto.
+      <p
+        className="rounded-[14px] border border-dashed bg-card p-4 text-sm text-muted-foreground"
+        data-testid="sin-lista"
+      >
+        Tu lista está vacía. Carga el plan de arriba para compararlo con tus
+        rubros.
       </p>
     );
 
@@ -35,17 +44,31 @@ export function ComparaPresupuesto({
         (porRubro.get(rubroDe(p)) ?? 0) + precio * (lista[p.id] ?? 0),
       );
   }
-  const presupuesto = RUBROS.map(([nombre, tope]) => ({
-    nombre,
-    tope,
-    gasto: porRubro.get(nombre) ?? 0,
-  }));
-  const fuera = [...porRubro].filter(([n]) => !RUBROS.some(([r]) => r === n));
+
+  const nombres = [
+    ...Object.keys(config.rubros),
+    ...[...porRubro.keys()].filter((n) => !(n in config.rubros)),
+  ];
+  const filas: Fila[] = nombres
+    .map((nombre) => ({
+      nombre,
+      tope: config.rubros[nombre] ?? 0,
+      gasto: porRubro.get(nombre) ?? 0,
+    }))
+    .filter((f) => f.tope > 0 || f.gasto > 0);
+  const totalPlan = filas.reduce((t, f) => t + f.tope, 0);
+  const totalLista = optimo.total;
 
   return (
-    <div className="flex flex-col gap-3" data-testid="compara">
+    <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+      <div>
+        <h2 className="text-lg font-bold">Tu lista vs. el presupuesto</h2>
+        <p className="text-xs text-muted-foreground">
+          Comprando dividido en las tiendas con mejor precio de hoy.
+        </p>
+      </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" data-testid="compara">
           <thead>
             <tr className="text-left text-xs text-muted-foreground">
               <th className="py-1.5 pr-3 font-medium">Rubro</th>
@@ -55,9 +78,17 @@ export function ComparaPresupuesto({
             </tr>
           </thead>
           <tbody className="tabular-nums">
-            {presupuesto.map((r) => (
+            {filas.map((r) => (
               <tr key={r.nombre} className="border-t">
-                <td className="py-1.5 pr-3">{r.nombre}</td>
+                <td className="py-1.5 pr-3">
+                  {r.nombre}
+                  {r.tope === 0 && (
+                    <span className="text-muted-foreground">
+                      {" "}
+                      (sin presupuesto)
+                    </span>
+                  )}
+                </td>
                 <td className="px-3 text-right">{pesos(r.tope)}</td>
                 <td className="px-3 text-right">{pesos(r.gasto)}</td>
                 <td
@@ -72,33 +103,35 @@ export function ComparaPresupuesto({
                 </td>
               </tr>
             ))}
-            {fuera.map(([nombre, gasto]) => (
-              <tr key={nombre} className="border-t">
-                <td className="py-1.5 pr-3">{nombre} (sin presupuesto)</td>
-                <td className="px-3 text-right">—</td>
-                <td className="px-3 text-right">{pesos(gasto)}</td>
-                <td />
-              </tr>
-            ))}
           </tbody>
+          <tfoot>
+            <tr className="border-t font-semibold">
+              <td className="py-2 pr-3">Total</td>
+              <td className="px-3 py-2 text-right">
+                <ValorAnimado valor={totalPlan} />
+              </td>
+              <td className="px-3 py-2 text-right">
+                <ValorAnimado valor={totalLista} />
+              </td>
+              <td
+                className={
+                  totalLista > totalPlan
+                    ? "pl-3 py-2 text-right text-up-ink"
+                    : "pl-3 py-2 text-right text-save-ink"
+                }
+              >
+                {totalLista > totalPlan ? "+" : "−"}
+                <ValorAnimado valor={Math.abs(totalLista - totalPlan)} />
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
-      <p className="text-sm">
-        Total de tu lista dividida: <b>{pesos(optimo.total)}</b>
-        {optimo.faltantes.length > 0 && (
-          <span className="text-muted-foreground">
-            {" "}
-            (sin precio: {optimo.faltantes.length} productos)
-          </span>
-        )}
-      </p>
-      <ul className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3">
-        {Object.values(ESC).map((e) => (
-          <li key={e.n}>
-            {e.n}: {pesos(e.t)} al mes
-          </li>
-        ))}
-      </ul>
-    </div>
+      {optimo.faltantes.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Sin precio: {optimo.faltantes.length} productos.
+        </p>
+      )}
+    </section>
   );
 }
