@@ -117,61 +117,6 @@ export const PLANES: Record<IdPlan, Plan> = {
   },
 };
 
-/** Lista base semanal de la dieta: [producto, cantidad, precio del PDF]. */
-export const BASE: [string, string, number][] = [
-  ["Canastas de 30 huevos", "4 canastas", 60000],
-  ["Lechuga crespa", "9 unidades", 13500],
-  ["Pepino", "5 kg", 10000],
-  ["Tomate chonto", "4 kg", 14000],
-  ["Cebolla morada y blanca", "3,5 kg", 10500],
-  ["Pimentón", "3,5 kg", 14000],
-  ["Apio", "1 manojo", 3000],
-  ["Zanahoria", "1 kg", 2000],
-  ["Aguacate", "4 kg", 16000],
-  ["Piña", "1 unidad", 4000],
-  ["Mango", "1 kg", 3000],
-  ["Cilantro", "1 manojo", 2000],
-  ["Cebollín", "1 manojo", 2000],
-  ["Limón", "10 unidades", 3000],
-  ["Ajo", "2 cabezas", 2000],
-  ["Papa", "3 kg", 6000],
-  ["Pollo", "3 kg", 21000],
-  ["Res para desmechar", "1 kg", 15000],
-  ["Carne molida de res", "1 kg", 13000],
-  ["Cerdo (chuleta)", "1 kg", 9000],
-  ["Maicitos dulces", "2 paquetes", 4000],
-  ["Pastas 500 g", "5 paquetes", 7500],
-  ["Leche líquida", "4 bolsas", 12000],
-  ["Yogurt griego mediano (D1)", "2 tarros", 14000],
-  ["Frijoles 500 g", "2 paquetes", 6000],
-  ["Lentejas 500 g", "4 paquetes", 12000],
-];
-/** Extras de la semana 1. */
-export const EXTRA: [string, string, number][] = [
-  ["Queso parmesano o costeño rallado", "250 g", 18000],
-  ["Queso crema", "2 tarros", 18000],
-  ["Garbanzos 500 g", "2 paquetes", 10000],
-  ["Sal 1 kg", "1 paquete", 3000],
-  ["Miel de abeja", "1 frasco", 15000],
-  ["Pasta de ajo", "1–2 frascos", 10000],
-  ["Paprika + pimentón molido", "1 paquete c/u", 8000],
-  ["Hierbas finas + orégano + pimienta", "1 paquete c/u", 9000],
-  ["Salsa de soya", "2 tarros", 12000],
-  ["Mayonesa + mostaza", "1 bolsa c/u", 14000],
-  ["Atún en lata", "4 latas", 16000],
-];
-/** Costo por porción de proteína, en pesos. */
-export const PROT: [string, number][] = [
-  ["Huevo (unidad)", 420],
-  ["Garbanzo 100 g", 500],
-  ["Lenteja 100 g", 600],
-  ["Atún (porción)", 4000],
-  ["Pollo 100 g", 7000],
-  ["Cerdo 100 g", 9000],
-  ["Res molida 100 g", 13000],
-  ["Res desmechar 100 g", 15000],
-];
-
 /**
  * Rubro del presupuesto al que pertenece un producto. Usa los mismos nombres
  * que los rubros editables del plan (`PRESUPUESTO_SUGERIDO_HOGAR`), para que la
