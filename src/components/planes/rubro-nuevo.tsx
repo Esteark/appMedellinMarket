@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { avisar } from "@/lib/avisos";
-import { agregarRubro, textoErrorRubro } from "@/lib/planes/rubros";
+import {
+  agregarRubro,
+  nombreLimpio,
+  textoErrorRubro,
+} from "@/lib/planes/rubros";
 import { usePlan } from "./plan-provider";
 
 const MAX_MONTO = 10_000_000;
@@ -23,7 +27,7 @@ export function RubroNuevo() {
       orden: r.config.orden,
       grupos: r.config.grupos,
     });
-    avisar("rubro_agregado", { nombre: nombre.trim() });
+    avisar("rubro_agregado", { nombre: nombreLimpio(nombre) ?? nombre });
     setNombre("");
     setMonto("");
     setError(null);

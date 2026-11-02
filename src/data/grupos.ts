@@ -12,6 +12,11 @@ export const BASICOS = [
 ];
 export const ANTOJOS = ["Mecato", "Bebidas", "Gourmet"];
 
+/** Todos los grupos de fábrica, en el orden en que se muestran en español. */
+export const GRUPOS_DE_PRODUCTO = [...BASICOS, ...ANTOJOS].sort((a, b) =>
+  a.localeCompare(b, "es"),
+);
+
 /** Color de cada grupo en el gráfico de gasto (GCOL del artifact). */
 export const COLOR_GRUPO: Record<string, string> = {
   Frutas: "#F97316",

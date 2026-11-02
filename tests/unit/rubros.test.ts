@@ -5,10 +5,12 @@ import {
   agregarRubro,
   asignarGrupo,
   gastoPorRubro,
+  gruposDe,
   moverRubro,
   quitarGrupo,
   quitarRubro,
   renombrarRubro,
+  restaurarRubro,
   rubroDeProducto,
   rubrosOrdenados,
 } from "@/lib/planes/rubros";
@@ -283,5 +285,61 @@ describe("gastoPorRubro", () => {
     expect(suma(gastoPorRubro(c, productos, lista, tiendaDe))).toBe(
       suma(gastoPorRubro(base, productos, lista, tiendaDe)),
     );
+  });
+});
+
+describe("restaurarRubro", () => {
+  const quitado = (c: ConfigPlan, nombre: string) => ({
+    nombre,
+    monto: c.rubros[nombre],
+    posicion: rubrosOrdenados(c).indexOf(nombre),
+    grupos: gruposDe(c, nombre),
+  });
+
+  it("vuelve a poner el rubro en su lugar, con monto y grupos", () => {
+    const previo = quitado(base, "Frutas");
+    const sin = ok(quitarRubro(base, "Frutas"));
+    const vuelta = ok(restaurarRubro(sin, previo));
+    expect(rubrosOrdenados(vuelta)).toEqual(rubrosOrdenados(base));
+    expect(vuelta.rubros.Frutas).toBe(base.rubros.Frutas);
+    expect(rubroDeProducto(vuelta, { id: "x", grupo: "Frutas" })).toBe(
+      "Frutas",
+    );
+  });
+
+  it("no pisa lo que se editó después de quitarlo", () => {
+    const previo = quitado(base, "Frutas");
+    let c = ok(quitarRubro(base, "Frutas"));
+    c = { ...c, rubros: { ...c.rubros, Granos: 111000 } };
+    c = ok(renombrarRubro(c, "Carnes", "Proteína"));
+    c = ok(agregarRubro(c, "Mascotas", 5000));
+    const vuelta = ok(restaurarRubro(c, previo));
+    expect(vuelta.rubros.Granos).toBe(111000);
+    expect(vuelta.rubros.Proteína).toBe(base.rubros.Carnes);
+    expect(vuelta.rubros.Mascotas).toBe(5000);
+    expect(vuelta.rubros.Frutas).toBe(base.rubros.Frutas);
+  });
+
+  it("no le quita a otro rubro un grupo que ya cuenta", () => {
+    const previo = quitado(base, "Mecato");
+    let c = ok(quitarRubro(base, "Mecato"));
+    c = ok(agregarRubro(c, "Mascotas"));
+    const r = asignarGrupo(c, "Mascotas", "Mecato");
+    if (!r.ok) throw new Error("debía poder");
+    const vuelta = ok(restaurarRubro(r.config, previo));
+    expect(gruposDe(vuelta, "Mecato")).toEqual([]);
+    expect(rubroDeProducto(vuelta, { id: "x", grupo: "Mecato" })).toBe(
+      "Mascotas",
+    );
+  });
+
+  it("rechaza si el nombre ya existe de nuevo", () => {
+    const previo = quitado(base, "Frutas");
+    const sin = ok(quitarRubro(base, "Frutas"));
+    const otra = ok(agregarRubro(sin, "frutas"));
+    expect(restaurarRubro(otra, previo)).toEqual({
+      ok: false,
+      error: "repetido",
+    });
   });
 });

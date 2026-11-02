@@ -30,7 +30,7 @@ export function Bombilla() {
   useEffect(() => {
     if (!menu) return;
     const tecla = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || e.defaultPrevented) return;
       setMenu(false);
       boton.current?.focus();
     };

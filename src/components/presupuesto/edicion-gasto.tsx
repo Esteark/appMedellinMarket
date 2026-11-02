@@ -29,6 +29,9 @@ type Props = {
   alGuardar: (cambios: CambiosGasto) => Promise<string | null>;
 };
 
+/** Igual que el tope de `editarGasto`. */
+const MAX_CANTIDAD = 100_000;
+
 const CAMPO =
   "mt-1 w-full rounded-[10px] border border-input bg-background px-2 py-1.5";
 
@@ -55,6 +58,11 @@ export function EdicionGasto(props: Props) {
     e.preventDefault();
     const monto = Number(campos.monto);
     const cantidad = campos.cantidad.trim() ? Number(campos.cantidad) : null;
+    // Vaciar el campo da `monto = 0`: sin esto un gasto de $45.000 se guardaría en $0 sin avisar.
+    if (!campos.monto || !(monto > 0))
+      return setError("Escribe el monto del gasto.");
+    if (cantidad !== null && cantidad > MAX_CANTIDAD)
+      return setError("La cantidad máxima es 100.000.");
     if (
       !campos.fecha ||
       !campos.rubro ||
@@ -89,6 +97,7 @@ export function EdicionGasto(props: Props) {
           onSubmit={guardar}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
+              e.preventDefault(); // quien escucha Esc en `document` lo respeta (hoja, tutorial)
               e.stopPropagation();
               props.alCancelar();
             }

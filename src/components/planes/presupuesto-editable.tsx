@@ -6,9 +6,11 @@ import type { ConfigPlan } from "@/lib/planes/config";
 import {
   gruposDe,
   moverRubro,
+  nombreLimpio,
   OTROS,
   quitarRubro,
   renombrarRubro,
+  restaurarRubro,
   rubrosOrdenados,
 } from "@/lib/planes/rubros";
 import { usePlan } from "./plan-provider";
@@ -30,6 +32,8 @@ export function PresupuestoEditable({ grupos }: { grupos: string[] }) {
   // «Deshacer» corre más tarde: debe usar el plan de ese momento, no el de cuando se quitó el rubro.
   const cambiarActual = useRef(cambiar);
   cambiarActual.current = cambiar;
+  const configActual = useRef(config);
+  configActual.current = config;
 
   const nombres = rubrosOrdenados(config);
   const total = nombres.reduce((t, r) => t + config.rubros[r], 0);
@@ -52,12 +56,17 @@ export function PresupuestoEditable({ grupos }: { grupos: string[] }) {
     if (!res.ok) return res.error;
     if (res.config === config) return null;
     cambiar(soloRubros(res.config));
-    avisar("rubro_renombrado", { de, a: a.trim().replace(/\s+/g, " ") });
+    avisar("rubro_renombrado", { de, a: nombreLimpio(a) ?? a });
     return null;
   };
 
   const quitar = (r: string) => {
-    const antes = config;
+    const previo = {
+      nombre: r,
+      monto: config.rubros[r],
+      posicion: nombres.indexOf(r),
+      grupos: gruposDe(config, r),
+    };
     const res = quitarRubro(config, r);
     if (!res.ok) return;
     cambiar(soloRubros(res.config));
@@ -66,7 +75,11 @@ export function PresupuestoEditable({ grupos }: { grupos: string[] }) {
       { nombre: r },
       {
         texto: "Deshacer",
-        alPulsar: () => cambiarActual.current(soloRubros(antes)),
+        // Solo vuelve este rubro; lo que se editó después se conserva.
+        alPulsar: () => {
+          const vuelta = restaurarRubro(configActual.current, previo);
+          if (vuelta.ok) cambiarActual.current(soloRubros(vuelta.config));
+        },
       },
     );
   };

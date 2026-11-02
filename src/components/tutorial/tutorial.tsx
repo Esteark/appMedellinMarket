@@ -59,7 +59,7 @@ export function Tutorial() {
   useEffect(() => {
     if (!activo) return;
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cierre.current();
+      if (e.key === "Escape" && !e.defaultPrevented) cierre.current();
     };
     document.addEventListener("keydown", tecla);
     return () => document.removeEventListener("keydown", tecla);

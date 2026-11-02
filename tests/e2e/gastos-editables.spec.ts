@@ -227,6 +227,26 @@ test.describe("tabla de gastos editable", () => {
     ).toContainText("5.000");
   });
 
+  test("monto vacío o cantidad sobre el tope no se guardan y lo dicen", async ({
+    page,
+  }) => {
+    const nota = `gasto ${Date.now()}`;
+    const fila = await agregarGastoManual(page, "45000", nota);
+    await fila.getByRole("button", { name: /^Editar / }).click();
+    const t = tabla(page);
+    await t.getByLabel("Monto", { exact: true }).fill("");
+    await t.getByRole("button", { name: "Guardar" }).click();
+    await expect(t.getByRole("alert")).toContainText("Escribe el monto");
+    await t.getByLabel("Monto", { exact: true }).pressSequentially("45000");
+    await t.getByLabel("Cantidad").fill("200000");
+    await t.getByRole("button", { name: "Guardar" }).click();
+    await expect(t.getByRole("alert")).toContainText("100.000");
+    await t.getByRole("button", { name: "Cancelar" }).click();
+    await expect(t.getByRole("row").filter({ hasText: nota })).toContainText(
+      "45.000",
+    );
+  });
+
   test("con sesión: el cambio llega a la cuenta y vuelve al recargar", async ({
     page,
   }) => {

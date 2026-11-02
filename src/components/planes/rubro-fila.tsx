@@ -51,6 +51,7 @@ export function RubroFila(props: Props) {
             }}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
+                e.preventDefault(); // quien escucha Esc en `document` lo respeta
                 e.stopPropagation();
                 setModo("ver");
                 setError(null);

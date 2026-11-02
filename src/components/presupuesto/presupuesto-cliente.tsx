@@ -326,7 +326,10 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
       guardarGastosLocal(gastos.map((x) => (x.id === g.id ? nuevo : x)));
     else {
       guardarGastosLocal(gastos.filter((x) => x.id !== g.id));
-      guardarGastosMes(nuevo.mes, [nuevo, ...leerGastosMes(nuevo.mes)]);
+      guardarGastosMes(nuevo.mes, [
+        nuevo,
+        ...leerGastosMes(nuevo.mes).filter((x) => x.id !== nuevo.id),
+      ]);
     }
     avisar("gasto_editado");
     return null;

@@ -92,8 +92,13 @@ for (const ruta of RUTAS) {
         page.getByRole("button", { name: "Quitar Otros" }),
       ).toHaveCount(0);
 
+      // Se edita otro rubro antes de deshacer: «Deshacer» no debe pisarlo.
+      const granos = page.getByLabel("Presupuesto de Granos");
+      await granos.fill("111000");
+
       await page.getByRole("button", { name: "Deshacer" }).click();
       await expect(page.getByTestId("rubro-Carnes")).toBeVisible();
+      await expect(granos).toHaveValue("111000");
       await expect(campo).toHaveValue(monto);
       expect((await orden(page)).indexOf("Carnes")).toBe(posicion);
     });

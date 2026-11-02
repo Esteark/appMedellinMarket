@@ -65,8 +65,8 @@ export function gruposDe(config: ConfigPlan, rubro: string): string[] {
   return config.grupos?.[rubro] ?? GRUPOS_DE_FABRICA[rubro] ?? [];
 }
 
-/** Valida y recorta un nombre de rubro; `null` si no sirve. */
-function limpiar(nombre: string): string | null {
+/** Recorta y colapsa espacios; `null` si el nombre de rubro no sirve (2 a 40 caracteres). */
+export function nombreLimpio(nombre: string): string | null {
   const n = nombre.trim().replace(/\s+/g, " ");
   return n.length >= 2 && n.length <= MAX_NOMBRE_RUBRO ? n : null;
 }
@@ -82,7 +82,7 @@ export function agregarRubro(
   nombre: string,
   monto = 0,
 ): ResultadoRubro {
-  const n = limpiar(nombre);
+  const n = nombreLimpio(nombre);
   if (!n) return falla("nombre_invalido");
   if (normalizarNombre(n) === normalizarNombre(OTROS))
     return falla("reservado");
@@ -109,7 +109,7 @@ export function renombrarRubro(
 ): ResultadoRubro {
   if (!(de in config.rubros)) return falla("no_existe");
   if (de === OTROS) return falla("reservado");
-  const n = limpiar(a);
+  const n = nombreLimpio(a);
   if (!n) return falla("nombre_invalido");
   if (normalizarNombre(n) === normalizarNombre(OTROS))
     return falla("reservado");
@@ -145,6 +145,46 @@ export function quitarRubro(
       rubros,
       orden: rubrosOrdenados(config).filter((r) => r !== nombre),
       grupos,
+    },
+  };
+}
+
+/** Lo que hace falta para volver a poner un rubro quitado. */
+export type RubroQuitado = {
+  nombre: string;
+  monto: number;
+  /** Lugar que ocupaba en el orden. */
+  posicion: number;
+  grupos: string[];
+};
+
+/**
+ * «Deshacer» de quitar: vuelve a poner solo ese rubro sobre el plan de ahora, sin tocar lo que se
+ * editó después. Sus grupos regresan salvo los que otro rubro ya cuenta (un grupo, un solo rubro).
+ */
+export function restaurarRubro(
+  config: ConfigPlan,
+  previo: RubroQuitado,
+): ResultadoRubro {
+  const { nombre } = previo;
+  if (nombre in config.rubros || choca(config, nombre))
+    return falla("repetido");
+  if (Object.keys(config.rubros).length >= MAX_RUBROS) return falla("limite");
+  const orden = rubrosOrdenados(config);
+  orden.splice(Math.min(previo.posicion, orden.length), 0, nombre);
+  const ocupados = new Set(
+    Object.keys(config.rubros).flatMap((r) => gruposDe(config, r)),
+  );
+  return {
+    ok: true,
+    config: {
+      ...config,
+      rubros: { ...config.rubros, [nombre]: previo.monto },
+      orden,
+      grupos: {
+        ...config.grupos,
+        [nombre]: previo.grupos.filter((g) => !ocupados.has(g)),
+      },
     },
   };
 }
