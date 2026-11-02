@@ -1156,7 +1156,7 @@
       "src/components/campo-moneda.tsx",
       "tests/unit/moneda.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E46-T2",
