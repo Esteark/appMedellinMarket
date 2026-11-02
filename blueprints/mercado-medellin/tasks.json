@@ -1178,9 +1178,10 @@
     ],
     "checkpoint": "paso-46b",
     "files": [
-      "src/components/presupuesto/presupuesto-cliente.tsx"
+      "src/components/presupuesto/presupuesto-cliente.tsx",
+      "tests/e2e/gastos-editables.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E46-T3",

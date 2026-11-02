@@ -6,6 +6,7 @@ import {
   eliminarGasto,
   listarGastos,
 } from "@/app/presupuesto/acciones";
+import { CampoMoneda } from "@/components/campo-moneda";
 import { ImportarFactura } from "@/components/importar/importar-factura";
 import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
@@ -562,11 +563,11 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                 ))}
               </span>
             </label>
-            <label className="text-sm">
+            <div className="text-sm">
               <span className="flex items-center justify-between">
-                <span>
+                <label htmlFor="precio-gasto">
                   {form.usarTotal ? "Precio total" : "Precio por unidad"}
-                </span>
+                </label>
                 <button
                   type="button"
                   onClick={() =>
@@ -578,39 +579,32 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                 </button>
               </span>
               {form.usarTotal ? (
-                <input
-                  type="number"
-                  min={0}
+                <CampoMoneda
+                  id="precio-gasto"
                   value={form.precioTotal}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, precioTotal: e.target.value }))
-                  }
-                  className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+                  onChange={(v) => setForm((f) => ({ ...f, precioTotal: v }))}
+                  className="mt-1 w-full min-w-0 flex-1 rounded-[10px] border px-2 py-1.5"
                 />
               ) : (
-                <input
-                  type="number"
-                  min={0}
+                <CampoMoneda
+                  id="precio-gasto"
                   value={form.precioUnitario}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, precioUnitario: e.target.value }))
+                  onChange={(v) =>
+                    setForm((f) => ({ ...f, precioUnitario: v }))
                   }
-                  className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+                  className="mt-1 w-full min-w-0 flex-1 rounded-[10px] border px-2 py-1.5"
                 />
               )}
-            </label>
-            <label className="text-sm">
-              Monto total
-              <input
-                type="number"
-                min={0}
+            </div>
+            <div className="text-sm">
+              <label htmlFor="monto-gasto">Monto total</label>
+              <CampoMoneda
+                id="monto-gasto"
                 value={form.monto}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, monto: e.target.value }))
-                }
-                className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
+                onChange={(v) => setForm((f) => ({ ...f, monto: v }))}
+                className="mt-1 w-full min-w-0 flex-1 rounded-[10px] border px-2 py-1.5"
               />
-            </label>
+            </div>
             <label className="text-sm">
               Nota / detalle
               <input
@@ -705,25 +699,15 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                   <tr key={f.rubro} className="border-t">
                     <td className="py-1.5 pr-2">{f.rubro}</td>
                     <td className="px-2 text-right">
-                      <input
-                        type="number"
-                        min={0}
-                        step={1000}
-                        inputMode="numeric"
+                      <CampoMoneda
                         aria-label={`Presupuesto de ${f.rubro}`}
-                        value={f.presupuestado || ""}
+                        value={f.presupuestado ? String(f.presupuestado) : ""}
                         placeholder="0"
-                        onChange={(e) =>
+                        onChange={(v) =>
                           guardarRubros(
                             rubros.map((r) =>
                               r.rubro === f.rubro
-                                ? {
-                                    ...r,
-                                    monto: Math.max(
-                                      0,
-                                      Number(e.target.value) || 0,
-                                    ),
-                                  }
+                                ? { ...r, monto: Number(v) || 0 }
                                 : r,
                             ),
                           )
