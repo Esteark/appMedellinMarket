@@ -25,6 +25,13 @@ La app compara los precios de 144 productos de mercado en **5 tiendas de Medell�
 - **Tienda/Carnicería de barrio con catálogo propio:** es la única fuente que nace sin ningún dato. Trae un catálogo inicial de 41 productos (17 proteínas, 12 lácteos, 7 panadería y 5 de despensa) que se completa y se edita a mano; todos sus precios se anotan con la misma corrección del paso 27 y tienen alertas de vencimiento (14 días para diarios, 30 para semanales) para recordar actualizarlos.
 - **Tutorial animado con GSAP:** un recorrido guiado sección por sección que ilumina solo la parte de la pantalla que explica, aparece una vez por dispositivo y se puede repetir desde un botón de bombilla abajo a la izquierda o desde "Ver tutorial" en Ayuda.
 
+**Desde el paso 40 (2-nov-2026) suma:**
+- **Hogar editable desde el primer campo:** la pestaña abre con los montos editables (personas, aportantes y los 11 rubros), el total y el reparto se recalculan y animan al escribir, y la tabla estática duplicada del artifact desaparece. La comparación "tu lista vs. el presupuesto" usa los mismos rubros editables, así que hay un solo desglose en toda la pantalla.
+- **Presupuestos del hogar guardados con nombre:** se pueden guardar varios escenarios (por ejemplo "Octubre", "Quincena", "Con visitas") y cargar uno para volverlo el plan activo. Con sesión viven en `planes_guardados`; sin sesión, en el dispositivo. Al iniciar sesión se fusionan por nombre sin perder lo local.
+
+**Desde el paso 41 (2-nov-2026) suma:**
+- **Importar sin botar filas:** los prompts de listas y facturas piden escribir la mejor lectura y **preguntar en la columna `duda`** lo que no se entienda, en vez de descartar la línea. La app acepta cabeceras equivalentes, columnas opcionales, `;` o tabulador, fracciones, `$`/miles, `dd/mm/aaaa` y sinónimos de unidad; las filas con duda se revisan y corrigen en pantalla, y una factura no se guarda hasta completar o quitar las filas incompletas.
+
 - La lectura es pública, sin sesión.
 - El registro es abierto, con email y contraseña.
 - **Objetivo n.º 1:** que la base de datos se actualice sola y que ningún fallo pase en silencio.
@@ -81,7 +88,7 @@ src/components/          catalogo/, carrito/, detalle/, graficos/, planes/, pres
                          tiendas/, anotados/, listas/, precios/, tutorial/, avisos/, ui/ (shadcn)
 src/lib/                 supabase/{server,client,tipos}.ts,
                          precios/{lista,etiquetas,pronostico,planes,secciones,exportar}.ts,
-                         listas/guardadas.ts, planes/config.ts, tutorial/*, alertas/reglas.ts,
+                         listas/guardadas.ts, planes/{config,guardados}.ts, tutorial/*, alertas/reglas.ts,
                          presupuesto/*, importar/{csv,hash,emparejar,prompt,tipos,lista,prompt-lista,grupos,factura}.ts,
                          tiendas/fusion.ts, unidades.ts, fecha.ts, datos.ts
 src/corrida/             orquestador.ts, normalizar.ts, admin.ts, alertas-usuario.ts, correo.ts,
@@ -215,8 +222,9 @@ alter publication supabase_realtime add table alertas;
 | 33 | — | sin migración: tutorial en el cliente |
 | 34 | `…_importar_compras.sql` | `importaciones_gastos`, `importacion_cambios`, `producto_alias`, `tienda_alias`, `producto_codigo`; `gastos_reales.cantidad/descripcion/lote_importacion` y `origen='importado'`; `precios_manuales_historial.origen/cantidad/total/promocion/importacion_id`; escritura global de `tiendas`/`productos` con `nombre_norm`, `origen`, `revisado` y auditoría; `historial_minimo` sin promociones; `catalogo_tienda` sin el candado de `barrio`; funciones `normalizar_nombre`, `slug_tienda`, `crear_tienda`, `crear_producto`, `emparejar_producto`, `previsualizar_compra`, `importar_compra`, `deshacer_importacion` |
 | 35 | `…_fusionar_productos.sql` | tabla `fusiones_productos` y función `fusionar_productos(text, text)` (mueve precios, historial, gastos, catálogo, alias, códigos y las listas y planes que apuntaban al origen, y borra el origen) |
+| 40 | `20261102134654_planes_guardados.sql` | tabla `planes_guardados` (copias con nombre del presupuesto de Hogar/Dieta); `unique (user_id, tipo, nombre_clave)` con `nombre_clave` generada como `lower(btrim(nombre))`; RLS por usuario y `revoke`/`grant` explícitos |
 
-`precio_efectivo` no cambia: la corrección a mano sigue viviendo en `anotados`, así que la regla de precio efectivo de §5 se cumple sin tocar la vista. **`listas.tienda_preferida` pasa de `'exito'` a `'d1'`**: la columna se creó con default `'exito'` en `0001_esquema.sql` y, al retirar Éxito, ese valor quedaría apuntando a una tienda inexistente. La migración del paso 31 actualiza las filas existentes y cambia el default; `src/corrida/alertas-usuario.ts` deja de caer en `"exito"` y cae en `"d1"`. Después de cada migración se corre `pnpm gen:tipos`; mientras `tipos.ts` no incluya una tabla nueva, la server action la consulta con el molde explícito que ya usa `presupuesto/acciones.ts`.
+`precio_efectivo` no cambia: la corrección a mano sigue viviendo en `anotados`, así que la regla de precio efectivo de §5 se cumple sin tocar la vista. **`listas.tienda_preferida` pasa de `'exito'` a `'d1'`**: la columna se creó con default `'exito'` en `0001_esquema.sql` y, al retirar Éxito, ese valor quedaría apuntando a una tienda inexistente. La migración del paso 31 actualiza las filas existentes y cambia el default; `src/corrida/alertas-usuario.ts` deja de caer en `"exito"` y cae en `"d1"`. Después de cada migración se corre `pnpm gen:tipos`; mientras `tipos.ts` no incluya una tabla nueva, la server action la consulta con el molde explícito que ya usa `presupuesto/acciones.ts`. `planes_guardados` no reemplaza a `planes_usuario`: el plan activo sigue siendo uno por tipo y "Cargar" una copia con nombre solo lo actualiza.
 
 ## 5. Reglas de negocio (exactas)
 
@@ -254,8 +262,10 @@ alter publication supabase_realtime add table alertas;
 - Todas las escrituras son globales e inmediatas. `creado_por` y `creado` quedan en tiendas y productos; no hay perfiles, así que la UI no muestra nombres de persona.
 - `/tiendas` es la pantalla de gestión; `/anotados` solo muestra tiendas con al menos un precio en `precio_efectivo`, salvo las automáticas (`manual = false`), que se muestran siempre para que una fuente caída no borre su columna.
 
-**Importación de una factura (CSV) (paso 34).**
-- Contrato: cabecera mínima `producto,cantidad,precio_total,tienda`; al final se aceptan `fecha` y `codigo` (opcionales, en ese orden). UTF-8, una fila por línea de la factura, sin totales ni columnas extra. Se toleran BOM, CRLF, `;` y coma decimal; el resto se rechaza con el número de línea.
+**Importación de una factura (CSV) (paso 34, tolerante desde el paso 41).**
+- Contrato: cabecera `producto,cantidad,precio_total,tienda` y, al final, `fecha,codigo,duda` (opcionales). Se aceptan nombres equivalentes (`descripcion`, `precio`, `valor`, `pregunta`…), columnas opcionales al final, `,`/`;`/tabulador, BOM, CRLF, comillas, vallas de markdown, `$`/miles, coma decimal, fracciones y fechas `dd/mm/aaaa`. Una fila incompleta no bota el archivo: se recupera con su `duda` y la persona la corrige o la quita en la revisión.
+- La columna `duda` es una pregunta corta por fila ("¿El precio era 12.500 o 1.250?"). La IA no descarta la línea: escribe su mejor lectura y pregunta; si no puede ni nombrar el producto, la deja como `# DUDOSA:` y las demás filas se cargan igual.
+- "Guardar importación" se habilita solo cuando todas las filas tienen producto, tienda, cantidad y precio ≥ 1. Una fila incompleta se corrige en la revisión o se quita con "Quitar fila"; una duda no bloquea si los datos están completos.
 - Un CSV puede traer varias facturas: se agrupa por `tienda` + `fecha`. `fecha` vacía usa la fecha del lote; `codigo` vacío no aporta nada.
 - `cantidad` es informativa para el gasto y **base del precio**: el precio de tienda es `round(precio_total / cantidad)`. Así "3 × 2.500" guarda 2.500, y "1.25 kg por 18.750" guarda 15.000/kg.
 - El precio se registra con la **fecha de la factura** y no pisa uno más nuevo de esa tienda; siempre queda en `precios_manuales_historial` con `origen = 'compra'`, cantidad y total. Si ya había uno más nuevo, el import lo informa en el resultado.
@@ -270,6 +280,12 @@ alter publication supabase_realtime add table alertas;
 - "Deshacer importación" restaura los precios que el lote pisó, solo si nadie los cambió después (si cambiaron, los deja y lo dice), y borra sus gastos. Las tiendas y productos creados quedan en el catálogo.
 - Efecto conocido: los precios importados entran a `precio_efectivo` y a `historial_minimo`, así que cambian totales, mejor tienda, alertas y pronóstico para todos. La revisión lo dice antes de guardar; el lote no genera alertas por sí mismo.
 
+**Importación de una lista (CSV) (paso 36, tolerante desde el paso 41).**
+- Contrato: `lista,producto,cantidad,unidad,nota,duda`; solo `producto` es obligatorio. `lista` vacía = «Lista importada», `cantidad` vacía = `1`, `unidad` vacía = `u`.
+- Se aceptan cabeceras equivalentes (`seccion`, `articulo`, `cant`, `medida`…), `,`/`;`/tabulador, fracciones (`1/2`, `1 1/2`, `½`), coma decimal y sinónimos de unidad (`kilos`, `gramos`, `litros`, `unidades`; `docena` = 12 u). Una cantidad o unidad rara no descarta la fila: queda con `duda` y la persona la corrige en la revisión.
+- `duda` se muestra como "Pregunta:" junto a la fila. Nombre, cantidad, unidad y cantidad de compra son editables antes de usar o guardar la lista; una fila con duda no bloquea las demás.
+- El prompt pide no descartar líneas, escribir la mejor lectura y preguntar lo que no se entiende. Una línea irreconocible va como `# DUDOSA:` y se muestra como aviso, sin botar el archivo.
+
 **Listas guardadas.** Una lista guardada es un nombre y una copia de la lista activa:
 - Nombre de 1 a 60 caracteres, único por cuenta sin distinguir mayúsculas ni espacios sobrantes. Repetirlo avisa `nombre_repetido` y no guarda.
 - Máximo 20 listas por cuenta y 200 ítems por lista. Al llegar al tope, "Guardar" queda deshabilitado y avisa `limite_listas`.
@@ -278,10 +294,19 @@ alter publication supabase_realtime add table alertas;
 - Guardar no vacía la lista activa ni la marca como comprada.
 
 **Hogar y Dieta editables.** Se editan los rubros del presupuesto, las personas y aportantes del reparto, las cantidades de los ítems del plan, los productos propios y una nota (≤1000 caracteres). Las tablas de referencia del artifact y los precios siguen de solo lectura.
+- **Una sola fuente de montos:** `config.rubros` alimenta el resumen, los rubros editables y la comparación "tu lista vs. el presupuesto". La tabla estática duplicada del artifact (`HogarTablas`) se retiró en el paso 40 porque mostraba tres desgloses distintos. Los 11 rubros de `PRESUPUESTO_SUGERIDO_HOGAR` se conservan para no migrar datos, y `rubroDe` mapea los grupos del catálogo a esos mismos rubros (huevos → Carnes, tubérculos y verduras → Verduras, frutas → Frutas, mecato → Mecato).
 - Config en `planes_usuario.config` (jsonb, versión 1, validado con zod). Con sesión en Supabase; sin sesión, en `mercado-medellin:plan:{hogar|dieta}`.
 - Al iniciar sesión gana el lado con `actualizada` más reciente; lo que se reemplaza queda una semana en `mercado-medellin:plan:{tipo}:respaldo`. Si gana lo local, sale `plan_restaurado` con "Deshacer" (vuelve lo de la nube).
 - Los rubros del plan **no** son el presupuesto mensual de `/presupuesto`: ese sigue en `presupuestos_mensuales`, y la UI lo dice.
 - El plan no escribe en la lista activa hasta que se pulsa "Usar como mi lista" o "Sumar a mi lista".
+
+**Presupuestos del hogar guardados.** Son copias con nombre del plan activo para comparar escenarios; no reemplazan al plan activo.
+- Nombre de 1 a 60 caracteres, único por cuenta y tipo sin distinguir mayúsculas ni espacios sobrantes (la base lo garantiza con `nombre_clave = lower(btrim(nombre))`). Guardar con un nombre existente lo reemplaza; no hay nombres repetidos.
+- Máximo 20 copias por tipo. Al llegar al tope, guardar avisa `limite_planes` y no escribe; la UI muestra el contador `N/20`.
+- "Cargar" copia esa configuración al plan activo (y lo guarda como cualquier edición); "Eliminar" borra la copia y ofrece "Deshacer". Guardar una copia **no** vacía ni cambia el plan activo.
+- Con sesión viven en `planes_guardados` (una fila por nombre); sin sesión, en `mercado-medellin:planes:{hogar|dieta}`. Al iniciar sesión se fusionan por nombre y gana la `actualizada` más reciente; lo local que no exista en la nube se conserva y se sube.
+- El conjunto completo se sincroniza con `sincronizarPlanes(tipo, planes)` (upsert por nombre y borrado de los que ya no están), con los mismos límites y validación zod en el servidor.
+
 
 **Pronóstico a 7 días.** Aplica solo a Frutas, Verduras y Tubérculos (40 productos) y responde una sola pregunta: ¿el precio sube, baja o se queda estable en los próximos 7 días?
 - Estadística determinista sobre la serie propia: 60 puntos de `serie_pronostico` (mínimo diario de `historial_minimo` más las filas de `precios_manuales_historial`), el clima de SIPSA de los últimos 7 días y el IPC de alimentos del DANE del último mes disponible. No usa IA ni LLM.
@@ -411,6 +436,10 @@ jobs:
 - Vacío: explica el botón flotante; sin sesión, una banda arriba dice "Estas listas viven en este dispositivo" con "Ingresar".
 - Los errores del límite y del nombre repetido se ven junto al campo, no solo en el toast.
 
+**Cargar listas e importar facturas (pasos 36 y 41):**
+- **Cargar lista desde texto:** el CSV se pega o se sube como `.csv`; la revisión muestra una sección por lista, con producto, cantidad, unidad y cantidad de compra editables, y la pregunta de cada fila con `duda`. "Usar como mi lista", "Sumar" y "Guardar" siguen disponibles aunque haya dudas; una fila incompleta se corrige o se omite.
+- **Importar factura:** la revisión muestra la pregunta de cada fila, marca las que faltan completar y permite "Quitar fila". "Guardar importación" se deshabilita mientras haya filas incompletas y dice cuántas faltan; una duda no bloquea una fila completa. El error de cabecera se distingue de los avisos de fila.
+
 **Anotados:**
 - Tabla producto × tienda, incluidas las manuales, con el precio más bajo resaltado en azul.
 - **Tienda/Carnicería de barrio** no entra en esa matriz: tiene su propia vista `/anotados/barrio` y un enlace destacado arriba de `/anotados` ("Tienda/Carnicería: N/41 con precio · M por actualizar"). En la matriz general solo aparece como una columna más si ya tiene precios; si no, se muestra "sin dato" y un enlace a su vista.
@@ -425,10 +454,16 @@ jobs:
 - Sin sesión se ve el catálogo y los precios, pero el ✎ lleva a `/ingresar`; la banda lo dice.
 - El estado vacío explica que esta tienda se arma a mano y que ningún precio se inventa.
 
-**Hogar y Dieta:** el contenido sale de `data/origen/*`, portado a `src/data/planes.ts`. Tienen botones "Usar como mi lista" y "Sumar a mi lista".
-- Editables: cada rubro es un `input` numérico y el total, el reparto por persona y por aportante y la comparación con la lista se recalculan al escribir (debounce 300 ms, guardado aparte).
-- "Ítems del plan" con stepper; "productos propios" (nombre + precio estimado, tope 50); nota con contador de 1000; "Volver al sugerido" confirma en línea.
+**Hogar y Dieta:** el contenido sale de `data/origen/*`, portado a `src/data/planes.ts`. Tienen botones "Usar como mi lista" y "Sumar a mi lista". La pestaña se lee de arriba abajo en este orden, sin tablas de referencia duplicadas (paso 40):
+1. **Resumen editable** (`RepartoInteractivo`): título, "¿Entre cuántas personas?", "¿Cuántos aportantes?" (solo Hogar) y "Volver al sugerido" con confirmación en línea. Tres tarjetas: total del mes (suma de rubros), lo que toca por persona y el aporte por trabajador. El sello de estado de guardado vive aquí.
+2. **Rubros del plan** (`PresupuestoEditable`): una fila por rubro con su `input` numérico (`aria-label="Presupuesto de {rubro}"`, 0–10.000.000) y el total al pie. Los rubros que agregó la persona van después de los 11 sugeridos.
+3. **Mis presupuestos guardados** (`MisPresupuestos`): un `<details>` cerrado con el contador `N/20`, el campo "Guardar el presupuesto actual como", el selector de copias con su total y "Cargar" / "Eliminar". Se abre solo cuando la persona lo pide, para no sumar ruido.
+4. **Productos del plan** (`PlanEditable`): ítems con stepper, "Agregar producto del catálogo…", productos propios (tope 50) y nota con contador de 1000; después "Usar como mi lista" / "Sumar a mi lista".
+5. **Comparación** (`ComparaPresupuesto`): "Tu lista vs. el presupuesto" con el mismo `config.rubros` y `rubroDe`; si no hay lista, muestra `sin-lista` con el enlace para armarla.
+
+Los montos del resumen, de los rubros y del reparto se animan con `ValorAnimado` (GSAP cuenta hasta el valor nuevo en 0,45 s y muestra pesos redondeados) y respetan `prefers-reduced-motion`. Cada cambio se guarda en el dispositivo al instante y, con sesión, en `planes_usuario` tras 800 ms de inactividad; "Volver al sugerido" confirma en línea antes de reemplazar todo.
 - Banda de estado de guardado: "Guardado en tu cuenta" · "Guardado en este dispositivo" · "Guardando…" · "Sin guardar". Con sesión y `planes_usuario` vacío, se sube lo local una vez y sale `plan_fusionado`.
+
 
 **Pronóstico (paso 30):**
 - Chip en la tarjeta solo para Frutas, Verduras y Tubérculos: "↑ 62 % · 7 días" con el color `up`, `save` o el neutro del texto, y un `aria-label` que dice la frase completa.
@@ -1020,6 +1055,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - `tests/unit/config-plan.test.ts`: rechaza `personas` 0 y 21, nota de 1001, 51 rubros, cantidad 1000 y `propios` de 51; `fusionarPlan` gana la más reciente y conserva el local si la nube viene vacía o corrupta.
   - pgTAP: A no lee ni escribe el plan de B; `tipo` fuera de `('hogar','dieta')` se rechaza.
   - Pasa el e2e `tests/e2e/planes-editables.spec.ts`: sin sesión, cambiar un rubro y recargar lo conserva; con sesión la banda dice "Guardado en tu cuenta"; con un local más nuevo que la nube aparece `plan_restaurado` y "Deshacer" repone el de la nube.
+- **Actualización del paso 40:** la pestaña pasa a abrir por lo editable, se retira la tabla estática duplicada y se agregan presupuestos con nombre en `planes_guardados`. Lo de este paso sigue vigente.
 
 **30. Pronóstico a 7 días (frutas, verduras y tubérculos).**
 - **Depende de:** pasos 27 (historial manual) y 7 (clima de SIPSA). **No agrega dependencias** (usa `exceljs` y Recharts que ya están).
@@ -2039,6 +2075,61 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - `tests/unit/lista-importar.test.ts`: el ejemplo de cada tipo de la sección «Casos» se lee sin errores y da las listas y cantidades esperadas; una fila sin cantidad ni unidad da `1 u`; un título de categoría no crea una lista aparte; `PROMPT_LISTA` sigue contenido en el `.md`.
   - El gate pasa. **Límite honesto:** la calidad real con cada IA y con fotos no se comprueba en pruebas; se mide a mano con listados reales (§11).
 
+**40. Hogar editable desde el primer campo y presupuestos guardados con nombre.** *(pedido del 2-nov-2026: la pestaña abre con contenido fijo y demasiado ruido; poder animar los montos y guardar varios presupuestos del hogar, con sesión y sin ella)*
+- **Depende de:** pasos 29 (plan editable y `planes_usuario`) y 23 (reparto y comparación). **Sin dependencias nuevas:** GSAP ya está para `ValorAnimado`. **Una migración nueva.**
+- **Migración `20261102134654_planes_guardados.sql`:**
+
+  ```sql
+  create table planes_guardados (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users on delete cascade,
+    tipo text not null check (tipo in ('hogar','dieta')),
+    nombre text not null check (char_length(btrim(nombre)) between 1 and 60),
+    -- permite el onConflict "user_id,tipo,nombre_clave" de PostgREST sin índice por expresión
+    nombre_clave text generated always as (lower(btrim(nombre))) stored,
+    config jsonb not null
+      check (jsonb_typeof(config) = 'object' and pg_column_size(config) <= 200000),
+    actualizada timestamptz not null default now(),
+    unique (user_id, tipo, nombre_clave)
+  );
+  alter table planes_guardados enable row level security;
+  create policy propia on planes_guardados for all to authenticated
+    using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  revoke all on planes_guardados from anon, authenticated;
+  grant select, insert, update, delete on planes_guardados to authenticated;
+  ```
+
+- **Hacer:**
+  - `src/app/hogar/page.tsx`: reordena la pestaña para que empiece por lo editable —resumen (personas, aportantes, montos) → rubros → presupuestos guardados → productos del plan → comparación— y deja de renderizar `HogarTablas`, que duplicaba el desglose mensual y los escenarios del artifact. El plan activo y la comparación usan **solo** `config.rubros`.
+  - `src/components/planes/valor-animado.tsx`: `ValorAnimado` con GSAP cuenta de un monto al siguiente en 0,45 s; el primer render coincide con el servidor (sin desajuste de hidratación) y con `prefers-reduced-motion` salta directo al valor final. Se usa en el total y el reparto de `RepartoInteractivo` y en el total de `PresupuestoEditable`.
+  - `src/components/planes/reparto-interactivo.tsx`: el resumen editable concentra el estado de guardado, el botón "Volver al sugerido" con confirmación en línea y las tres tarjetas animadas (total, por persona, por aportante). `PresupuestoEditable` mantiene una fila por rubro con `input` numérico y su total al pie.
+  - `src/lib/planes/guardados.ts` (puro): `PlanGuardado`, `normalizarNombre` (igual que `nombre_clave`), `leerGuardado`/`leerGuardados` (validan cada fila con `leerConfig` y descartan basura), `recortarGuardados` (máx. 20, más recientes primero), `fusionarGuardados` (une dispositivo y nube por nombre y gana la `actualizada` más reciente) y `huellaGuardados` (evita subir si no cambió nada). Clave local `mercado-medellin:planes:{hogar|dieta}` con `{ version: 1, planes }`.
+  - `src/components/planes/mis-presupuestos.tsx`: `<details>` compacto con contador `N/20`, campo para nombrar la copia actual, selector con el total de cada copia, "Cargar" y "Eliminar". Guardar con un nombre existente reemplaza; no se puede superar 20.
+  - `src/components/planes/plan-provider.tsx`: estado `guardados`, fusión al arrancar (local + nube) y CRUD `guardarComo`, `cargarGuardado` (vuelve la copia el plan activo y la guarda) y `eliminarGuardado` (con "Deshacer").
+  - `src/app/planes/acciones.ts`: `sincronizarPlanes(tipo, planes)` valida con zod (≤20, nombres únicos, `configPlan`), hace upsert por `user_id,tipo,nombre_clave` y borra las copias que ya no están. `src/lib/datos.ts` (`planGuardado`) devuelve también `guardados` de la cuenta, en paralelo con el plan activo.
+  - `src/data/planes.ts`: `rubroDe` se alinea con los 11 rubros de `PRESUPUESTO_SUGERIDO_HOGAR` (huevos → Carnes, tubérculos y verduras → Verduras, frutas → Frutas, mecato → Mecato). Se retiran `ESC`, `RUBROS` y `COLCHON`, que alimentaban la tabla eliminada. `src/components/planes/compara-presupuesto.tsx` usa `config.rubros` y `rubroDe`.
+  - `src/lib/avisos.ts`: `planes_fusionados`, `plan_guardado`, `plan_cargado`, `plan_eliminado` y `limite_planes`.
+- **Hecho cuando:**
+  - `tests/unit/planes-guardados.test.ts`: `normalizarNombre` recorta y baja a minúsculas; `leerGuardado` descarta nombre vacío, nombre de 61 y config inválida; `fusionarGuardados` une " Octubre " con "octubre" y conserva la más reciente; `recortarGuardados` deja 20 y ordena; `huellaGuardados` no depende del orden.
+  - pgTAP (`supabase/tests/planes_guardados.test.sql`): A solo ve su copia y no puede editar la de B; un `tipo` fuera de `hogar/dieta` se rechaza; el mismo nombre con espacios o mayúsculas choca con el índice único; `anon` no lee la tabla.
+  - E2E `tests/e2e/planes-guardados.spec.ts`: sin sesión, guardar "Quincena", cambiar Carnes, cargar la copia y recuperar el monto, y sobrevivir a una recarga; eliminar la copia deja el contador en 0. Con sesión, la copia vuelve aunque se borren las claves locales, y "Cargar" restaura sus montos.
+  - E2E `tests/e2e/planes-editables.spec.ts` y `tests/e2e/planes.spec.ts` siguen pasando: la pestaña conserva los 28 ítems, los botones "Usar como mi lista"/"Sumar a mi lista", la etiqueta "¿Entre cuántas personas?", `estado-guardado` y `compara`.
+  - `pnpm exec supabase db reset`, `pnpm migrar`, `pnpm gen:tipos`, el gate (`pnpm typecheck && pnpm lint && pnpm test`) y `pnpm test:e2e` pasan.
+
+**41. Importar sin botar filas: prompts tolerantes y preguntas por fila.** *(pedido del 2-nov-2026: los prompts eran demasiado restrictivos y descartaban casos fuera del patrón; que pregunten qué quiso decir la persona y carguen mejor la información)*
+- **Depende de:** pasos 34 (factura) y 36 (listas). **Sin migración y sin dependencias nuevas.**
+- **Hacer:**
+  - `src/lib/importar/prompt.ts` y `src/lib/importar/prompt-lista.ts`: cabecera con `duda` (7 columnas en facturas, 6 en listas); regla "nunca descartes una línea por duda: escribe tu mejor lectura y pregunta"; ejemplos de precio `0`, nombre partido, cantidad ambigua y línea irreconocible; `# DUDOSA:` solo cuando no se puede ni nombrar el producto. `prompts/importar-gastos.md` e `prompts/importar-lista.md` reproducen el mismo texto y agregan casos fuera de patrón.
+  - `src/lib/importar/csv.ts`: alias de cabecera (`descripcion`, `precio`, `valor`, `pregunta`…), columnas opcionales al final, delimitador `,`/`;`/tabulador, `aCantidad` (`1/2`, `1 1/2`, `½`), `aPrecio` (`$12.500`, `12.500,50`), `aFechaIso` (`dd/mm/aaaa`), recuperación por fila con `duda` y `precioTotal: 0`/`fecha: ""`; solo la cabecera inválida, el producto vacío, el archivo enorme y el exceso de filas cortan la lectura.
+  - `src/lib/importar/lista.ts`: alias (`seccion`, `articulo`, `cant`, `medida`…), unidades sinónimas (`kilos`, `gramos`, `litros`, `unidades`), docena = 12 u, recuperación de cantidad/unidad con `duda`, y `notas` para `# DUDOSA:`.
+  - `src/components/listas/cargar-lista.tsx` y `seccion-lista.tsx`: la revisión sigue aunque haya avisos; nombre, cantidad, unidad y cantidad de compra editables; muestra la pregunta y vuelve a emparejar al cambiar el nombre.
+  - `src/components/importar/importar-factura.tsx`, `revision.tsx` y `origen.tsx`: revisión parcial con las filas completas, `duda` visible, faltantes marcados, "Quitar fila" y bloqueo de "Guardar importación" mientras haya incompletas. La previsualización con sesión mapea por posición las filas completas enviadas (el RPC numera 1..N, no las líneas del CSV).
+- **Hecho cuando:**
+  - `tests/unit/importar.test.ts`: cabeceras equivalentes, columnas faltantes, `$`/miles, `dd/mm/aaaa`, precio/fecha recuperados con `duda`, `malo.csv` con 2 filas y dudas, y contrato del `.md`.
+  - `tests/unit/lista-importar.test.ts`: cabecera inválida real, cantidad/unidad recuperadas, fracciones/sinónimos/docena/dudas y los 7 casos del `.md`.
+  - E2E `tests/e2e/cargar-lista.spec.ts`: una fila con `1/2`/`kilos` y `duda` muestra la pregunta, se corrige y se usa. E2E `tests/e2e/importar.spec.ts`: precio `0` y tienda vacía bloquean el guardado, corregir una y quitar la otra lo habilita, y solo se guardan las 2 filas completas.
+  - `pnpm typecheck`, `pnpm lint`, `pnpm test` y los E2E de `cargar-lista` e `importar` pasan.
+
 ## 11. Lanzamiento (manual, con tus cuentas)
 
 1. **Proyecto en Supabase:** crearlo (plan gratis, región São Paulo), luego `pnpm exec supabase link`, `pnpm exec supabase db push` y `pnpm migrar` con las variables de producción.
@@ -2050,6 +2141,7 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 7. **Tiendas retiradas:** en el proyecto de producción, comprobar que `select count(*) from tiendas` da 5 y que `precios_actuales` tiene 432 filas; que `listas` y `listas_guardadas` no conservan `tienda_preferida` de una tienda retirada; y que el encabezado dice "X/3 fuentes OK". Si alguna tienda reaparece, el filtro `TIENDAS_RETIRADAS` de `scripts/migrar.ts` no se aplicó en la carga.
 8. **Importación y catálogo compartido:** con una cuenta real, subir `tests/importar/varias-tiendas.csv`, revisar que aparecen las dos tiendas y sus precios en `/tiendas` y en `/anotados` desde otro navegador; repetir el mismo archivo y comprobar `importacion_duplicada`; deshacer y verificar que los precios vuelven y los gastos desaparecen, y que el mismo archivo se puede volver a importar; fusionar un producto duplicado en `/tiendas` y comprobar que el precio y los gastos quedan en el destino. Sin sesión, el mismo CSV debe quedar solo en el dispositivo.
 9. **Barrio y tutorial en un dispositivo real:** entrar desde un celular nuevo y comprobar que el tutorial aparece una sola vez, que la bombilla está abajo a la izquierda, que no tapa "Guardar lista" ni la barra del carrito, y que "Reiniciar tutorial" lo vuelve a mostrar. En `/anotados/barrio`, comprobar que el progreso arranca en "0/41 con precio" y que un precio anotado desde el celular se ve en la web.
+10. **Presupuestos del hogar guardados:** en producción, con una cuenta real, guardar "Octubre" en `/hogar`, cambiar un rubro, guardar "Quincena" y comprobar que "Cargar" alterna entre los dos sin tocar el otro. Repetir en otro navegador con la misma cuenta para ver que vienen de la cuenta; sin sesión, comprobar que sobreviven a una recarga del dispositivo y que el contador no pasa de 20.
 
 ## 12. Riesgos
 
@@ -2094,3 +2186,12 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
 | Cualquier cuenta con sesión edita el catálogo que ven todos | El nombre es único, nada se borra sin fusionar, cada alta y cada edición deja `creado_por`/`creado`, la fusión queda auditada, los topes diarios frenan una carga masiva y la UI nunca ofrece "borrar" tiendas ni productos |
 | `fusionar_productos` es `security definer` y puede borrar un producto | Solo `authenticated` la ejecuta, mueve todas las filas hijas antes de borrar (una referencia inesperada aborta la transacción), la persona escribe el nombre del origen para confirmar y queda una fila en `fusiones_productos` con autor y fecha |
 | Un CSV repite el mismo producto en dos líneas o dos lotes el mismo día | El precio del día se pondera con la suma de cantidades y totales del lote; el gasto queda uno por línea; `importacion_cambios` guarda el valor anterior a todo el lote para que "deshacer" lo reponga completo |
+
+**42. Presupuesto claro: de dónde sale cada cifra y unidad/cantidad con opciones.** *(pedido del 2-nov-2026)*
+- **Sin migración y sin dependencias nuevas.** Solo `src/components/presupuesto/presupuesto-cliente.tsx` y este documento.
+- **Origen de las cifras del Resumen** (`compararPresupuestadoVsGastado` en `src/lib/presupuesto/calculos.ts`, puro):
+  - **Presupuestado** = suma de los `monto > 0` de los rubros que la persona escribe en la pestaña «Seguimiento por rubro» (columna «Presupuestado», un campo numérico por rubro, que lista siempre los 11 rubros aunque estén en 0). Se guarda en el dispositivo (`mercado-medellin:presupuesto:{hogar|dieta}`) y `SincronizarPresupuesto` lo sube a `presupuestos_mensuales` con sesión. **Antes no existía ningún campo para escribirlo y la cifra salía siempre en 0.** No viene del plan de Hogar/Dieta (`planes_usuario`); la UI lo dice debajo de la cifra.
+  - **Gastado** = suma de los gastos cuyo `mes` es el mes visible; **Restante** = `max(0, presupuestado − gastado)`.
+  - **Proyección fin de mes** = `round(gastado ÷ días transcurridos × días del mes)`: ritmo lineal, 0 el día 0. No es un pronóstico de precios (regla 10) ni usa IA. Debajo de la cifra la UI muestra la fórmula con los días reales.
+- **Agregar gasto:** «Unidad (opcional)» sigue siendo texto libre (máx. 10 caracteres) con `<datalist>` de sugeridas (`kg, lb, g, l, ml, und, docena, panal, paquete, bolsa, caja, botella, atado`); elegir un producto del catálogo la rellena. «Cantidad» sigue siendo numérica libre y suma chips predefinidos (`0.25, 0.5, 1, 2, 3, 6, 12`) que solo rellenan el campo.
+- **Hecho cuando:** el gate pasa; E2E `tests/e2e/presupuesto-claro.spec.ts`: fijar Carnes en 200000 se refleja en el Resumen, que muestra la fórmula de la proyección; escribir una unidad fuera de la lista se guarda tal cual y un chip de cantidad rellena el campo.

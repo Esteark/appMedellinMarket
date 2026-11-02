@@ -69,8 +69,20 @@ Convertir Hogar/Dieta en presupuestos editables y añadir seguimiento de gastos 
 - [x] Hacer los gráficos/reparto de Hogar/Dieta dinámicos (no estáticos). Añadir campo editable "¿Entre cuántas personas?" 
 - [x] El texto "entre X personas toca dividir..." / "a cada uno le corresponde..." debe recalcularse en tiempo real al cambiar presupuesto o nº de personas
 - [x] Debe reaccionar en toda la pestaña Hogar/Dieta; si se modifica el presupuesto/rubro o el número de personas se actualiza el reparto al instante
-- [ ] Partir de los valores actuales como base. Persistir configuración en `localStorage` y, si hay sesión, guardar/sobrescribir en DB (sin inventar valores) (localStorage hecho; falta DB, va con el paso 29 `planes_usuario`)
+- [x] Partir de los valores actuales como base. Persistir configuración en `localStorage` y, si hay sesión, guardar/sobrescribir en DB (sin inventar valores) (hecho en el paso 29 con `planes_usuario`; las copias con nombre llegan en el paso 40 con `planes_guardados`)
 - [x] Mantener coherencia con los montos del presupuesto Hogar/Dieta
+
+### 23.12 Hogar: editable desde el primer campo y presupuestos guardados
+- [x] Reordenar `/hogar`: resumen editable → rubros → presupuestos guardados → productos del plan → comparación
+- [x] Retirar la tabla estática duplicada (`HogarTablas`) y dejar `config.rubros` como única fuente
+- [x] Animar total y reparto con `ValorAnimado` (GSAP, respeta `prefers-reduced-motion`)
+- [x] Migración `planes_guardados` + RLS + pgTAP
+- [x] Lógica pura `src/lib/planes/guardados.ts` + tests unitarios
+- [x] Server action `sincronizarPlanes` y lectura de `guardados` en `planGuardado`
+- [x] UI `MisPresupuestos` y CRUD en `PlanProvider` (guardar, cargar, eliminar con Deshacer)
+- [x] Avisos `planes_fusionados`, `plan_guardado`, `plan_cargado`, `plan_eliminado`, `limite_planes`
+- [x] E2E `tests/e2e/planes-guardados.spec.ts` (con y sin sesión)
+- [x] Gate completo y E2E de planes verdes
 
 ## Criterio de hecho
 

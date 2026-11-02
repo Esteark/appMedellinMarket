@@ -235,3 +235,11 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 - **PriceSmart:** se mantiene. Si el usuario tampoco merca allí, se retira con el mismo patrón del paso 31 (una línea más en `TIENDAS_RETIRADAS` y en la migración).
 - **La Mayorista Medellín:** sigue pendiente de decisión desde el paso 21.
 - **Catálogo de barrio:** los 41 productos son un punto de partida; el usuario puede agregar o quitar desde `/anotados/barrio`. Si más adelante quiere que el catálogo sea por usuario, habría que agregar `user_id` a `catalogo_tienda` (hoy es global, como las correcciones de precio).
+
+## Cambio del 2-nov-2026 (paso 40)
+
+- **Hogar abre por lo editable.** El problema no era el diseño de los rubros, sino el orden y el ruido: la pestaña empezaba con contenido fijo y mostraba tres desgloses distintos (la tabla del artifact, el presupuesto editable y la comparación). Se retira `HogarTablas` de `/hogar` y queda una sola fuente, `config.rubros`, para el resumen, los rubros y la comparación. Los 11 rubros de `PRESUPUESTO_SUGERIDO_HOGAR` se conservan para no migrar datos existentes, y `rubroDe` se alinea con ellos.
+- **Los montos se animan.** `ValorAnimado` usa GSAP para contar del valor anterior al nuevo en 0,45 s; con `prefers-reduced-motion` salta directo. Se aplica al total, al reparto por persona/aportante y al pie de los rubros, no a cada celda.
+- **Varios presupuestos del hogar con nombre (paso 40).** El plan activo sigue siendo uno (`planes_usuario`); las copias viven en `planes_guardados`, separadas para no pisar el plan del día a día. Se guardan como "Octubre", "Quincena" o "Con visitas", se cargan para volverlas el plan activo y se eliminan con "Deshacer". Sin sesión viven en `mercado-medellin:planes:{hogar|dieta}`; con sesión, en Supabase. Al iniciar sesión se fusionan por nombre y gana la `actualizada` más reciente, igual que las listas guardadas. Tope: 20 copias.
+- **Sin dependencias nuevas:** GSAP y `@supabase/supabase-js` ya están. Una migración nueva (`planes_guardados`) y `pnpm gen:tipos` después. `hogar-tablas.tsx` y `cuadrar-presupuesto.tsx` quedan sin uso; no se borran para no tocar el historial de los pasos 23 y 29.
+

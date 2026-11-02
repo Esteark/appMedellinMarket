@@ -32,7 +32,9 @@
     "id": "E34-T2",
     "title": "Leer el CSV de una factura y calcular su hash",
     "epic": "34-importacion-y-catalogo",
-    "dependencies": ["E34-T1"],
+    "dependencies": [
+      "E34-T1"
+    ],
     "priority": "p0",
     "acceptance": [
       "WHEN `leerCsv` recibe el mismo CSV con BOM y CRLF THE SYSTEM SHALL devolver las mismas filas que sin ellos.",
@@ -61,7 +63,9 @@
     "id": "E34-T3",
     "title": "Emparejar productos, rubros y prompt de factura",
     "epic": "34-importacion-y-catalogo",
-    "dependencies": ["E34-T2"],
+    "dependencies": [
+      "E34-T2"
+    ],
     "priority": "p0",
     "acceptance": [
       "WHEN el nombre coincide por código, alias de tienda, alias global o nombre normalizado THE SYSTEM SHALL devolver ese producto, en ese orden.",
@@ -88,7 +92,9 @@
     "id": "E34-T4",
     "title": "Acciones de servidor y almacenamiento de importaciones",
     "epic": "34-importacion-y-catalogo",
-    "dependencies": ["E34-T3"],
+    "dependencies": [
+      "E34-T3"
+    ],
     "priority": "p0",
     "acceptance": [
       "WHEN `importarCompra` recibe más de 500 filas o una fecha inválida THE SYSTEM SHALL rechazarlo con zod antes de tocar la base.",
@@ -117,7 +123,9 @@
     "id": "E34-T5",
     "title": "Pestaña Importar factura en /presupuesto",
     "epic": "34-importacion-y-catalogo",
-    "dependencies": ["E34-T4"],
+    "dependencies": [
+      "E34-T4"
+    ],
     "priority": "p0",
     "acceptance": [
       "WHEN `agrupar` recibe filas de dos tiendas y una fila sin fecha THE SYSTEM SHALL agrupar por tienda + fecha usando la fecha del lote.",
@@ -149,7 +157,9 @@
     "id": "E34-T6",
     "title": "Probar de punta a punta la importación de facturas",
     "epic": "34-importacion-y-catalogo",
-    "dependencies": ["E34-T5"],
+    "dependencies": [
+      "E34-T5"
+    ],
     "priority": "p0",
     "acceptance": [
       "WHEN se pega `varias-tiendas.csv` THE SYSTEM SHALL mostrar dos grupos tienda+fecha en la revisión.",
@@ -165,14 +175,19 @@
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-34f",
-    "files": ["tests/e2e/importar.spec.ts", "src/components/importar/revision.tsx"],
+    "files": [
+      "tests/e2e/importar.spec.ts",
+      "src/components/importar/revision.tsx"
+    ],
     "status": "done"
   },
   {
     "id": "E35-T1",
     "title": "Migrar la fusión de productos duplicados",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E34-T1"],
+    "dependencies": [
+      "E34-T1"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN `anon` ejecuta `fusionar_productos` THE SYSTEM SHALL rechazarlo, y solo puede leer `fusiones_productos`.",
@@ -202,7 +217,10 @@
     "id": "E35-T2",
     "title": "Lógica de fusión y acciones de /tiendas",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E35-T1", "E34-T4"],
+    "dependencies": [
+      "E35-T1",
+      "E34-T4"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN `validarFusion` recibe ids iguales o vacíos THE SYSTEM SHALL rechazarlos.",
@@ -229,7 +247,9 @@
     "id": "E35-T3",
     "title": "Pantalla /tiendas con edición y diálogo de fusión",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E35-T2"],
+    "dependencies": [
+      "E35-T2"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN `pnpm build` corre THE SYSTEM SHALL incluir la ruta `/tiendas` y terminar con exit 0.",
@@ -258,7 +278,9 @@
     "id": "E35-T4",
     "title": "Probar de punta a punta /tiendas y la fusión",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E35-T3"],
+    "dependencies": [
+      "E35-T3"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN se abre `/tiendas` THE SYSTEM SHALL listar las 5 tiendas sembradas y la creada en el paso 34.",
@@ -273,14 +295,18 @@
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-35d",
-    "files": ["tests/e2e/tiendas.spec.ts"],
+    "files": [
+      "tests/e2e/tiendas.spec.ts"
+    ],
     "status": "done"
   },
   {
     "id": "E35-T5",
     "title": "Leer el CSV de una lista y convertir unidades",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E34-T3"],
+    "dependencies": [
+      "E34-T3"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN `leerListaCsv` recibe el ejemplo de papas, pepino, tomate, pimentón, cebolla morada y aguacate con dos secciones THE SYSTEM SHALL devolver dos listas.",
@@ -308,7 +334,10 @@
     "id": "E35-T6",
     "title": "Cargar lista desde texto en /listas",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E35-T5", "E35-T3"],
+    "dependencies": [
+      "E35-T5",
+      "E35-T3"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN `pnpm build` corre THE SYSTEM SHALL terminar con exit 0 con el componente de carga incluido.",
@@ -339,7 +368,9 @@
     "id": "E35-T7",
     "title": "Probar de punta a punta la carga de listas",
     "epic": "35-tiendas-y-listas",
-    "dependencies": ["E35-T6"],
+    "dependencies": [
+      "E35-T6"
+    ],
     "priority": "p1",
     "acceptance": [
       "WHEN se carga el CSV de ejemplo y se pulsa 'Usar como mi lista' THE SYSTEM SHALL mostrar los ítems y el total por tienda en la pantalla principal.",
@@ -353,7 +384,9 @@
       "pnpm typecheck && pnpm lint && pnpm test"
     ],
     "checkpoint": "paso-36c",
-    "files": ["tests/e2e/cargar-lista.spec.ts"],
+    "files": [
+      "tests/e2e/cargar-lista.spec.ts"
+    ],
     "status": "done"
   },
   {
@@ -549,6 +582,145 @@
     "checkpoint": "paso-38c",
     "files": [
       "tests/e2e/listas-editar.spec.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E40-T1",
+    "title": "Migrar planes_guardados y leer las copias de la cuenta",
+    "epic": "40-hogar-editable",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `anon` lee `planes_guardados` THE SYSTEM SHALL rechazarlo por permisos.",
+      "WHEN A consulta sus copias THE SYSTEM SHALL devolver solo las suyas y no permitir editar las de B.",
+      "WHEN se guarda ' octubre ' y existe 'Octubre' del mismo tipo y usuario THE SYSTEM SHALL rechazarlo por el índice único.",
+      "WHEN `planGuardado('hogar')` corre con sesión THE SYSTEM SHALL devolver el plan activo y hasta 20 copias ordenadas por `actualizada`."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset",
+      "pnpm migrar",
+      "pnpm gen:tipos",
+      "pnpm exec supabase test db",
+      "pnpm typecheck"
+    ],
+    "checkpoint": "paso-40a",
+    "files": [
+      "supabase/migrations/20261102134654_planes_guardados.sql",
+      "supabase/tests/planes_guardados.test.sql",
+      "src/lib/datos.ts",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E40-T2",
+    "title": "Lógica pura de presupuestos guardados y sincronización",
+    "epic": "40-hogar-editable",
+    "dependencies": [
+      "E40-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se lee una fila sin `actualizada` o con `config` inválida THE SYSTEM SHALL descartarla.",
+      "WHEN se fusionan dispositivo y nube con el mismo nombre THE SYSTEM SHALL conservar la `actualizada` más reciente.",
+      "WHEN hay más de 20 copias THE SYSTEM SHALL recortar a 20 y dejar las más recientes primero.",
+      "WHEN `sincronizarPlanes` recibe dos nombres iguales sin distinguir mayúsculas THE SYSTEM SHALL rechazarlo.",
+      "WHEN `sincronizarPlanes` recibe el conjunto completo THE SYSTEM SHALL hacer upsert por nombre y borrar las copias que ya no están."
+    ],
+    "verify": [
+      "pnpm test tests/unit/planes-guardados.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "paso-40b",
+    "files": [
+      "src/lib/planes/guardados.ts",
+      "src/app/planes/acciones.ts",
+      "tests/unit/planes-guardados.test.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E40-T3",
+    "title": "Abrir Hogar por lo editable y animar los montos",
+    "epic": "40-hogar-editable",
+    "dependencies": [
+      "E40-T2"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se abre `/hogar` THE SYSTEM SHALL mostrar primero el resumen editable y después los rubros.",
+      "WHEN se cambia un rubro o las personas THE SYSTEM SHALL recalcular y animar el total y el reparto.",
+      "WHEN el dispositivo pide `prefers-reduced-motion` THE SYSTEM SHALL mostrar el valor final sin animación.",
+      "WHEN se compara la lista con el presupuesto THE SYSTEM SHALL usar `config.rubros` y `rubroDe`, sin una segunda tabla de desglose."
+    ],
+    "verify": [
+      "pnpm test tests/unit/planes.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build"
+    ],
+    "checkpoint": "paso-40c",
+    "files": [
+      "src/app/hogar/page.tsx",
+      "src/components/planes/reparto-interactivo.tsx",
+      "src/components/planes/presupuesto-editable.tsx",
+      "src/components/planes/valor-animado.tsx",
+      "src/components/planes/compara-presupuesto.tsx",
+      "src/data/planes.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E40-T4",
+    "title": "Guardar, cargar y eliminar presupuestos con nombre",
+    "epic": "40-hogar-editable",
+    "dependencies": [
+      "E40-T2",
+      "E40-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN sin sesión se guarda 'Quincena', se cambia un rubro y se carga la copia THE SYSTEM SHALL restaurar los montos guardados.",
+      "WHEN se recarga la página THE SYSTEM SHALL conservar las copias del dispositivo.",
+      "WHEN con sesión se borran las claves locales THE SYSTEM SHALL recuperar las copias de la cuenta.",
+      "WHEN se elimina una copia THE SYSTEM SHALL quitarla de la lista y ofrecer 'Deshacer'.",
+      "WHEN ya hay 20 copias THE SYSTEM SHALL avisar `limite_planes` y no guardar otra."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/planes-guardados.spec.ts tests/e2e/planes-editables.spec.ts tests/e2e/planes.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-40d",
+    "files": [
+      "src/components/planes/mis-presupuestos.tsx",
+      "src/components/planes/plan-provider.tsx",
+      "src/lib/avisos.ts",
+      "tests/e2e/planes-guardados.spec.ts"
+    ],
+    "status": "done"
+  },
+  {
+    "id": "E42-T1",
+    "title": "Presupuesto claro: rubros editables, leyendas de origen, unidad y cantidad con opciones",
+    "epic": "42-presupuesto-claro",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se escribe un monto en «Seguimiento por rubro» THE SYSTEM SHALL reflejarlo en «Presupuestado» del Resumen.",
+      "THE SYSTEM SHALL mostrar bajo «Presupuestado» y «Proyección fin de mes» de dónde sale cada cifra.",
+      "WHEN se escribe en «Unidad» un valor fuera de las sugeridas THE SYSTEM SHALL aceptarlo tal cual.",
+      "WHEN se pulsa un chip de cantidad THE SYSTEM SHALL rellenar el campo Cantidad."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/presupuesto-claro.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-42",
+    "files": [
+      "src/components/presupuesto/presupuesto-cliente.tsx",
+      "tests/e2e/presupuesto-claro.spec.ts"
     ],
     "status": "done"
   }
