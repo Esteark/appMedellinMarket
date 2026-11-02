@@ -9,6 +9,7 @@ import { avisar } from "@/lib/avisos";
 import type { ProductoGestion } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import { claveAviso } from "@/lib/importar/factura";
+import { QuitarDeTienda } from "./quitar-de-tienda";
 
 const campo = "w-full min-w-20 rounded-[10px] border bg-card px-2 py-1 text-sm";
 const boton = "rounded-[10px] border px-2.5 py-1 text-xs";
@@ -209,7 +210,10 @@ export function TablaProductos({
                       <>
                         <Boton onClick={() => editar(p)}>Editar</Boton>{" "}
                         <Boton onClick={() => setPrecio(p)}>Precio</Boton>{" "}
-                        <Boton onClick={() => onFusionar(p)}>Fusionar</Boton>
+                        <Boton onClick={() => onFusionar(p)}>Fusionar</Boton>{" "}
+                        {p.tiendas.includes(tienda.id) && (
+                          <QuitarDeTienda producto={p} tienda={tienda} />
+                        )}
                         {porRevisar(p) && (
                           <Boton onClick={() => revisar(p)}>
                             Marcar revisado

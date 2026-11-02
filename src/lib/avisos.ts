@@ -426,6 +426,21 @@ export const AVISOS = {
     texto:
       "Ya existe una tienda con ese nombre (sin importar tildes ni mayúsculas).",
   },
+  producto_agregado_a_tienda: {
+    tipo: "exito",
+    emoji: "🏪",
+    texto: "«{nombre}» ahora está en {tienda}.",
+  },
+  producto_quitado_de_tienda: {
+    tipo: "info",
+    emoji: "🏪",
+    texto: "«{nombre}» salió de {tienda}. Sus precios se conservan.",
+  },
+  catalogo_error: {
+    tipo: "error",
+    emoji: "❌",
+    texto: "No se pudo actualizar el catálogo de la tienda. Intenta de nuevo.",
+  },
   producto_editado: {
     tipo: "exito",
     emoji: "✏️",

@@ -19,12 +19,23 @@ const boton =
 export type Formulario =
   | { tipo: "tienda" }
   | { tipo: "renombrar"; id: string; nombre: string }
-  | { tipo: "producto" };
+  | { tipo: "producto"; tiendaInicial?: string };
 
-type Props = { formulario: Formulario; grupos: string[]; alCerrar: () => void };
+type Props = {
+  formulario: Formulario;
+  grupos: string[];
+  /** Tiendas que se pueden marcar al crear un producto. */
+  tiendas: { id: string; nombre: string }[];
+  alCerrar: () => void;
+};
 
 /** Hoja de formulario para crear una tienda, renombrarla o crear un producto. */
-export function HojaFormulario({ formulario, grupos, alCerrar }: Props) {
+export function HojaFormulario({
+  formulario,
+  grupos,
+  tiendas,
+  alCerrar,
+}: Props) {
   const router = useRouter();
   const titulo = useId();
   const [nombre, setNombre] = useState(
@@ -34,6 +45,11 @@ export function HojaFormulario({ formulario, grupos, alCerrar }: Props) {
   const [unidad, setUnidad] = useState("kg");
   const [frecuencia, setFrecuencia] = useState("semanal");
   const [emoji, setEmoji] = useState("");
+  const [marcadas, setMarcadas] = useState<string[]>(
+    formulario.tipo === "producto" && formulario.tiendaInicial
+      ? [formulario.tiendaInicial]
+      : [],
+  );
   const [enviando, setEnviando] = useState(false);
 
   const enviar = async () => {
@@ -44,11 +60,26 @@ export function HojaFormulario({ formulario, grupos, alCerrar }: Props) {
           ? await crearTienda(nombre)
           : formulario.tipo === "renombrar"
             ? await renombrarTienda(formulario.id, nombre)
-            : await crearProducto({ nombre, grupo, unidad, frecuencia, emoji });
+            : await crearProducto({
+                nombre,
+                grupo,
+                unidad,
+                frecuencia,
+                emoji,
+                tiendas: marcadas,
+              });
       if (!r.ok) return avisar(claveAviso(r.error));
       if (formulario.tipo === "tienda") avisar("tienda_creada", { nombre });
       else if (formulario.tipo === "renombrar")
         avisar("tienda_renombrada", { nombre });
+      else if ("existente" in r && r.existente)
+        avisar("producto_agregado_a_tienda", {
+          nombre,
+          tienda: tiendas
+            .filter((t) => marcadas.includes(t.id))
+            .map((t) => t.nombre)
+            .join(", "),
+        });
       else avisar("producto_creado", { nombre });
       alCerrar();
       router.refresh();
@@ -126,7 +157,37 @@ export function HojaFormulario({ formulario, grupos, alCerrar }: Props) {
             </div>
           </div>
         )}
-        <button type="submit" disabled={enviando} className={boton}>
+        {esProducto && (
+          <fieldset className="flex flex-col gap-1.5 text-sm">
+            <legend className="mb-1">Tiendas donde se vende</legend>
+            {tiendas.map((t) => (
+              <label key={t.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={marcadas.includes(t.id)}
+                  onChange={(e) =>
+                    setMarcadas((m) =>
+                      e.target.checked
+                        ? [...m, t.id]
+                        : m.filter((x) => x !== t.id),
+                    )
+                  }
+                />
+                {t.nombre}
+              </label>
+            ))}
+            {marcadas.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Marca al menos una tienda.
+              </p>
+            )}
+          </fieldset>
+        )}
+        <button
+          type="submit"
+          disabled={enviando || (esProducto && marcadas.length === 0)}
+          className={boton}
+        >
           {enviando ? "Guardando…" : "Guardar"}
         </button>
       </form>

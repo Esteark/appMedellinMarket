@@ -16,6 +16,9 @@ const ERRORES_BASE: Record<string, string> = {
   mismo_producto: "fusion_no_permitida",
   producto_no_existe: "fusion_sin_datos",
   sin_sesion: "sin_sesion",
+  tiendas_invalidas: "catalogo_error",
+  tienda_inexistente: "catalogo_error",
+  producto_inexistente: "catalogo_error",
 };
 
 /** Nunca devuelve `error.message` crudo: o es una clave conocida o `importacion_error`. */
@@ -34,6 +37,8 @@ const esquemaProducto = z.object({
   unidad: z.string().trim().min(1).max(40),
   frecuencia: z.enum(["diaria", "semanal"]),
   emoji: z.string().trim().max(8).nullable().optional(),
+  /** Tiendas que seguirán el producto; «Nuevo producto» exige al menos una en el formulario. */
+  tiendas: z.array(id).max(10).default([]),
 });
 
 async function sesion() {
@@ -94,14 +99,26 @@ export async function renombrarTienda(
   return { ok: true };
 }
 
+/** Crea un producto (o reutiliza el de ese nombre) y lo agrega a las tiendas indicadas. */
 export async function crearProducto(
   entrada: unknown,
-): Promise<{ ok: true; id: string } | Falla> {
+): Promise<{ ok: true; id: string; existente: boolean } | Falla> {
   const sinSesion = await sesion();
   if (sinSesion) return sinSesion;
   const p = esquemaProducto.safeParse(entrada);
   if (!p.success) return { ok: false, error: "nombre_invalido" };
   const db = await clienteServidor();
+  // Si el nombre ya existe se reutiliza tal cual: no se pisa su ícono, unidad ni grupo.
+  const { data: norma } = await db.rpc("normalizar_nombre", {
+    p_texto: p.data.nombre,
+  });
+  const { data: previo } = norma
+    ? await db
+        .from("productos")
+        .select("id")
+        .eq("nombre_norm", norma)
+        .maybeSingle()
+    : { data: null };
   const { data, error } = await db.rpc("crear_producto", {
     p_nombre: p.data.nombre,
     p_grupo: p.data.grupo,
@@ -109,17 +126,63 @@ export async function crearProducto(
   });
   if (error || !data)
     return { ok: false, error: traducir(error?.message ?? "") };
-  await db
-    .from("productos")
-    .update({
-      unidad: p.data.unidad,
-      ...unidadBase(p.data.unidad),
-      emoji: p.data.emoji || null,
-      origen: "manual",
-      revisado: true,
-    })
-    .eq("id", data);
-  return { ok: true, id: data };
+  if (!previo)
+    await db
+      .from("productos")
+      .update({
+        unidad: p.data.unidad,
+        ...unidadBase(p.data.unidad),
+        emoji: p.data.emoji || null,
+        origen: "manual",
+        revisado: true,
+      })
+      .eq("id", data);
+  if (p.data.tiendas.length) {
+    const r = await agregar(data, p.data.tiendas);
+    if (!r.ok) return r;
+  }
+  return { ok: true, id: data, existente: !!previo };
+}
+
+async function agregar(
+  producto: string,
+  tiendas: string[],
+): Promise<{ ok: true } | Falla> {
+  const db = await clienteServidor();
+  const { error } = await db.rpc("agregar_a_tienda", {
+    p_producto: producto,
+    p_tiendas: tiendas,
+  });
+  return error ? { ok: false, error: traducir(error.message) } : { ok: true };
+}
+
+/** Agrega un producto que ya existe al catálogo de una o varias tiendas (o lo reactiva). */
+export async function agregarATienda(
+  entrada: unknown,
+): Promise<{ ok: true } | Falla> {
+  const sinSesion = await sesion();
+  if (sinSesion) return sinSesion;
+  const p = z
+    .object({ producto: id, tiendas: z.array(id).min(1).max(10) })
+    .safeParse(entrada);
+  if (!p.success) return { ok: false, error: "catalogo_error" };
+  return agregar(p.data.producto, p.data.tiendas);
+}
+
+/** Quitar es `activo = false`: la fila, los precios y el historial se quedan. */
+export async function quitarDeTienda(
+  entrada: unknown,
+): Promise<{ ok: true } | Falla> {
+  const sinSesion = await sesion();
+  if (sinSesion) return sinSesion;
+  const p = z.object({ producto: id, tienda: id }).safeParse(entrada);
+  if (!p.success) return { ok: false, error: "catalogo_error" };
+  const db = await clienteServidor();
+  const { error } = await db.rpc("quitar_de_tienda", {
+    p_producto: p.data.producto,
+    p_tienda: p.data.tienda,
+  });
+  return error ? { ok: false, error: traducir(error.message) } : { ok: true };
 }
 
 export async function editarProducto(
@@ -129,7 +192,7 @@ export async function editarProducto(
   const sinSesion = await sesion();
   if (sinSesion) return sinSesion;
   const i = id.safeParse(producto);
-  const c = esquemaProducto.safeParse(cambios);
+  const c = esquemaProducto.omit({ tiendas: true }).safeParse(cambios);
   if (!i.success || !c.success) return { ok: false, error: "nombre_invalido" };
   const db = await clienteServidor();
   const { data: actual } = await db

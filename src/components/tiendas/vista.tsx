@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { ProductoGestion, TiendaConConteos } from "@/lib/datos";
 import { normalizarNombre } from "@/lib/importar/emparejar";
+import { AgregarATienda } from "./agregar-a-tienda";
 import { DialogoFusion } from "./dialogo-fusion";
 import { type Formulario, HojaFormulario } from "./formularios";
 import { porRevisar, TablaProductos } from "./tabla-productos";
@@ -22,6 +23,7 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
   const [tiendaId, setTiendaId] = useState(tiendas[0]?.id ?? "");
   const [formulario, setFormulario] = useState<Formulario | null>(null);
   const [origen, setOrigen] = useState<ProductoGestion | null>(null);
+  const [agregando, setAgregando] = useState(false);
 
   const grupos = useMemo(
     () => [...new Set(productos.map((p) => p.grupo))].sort(),
@@ -142,6 +144,16 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
         />
         Solo por revisar ({pendientes})
       </label>
+      {tienda && conSesion && (
+        <button
+          type="button"
+          data-testid="agregar-a-esta-tienda"
+          onClick={() => setAgregando(true)}
+          className={`${boton} self-start`}
+        >
+          Agregar a esta tienda
+        </button>
+      )}
       {tienda && (
         <TablaProductos
           productos={visibles}
@@ -156,7 +168,20 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
         <HojaFormulario
           formulario={formulario}
           grupos={grupos}
+          tiendas={tiendas}
           alCerrar={() => setFormulario(null)}
+        />
+      )}
+      {agregando && tienda && (
+        <AgregarATienda
+          tienda={tienda}
+          tiendas={tiendas}
+          productos={productos}
+          alCerrar={() => setAgregando(false)}
+          alCrear={() => {
+            setAgregando(false);
+            setFormulario({ tipo: "producto", tiendaInicial: tienda.id });
+          }}
         />
       )}
       {origen && (

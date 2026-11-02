@@ -69,6 +69,7 @@ test("con sesión: crear tienda y producto los muestra a todos, y /anotados ocul
 
   await page.getByRole("button", { name: "Nuevo producto" }).click();
   await page.getByLabel("Nombre").fill(producto);
+  await page.getByRole("checkbox", { name: "D1", exact: true }).check();
   await page.getByRole("button", { name: "Guardar" }).click();
   await page.getByLabel("Buscar producto").fill(String(ts));
   await expect(fila(page, producto)).toBeVisible();
@@ -186,6 +187,7 @@ test("con sesión: elegir un ícono en el selector lo guarda y lo muestra; Esc l
   await page.goto("/tiendas");
   await page.getByRole("button", { name: "Nuevo producto" }).click();
   await page.getByLabel("Nombre").fill(producto);
+  await page.getByRole("checkbox", { name: "D1", exact: true }).check();
 
   await page.getByRole("button", { name: "Elegir ícono" }).click();
   const selector = page.getByTestId("selector-emoji");
@@ -201,4 +203,85 @@ test("con sesión: elegir un ícono en el selector lo guarda y lo muestra; Esc l
   await page.getByRole("button", { name: "Guardar" }).click();
   await page.getByLabel("Buscar producto").fill(producto);
   await expect(fila(page, producto)).toContainText("🍍");
+});
+
+test("con sesión: un producto de una sola tienda se agrega a otra y se quita sin borrar la fila", async ({
+  page,
+}) => {
+  const producto = `E2E Solo Minorista ${Date.now()}`;
+  await crearCuenta(page);
+  await page.goto("/tiendas");
+  const ver = (id: string) =>
+    page
+      .getByTestId(`tienda-${id}`)
+      .getByRole("button", { name: "Ver precios" })
+      .click();
+
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+  await page.getByLabel("Nombre").fill(producto);
+  // «Guardar» exige al menos una tienda.
+  await expect(page.getByRole("button", { name: "Guardar" })).toBeDisabled();
+  await page.getByRole("checkbox", { name: "La Minorista" }).check();
+  await page.getByRole("button", { name: "Guardar" }).click();
+
+  await ver("minorista");
+  await page.getByLabel("Buscar producto", { exact: true }).fill(producto);
+  await expect(fila(page, producto)).toBeVisible();
+  await ver("pricesmart");
+  await expect(fila(page, producto)).toHaveCount(0);
+
+  // Agregarlo a PriceSmart desde su pestaña.
+  await page.getByTestId("agregar-a-esta-tienda").click();
+  const hoja = page.getByTestId("agregar-a-tienda");
+  await hoja.getByLabel("Buscar producto para agregar").fill(producto);
+  await expect(hoja.getByText("También en La Minorista")).toBeVisible();
+  await hoja.getByRole("button", { name: "Agregar", exact: true }).click();
+  await page.getByRole("button", { name: "Cerrar" }).first().click();
+  await expect(fila(page, producto)).toBeVisible();
+
+  // Quitarlo de PriceSmart con confirmación; sigue en La Minorista.
+  await fila(page, producto)
+    .getByRole("button", { name: "Quitar de esta tienda" })
+    .click();
+  await fila(page, producto)
+    .getByRole("button", { name: "Sí, quitar" })
+    .click();
+  await expect(fila(page, producto)).toHaveCount(0);
+  await ver("minorista");
+  await expect(fila(page, producto)).toBeVisible();
+});
+
+test("sin sesión no hay acciones para agregar ni quitar de una tienda", async ({
+  page,
+}) => {
+  await page.goto("/tiendas");
+  await expect(page.getByTestId("agregar-a-esta-tienda")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Quitar de esta tienda" }),
+  ).toHaveCount(0);
+});
+
+test("con sesión: crear un producto con un nombre que ya existe lo reutiliza y lo suma a la otra tienda", async ({
+  page,
+}) => {
+  const producto = `E2E Reuso ${Date.now()}`;
+  await crearCuenta(page);
+  await page.goto("/tiendas");
+  const crear = async (tienda: string) => {
+    await page.getByRole("button", { name: "Nuevo producto" }).click();
+    await page.getByLabel("Nombre").fill(producto);
+    await page.getByRole("checkbox", { name: tienda, exact: true }).check();
+    await page.getByRole("button", { name: "Guardar" }).click();
+  };
+  await crear("D1");
+  await crear("La Minorista");
+
+  for (const id of ["d1", "minorista"]) {
+    await page
+      .getByTestId(`tienda-${id}`)
+      .getByRole("button", { name: "Ver precios" })
+      .click();
+    await page.getByLabel("Buscar producto", { exact: true }).fill(producto);
+    await expect(fila(page, producto)).toHaveCount(1);
+  }
 });
