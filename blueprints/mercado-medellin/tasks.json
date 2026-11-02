@@ -1231,9 +1231,12 @@
     "files": [
       "src/components/presupuesto/tabla-gastos.tsx",
       "src/components/presupuesto/fila-gasto.tsx",
-      "src/components/presupuesto/presupuesto-cliente.tsx"
+      "src/components/presupuesto/presupuesto-cliente.tsx",
+      "src/components/presupuesto/edicion-gasto.tsx",
+      "src/app/presupuesto/page.tsx",
+      "tests/e2e/gastos-editables.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E46-T5",

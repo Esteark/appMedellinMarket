@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   agregarGasto,
+  editarGasto,
   eliminarGasto,
   listarGastos,
 } from "@/app/presupuesto/acciones";
 import { CampoMoneda } from "@/components/campo-moneda";
 import { ImportarFactura } from "@/components/importar/importar-factura";
-import { avisar } from "@/lib/avisos";
+import { avisar, textoAviso } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
 import {
@@ -33,6 +34,8 @@ import type {
   PresupuestoCierreSnapshot,
   PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
+import type { CambiosGasto } from "./fila-gasto";
+import { TablaGastos } from "./tabla-gastos";
 
 type Tab =
   | "resumen"
@@ -65,6 +68,7 @@ function inicializarRubros(): PresupuestoRubro[] {
 
 type Props = {
   productos?: ProductoCatalogo[];
+  tiendas?: { id: string; nombre: string }[];
 };
 
 const UNIDADES_GASTO = [
@@ -84,7 +88,7 @@ const UNIDADES_GASTO = [
 ];
 const CANTIDADES_GASTO = ["0.25", "0.5", "1", "2", "3", "6", "12"];
 
-export function PresupuestoCliente({ productos = [] }: Props) {
+export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
   const [version, setVersion] = useState(0);
   const [mes, setMes] = useState("");
@@ -126,12 +130,6 @@ export function PresupuestoCliente({ productos = [] }: Props) {
       )
       .slice(0, 30);
   }, [productos, form.productoNombre]);
-
-  const prodMap = useMemo(() => {
-    const m = new Map<string, ProductoCatalogo>();
-    for (const p of productos) m.set(p.id, p);
-    return m;
-  }, [productos]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `version` solo fuerza la recarga
   useEffect(() => {
@@ -304,6 +302,34 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     } catch {
       // ignorar
     }
+  };
+
+  /** Guarda los cambios de un gasto; devuelve el texto del error o `null`. Con sesión, primero el servidor. */
+  const editar = async (
+    g: GastoReal,
+    c: CambiosGasto,
+  ): Promise<string | null> => {
+    if (!g.id.startsWith("local-")) {
+      try {
+        const r = await editarGasto({ id: g.id, ...c });
+        if (!r.ok)
+          return r.error === "ajeno"
+            ? "Solo puedes editar tus gastos."
+            : textoAviso("gasto_edicion_invalida");
+      } catch {
+        return textoAviso("sin_conexion");
+      }
+    }
+    const nuevo: GastoReal = { ...g, ...c, mes: c.fecha.slice(0, 7) };
+    // Si cambió de mes, sale de este y entra al otro; si no, se reemplaza en su sitio.
+    if (nuevo.mes === mes)
+      guardarGastosLocal(gastos.map((x) => (x.id === g.id ? nuevo : x)));
+    else {
+      guardarGastosLocal(gastos.filter((x) => x.id !== g.id));
+      guardarGastosMes(nuevo.mes, [nuevo, ...leerGastosMes(nuevo.mes)]);
+    }
+    avisar("gasto_editado");
+    return null;
   };
 
   const guardarRubros = (nuevos: PresupuestoRubro[]) => {
@@ -624,56 +650,14 @@ export function PresupuestoCliente({ productos = [] }: Props) {
           >
             Agregar gasto
           </button>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-muted-foreground">
-                  <th className="py-1.5 pr-2 font-medium">Fecha</th>
-                  <th className="px-2 font-medium">Producto</th>
-                  <th className="px-2 font-medium">Rubro</th>
-                  <th className="px-2 text-right font-medium">Monto</th>
-                  <th className="px-2 font-medium">Detalle</th>
-                  <th className="pl-2" />
-                </tr>
-              </thead>
-              <tbody className="tabular-nums">
-                {gastos.map((g) => {
-                  const prod = g.producto_id
-                    ? prodMap.get(g.producto_id)
-                    : null;
-                  return (
-                    <tr key={g.id} className="border-t">
-                      <td className="py-1.5 pr-2">{g.fecha}</td>
-                      <td className="px-2">
-                        {prod ? (
-                          <span className="flex items-center gap-1.5">
-                            {prod.emoji && <span>{prod.emoji}</span>}
-                            <span>{prod.nombre}</span>
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Manual</span>
-                        )}
-                      </td>
-                      <td className="px-2">{g.rubro}</td>
-                      <td className="px-2 text-right">{pesos(g.monto)}</td>
-                      <td className="px-2 text-muted-foreground">
-                        {g.nota ?? ""}
-                      </td>
-                      <td className="pl-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => eliminar(g.id)}
-                          className="text-xs text-muted-foreground"
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TablaGastos
+            gastos={gastos}
+            productos={productos}
+            tiendas={tiendas}
+            rubros={rubros.map((r) => r.rubro)}
+            onEditar={editar}
+            onEliminar={eliminar}
+          />
         </section>
       )}
       {tab === "seguimiento" && (

@@ -7,8 +7,8 @@ import { catalogo } from "@/lib/datos";
 export const metadata: Metadata = { title: "Presupuesto · Mercado Medellín" };
 
 async function PresupuestoDatos() {
-  const { productos } = await catalogo();
-  return <PresupuestoCliente productos={productos} />;
+  const { productos, tiendas } = await catalogo();
+  return <PresupuestoCliente productos={productos} tiendas={tiendas} />;
 }
 
 export default function PresupuestoPage() {
