@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { d1 } from "@/corrida/adaptadores/vtex";
+import { d1, urlConsulta } from "@/corrida/adaptadores/vtex";
 import type { Consulta } from "@/corrida/tipos";
 import { contextoPrueba, fetchFalso } from "../helpers/fetch-falso";
 
@@ -115,6 +115,77 @@ describe("adaptador VTEX (D1) sobre fixtures reales", () => {
       contextoPrueba(fetch),
     );
     expect(h).toBeNull();
+  });
+
+  describe("direcciones /p y productos por unidad", () => {
+    const aceite = "https://www.d1.com.co/aceite-girasol-don-olio-12004357/p";
+    // Variante en memoria del fixture por RefId (el archivo no se toca).
+    const refidCon = (cambio: (item: { measurementUnit: string }) => void) =>
+      fetchFalso("vtex", (archivo, texto) => {
+        if (archivo !== "d1-refid.json") return texto;
+        const datos = JSON.parse(texto);
+        cambio(datos[0].items[0]);
+        return JSON.stringify(datos);
+      });
+
+    it("lee el RefId tras la barra y tras el guion", () => {
+      const sinGuion = "https://www.d1.com.co/12008039/p";
+      expect(urlConsulta(consulta({ url: sinGuion }))).toBe(
+        "https://www.d1.com.co/api/catalog_system/pub/products/search?fq=alternateIds_RefId:12008039",
+      );
+      expect(d1.cubre(consulta({ url: sinGuion }))).toBe(true);
+      expect(urlConsulta(consulta({ url: aceite }))).toContain("12004357");
+    });
+
+    it("una dirección de búsqueda por término no cuenta como exacta", () => {
+      const busqueda =
+        "https://www.d1.com.co/api/catalog_system/pub/products/search?ft=ajo&_from=0&_to=4";
+      expect(d1.cubre(consulta({ url: busqueda }))).toBe(false);
+    });
+
+    it("un producto por unidad toma el precio de la página aunque el nombre diga ml o g", async () => {
+      const { fetch } = fetchFalso("vtex");
+      // Catálogo `u` 1 contra «Aceite … 900 Ml»: antes se rechazaba y el precio nunca se actualizaba.
+      const h = await d1.buscar(
+        consulta({ producto_id: "aceite", url: aceite }),
+        contextoPrueba(fetch),
+      );
+      expect(h).toMatchObject({ producto_id: "aceite", precio: 7990 });
+    });
+
+    it("si la conversión normal sí puede, manda ella", async () => {
+      const { fetch } = fetchFalso("vtex");
+      const h = await d1.buscar(
+        consulta({
+          producto_id: "aceite",
+          unidad_base: "ml",
+          cantidad_base: 1000,
+          url: aceite,
+        }),
+        contextoPrueba(fetch),
+      );
+      expect(h).toMatchObject({ precio: 8900 });
+    });
+
+    it("no se aplica si el catálogo es un paquete de más de una unidad", async () => {
+      const { fetch } = fetchFalso("vtex");
+      const h = await d1.buscar(
+        consulta({ producto_id: "aceite", cantidad_base: 6, url: aceite }),
+        contextoPrueba(fetch),
+      );
+      expect(h).toBeNull();
+    });
+
+    it("no se aplica a un granel (kg)", async () => {
+      const { fetch } = refidCon((item) => {
+        item.measurementUnit = "kg";
+      });
+      const h = await d1.buscar(
+        consulta({ producto_id: "aceite", url: aceite }),
+        contextoPrueba(fetch),
+      );
+      expect(h).toBeNull();
+    });
   });
 
   it("lee robots.txt una vez por corrida y antes de la API", async () => {

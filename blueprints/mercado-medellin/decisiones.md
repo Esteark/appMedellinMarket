@@ -262,3 +262,10 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 - **Producto nuevo de un gasto crea el producto (ajuste del paso 46).** «Agregar producto nuevo» solo guardaba el nombre en la nota y dejaba el gasto como «Manual»: nada que editar después. Ahora, con sesión, crea el producto en el catálogo (grupo, tienda e ícono) y liga el gasto; sin sesión sigue siendo texto y lo dice. En la fila de edición el producto se elige en una lista con buscador.
   - **Se reabre si:** se quiere crear productos sin sesión (habría que guardarlos pendientes y subirlos al iniciar sesión, como los gastos `local-…`).
 
+## Cambio del 2-nov-2026 (D1: por qué 20 precios no se actualizaban)
+
+- **Diagnóstico.** Una consulta a `precios_actuales` mostró 33 precios de D1 con más de 3 días. 12 tenían como fuente solo una búsqueda por término (el adaptador de D1 solo consulta página exacta, a propósito); 6 tenían página exacta pero el catálogo cuenta «unidad» y D1 anuncia gramos, así que `normalizar` rechazaba el precio; 1 (cerdo) tenía una dirección `/12008039/p` sin guion que el patrón no leía; 1 (mazorca) apunta a un código que D1 ya no devuelve; y 13 nunca tuvieron fuente.
+- **Corregido.** El patrón del RefId acepta `[-/]` antes del número, y un producto de catálogo `u` 1 con página exacta toma el precio de esa página cuando D1 lo vende como unidad (`measurementUnit` «un», multiplicador 1) y la conversión normal no puede. Si la conversión normal puede, manda ella; el granel (kg) nunca entra por aquí.
+- **Sigue pendiente (requiere elegir páginas de D1):** los 12 de solo término, la mazorca y los 13 sin fuente; y `crema_leche`, cuyo catálogo es ml y la página anuncia g.
+  - **Se reabre si:** un producto «por unidad» queda con una página de otra presentación (se vería como un salto de precio marcado «revisar», umbral del 35 %).
+

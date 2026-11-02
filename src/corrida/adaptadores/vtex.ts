@@ -6,8 +6,9 @@ import { unidadBase } from "@/lib/unidades";
 
 // Solo D1 usa VTEX (blueprint §1).
 const HOST = "https://www.d1.com.co";
-// En las páginas /p de D1 el número final es el RefId del producto.
-const REF_ID = /-(\d+)\/p$/;
+// En las páginas /p de D1 el número final es el RefId del producto; va tras un guion
+// («…-12006920/p») o, en algunas, directo tras la barra («…/12008039/p»).
+const REF_ID = /[-/](\d+)\/p$/;
 
 const Respuesta = z.array(
   z.object({
@@ -68,7 +69,18 @@ async function buscar(c: Consulta, ctx: Contexto): Promise<Hallazgo | null> {
             cantidad_base: item.unitMultiplier * 1000,
           }
         : unidadBase(p.productName);
-    const precio = normalizar(oferta.Price, c, medida);
+    // Un producto que se cuenta por unidad o paquete («Arepa x5», catálogo `u` 1) y una página exacta que
+    // eligió una persona: D1 lo vende como una unidad ("un") aunque el nombre diga gramos, y `normalizar`
+    // rechazaría u contra g. Entonces el precio de la página es el de la unidad. Solo si la conversión
+    // normal no pudo (si pudo, manda ella) y solo para "un" con multiplicador 1: un granel (kg) nunca.
+    const comoUnidad =
+      item.measurementUnit.toLowerCase() === "un" &&
+      item.unitMultiplier === 1 &&
+      c.unidad_base === "u" &&
+      c.cantidad_base === 1;
+    const precio =
+      normalizar(oferta.Price, c, medida) ??
+      (comoUnidad ? Math.round(oferta.Price) : null);
     if (precio == null) continue;
     return {
       producto_id: c.producto_id,
