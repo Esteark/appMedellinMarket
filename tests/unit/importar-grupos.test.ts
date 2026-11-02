@@ -16,6 +16,7 @@ const csv = (
   tienda,
   fecha,
   codigo: "",
+  duda: "",
 });
 
 describe("agrupar", () => {

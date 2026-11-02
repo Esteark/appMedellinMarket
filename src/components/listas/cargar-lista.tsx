@@ -13,6 +13,7 @@ import {
   itemDeProducto,
   leerAlias,
   leerListaCsv,
+  type UnidadLista,
   unidadDeCompra,
 } from "@/lib/importar/lista";
 import { PROMPT_LISTA } from "@/lib/importar/prompt-lista";
@@ -46,6 +47,7 @@ export function CargarLista({
 }) {
   const [texto, setTexto] = useState("");
   const [errores, setErrores] = useState<string[]>([]);
+  const [notas, setNotas] = useState<string[]>([]);
   const [secciones, setSecciones] = useState<Seccion[] | null>(null);
   const [nuevos, setNuevos] = useState<Producto[]>([]);
   const [confirmar, setConfirmar] = useState<number | null>(null);
@@ -63,7 +65,9 @@ export function CargarLista({
     setErrores(
       r.errores.map((e) => `Línea ${e.linea}: ${e.mensaje.replace(/_/g, " ")}`),
     );
-    if (r.errores.length || !r.listas.length) return setSecciones(null);
+    setNotas(r.notas);
+    // Una fila mala no bota el archivo completo: se revisa lo que sí se entendió.
+    if (!r.listas.length) return setSecciones(null);
     const alias = { ...aliasNube, ...leerAlias() };
     setSecciones(
       r.listas.map((l) => ({
@@ -97,6 +101,33 @@ export function CargarLista({
             : x,
         ) ?? null,
     );
+
+  /** Corregir el texto de una fila vuelve a emparejar y recalcula la cantidad de compra. */
+  const cambiarFila = (s: number, i: number, parche: Partial<FilaLista>) =>
+    setSecciones((ss) => {
+      if (!ss) return null;
+      const alias = { ...aliasNube, ...leerAlias() };
+      return ss.map((x, k) => {
+        if (k !== s) return x;
+        return {
+          ...x,
+          filas: x.filas.map((r, j) => {
+            if (j !== i) return r;
+            const f = { ...r.f, ...parche };
+            const productoId =
+              parche.producto === undefined
+                ? r.productoId
+                : (alias[normalizarNombre(f.producto)] ??
+                  emparejarProducto(
+                    { producto: f.producto, tiendaId: null },
+                    { productos, aliasProducto: [], codigos: {} },
+                  ) ??
+                  "");
+            return { f, productoId, ...calcular(productoId, f) };
+          }),
+        };
+      });
+    });
 
   const elegir = async (s: number, i: number, id: string) => {
     const f = secciones?.[s].filas[i].f;
@@ -209,9 +240,26 @@ export function CargarLista({
         className={`${campo} w-full font-mono text-xs`}
       />
       {errores.length > 0 && (
-        <ul role="alert" className="text-sm text-up-ink">
-          {errores.slice(0, 6).map((e) => (
-            <li key={e}>{e}</li>
+        <div
+          role={secciones ? "status" : "alert"}
+          className={`text-sm ${secciones ? "text-warn-ink" : "text-up-ink"}`}
+        >
+          {secciones && (
+            <p>
+              Se cargaron las filas que sí se entendieron. Revisa estos avisos:
+            </p>
+          )}
+          <ul>
+            {errores.slice(0, 6).map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {notas.length > 0 && (
+        <ul role="status" className="text-sm text-warn-ink">
+          {notas.map((n) => (
+            <li key={n}>Dudosa: {n}</li>
           ))}
         </ul>
       )}
@@ -229,6 +277,9 @@ export function CargarLista({
           sec={sec}
           productos={todos}
           confirmando={confirmar === s}
+          onProducto={(i, producto) => cambiarFila(s, i, { producto })}
+          onCantidad={(i, cantidad) => cambiarFila(s, i, { cantidad })}
+          onUnidad={(i, unidad: UnidadLista) => cambiarFila(s, i, { unidad })}
           onElegir={(i, id) => void elegir(s, i, id)}
           onItem={(i, item) => cambiar(s, i, { item, aviso: false })}
           onNombre={(guardar) =>

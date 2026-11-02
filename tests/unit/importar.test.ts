@@ -34,12 +34,33 @@ describe("leerCsv", () => {
     expect(r.filas).toEqual([]);
   });
 
-  it("una fila con 4 columnas cuando se esperan 5 falla con su número", () => {
+  it("una fila con menos columnas se completa con vacíos", () => {
     const r = leerCsv(
       `${CABECERA}\nLeche,3,12750,D1,2026-10-30\nArroz,2,6400,D1`,
     );
-    expect(r.errores).toEqual([{ linea: 3, mensaje: "columnas_distintas" }]);
-    expect(r.filas).toHaveLength(1);
+    expect(r.errores).toEqual([]);
+    expect(r.filas).toHaveLength(2);
+    expect(r.filas[1]).toMatchObject({
+      producto: "Arroz",
+      tienda: "D1",
+      cantidad: 2,
+      precioTotal: 6400,
+      fecha: "",
+      duda: "",
+    });
+  });
+
+  it("acepta la columna duda y formatos con $, miles y dd/mm/aaaa", () => {
+    const r = leerCsv(`producto,cantidad,precio_total,tienda,fecha,duda
+Papa,1 1/2,"$12.500",D1,30/10/2026,"¿Eran 1,5 kg o 1,25?"
+`);
+    expect(r.errores).toEqual([]);
+    expect(r.filas[0]).toMatchObject({
+      cantidad: 1.5,
+      precioTotal: 12500,
+      fecha: "2026-10-30",
+    });
+    expect(r.filas[0].duda).toContain("1,5");
   });
 
   it("501 filas se rechazan y 500 pasan", () => {
@@ -65,13 +86,17 @@ describe("leerCsv", () => {
     expect(r.filas).toHaveLength(1);
   });
 
-  it("rechaza precio con letras, fecha imposible y archivo de más de 1 MB", () => {
-    expect(
-      leerCsv(`${CABECERA}\nPapa,1,seis mil,D1,2026-10-30`).errores[0].mensaje,
-    ).toBe("precio_invalido");
-    expect(
-      leerCsv(`${CABECERA}\nPapa,1,5000,D1,2026-02-30`).errores[0].mensaje,
-    ).toBe("fecha_invalida");
+  it("recupera precio y fecha raros con una duda, y rechaza archivos enormes", () => {
+    const precio = leerCsv(`${CABECERA}\nPapa,1,seis mil,D1,2026-10-30`);
+    expect(precio.errores).toEqual([]);
+    expect(precio.filas[0]).toMatchObject({ precioTotal: 0 });
+    expect(precio.filas[0].duda).toContain("precio");
+
+    const fecha = leerCsv(`${CABECERA}\nPapa,1,5000,D1,2026-02-30`);
+    expect(fecha.errores).toEqual([]);
+    expect(fecha.filas[0]).toMatchObject({ fecha: "" });
+    expect(fecha.filas[0].duda).toContain("fecha");
+
     expect(leerCsv("x".repeat(1024 * 1024 + 1)).errores[0].mensaje).toBe(
       "archivo_muy_grande",
     );
@@ -85,9 +110,11 @@ describe("leerCsv", () => {
       new Set(varias.filas.map((f) => `${f.tienda}|${f.fecha}`)).size,
     ).toBe(2);
     expect(leerCsv(csv("con-promocion.csv")).filas).toHaveLength(2);
-    expect(leerCsv(csv("malo.csv")).errores.map((e) => e.linea)).toEqual([
-      3, 4,
-    ]);
+    const malo = leerCsv(csv("malo.csv"));
+    expect(malo.errores).toEqual([]);
+    expect(malo.filas).toHaveLength(2);
+    expect(malo.filas[0].duda).toContain("tienda");
+    expect(malo.filas[1].duda).toContain("precio");
   });
 });
 
@@ -117,5 +144,13 @@ describe("PROMPT_FACTURA", () => {
     ]);
     expect(r.total).toBe(34700);
     expect(r.filas.reduce((s, f) => s + f.precioTotal, 0)).toBe(r.total);
+  });
+
+  it("está contenido en prompts/importar-gastos.md", () => {
+    const md = readFileSync(
+      "blueprints/mercado-medellin/prompts/importar-gastos.md",
+      "utf-8",
+    ).replace(/\r\n/g, "\n");
+    expect(md).toContain(PROMPT_FACTURA);
   });
 });

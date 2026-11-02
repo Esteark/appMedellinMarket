@@ -16,6 +16,9 @@ type Props = {
 
 /** Primera pantalla: el CSV llega por archivo o pegado; nada se sube a ningún servidor. */
 export function OrigenFactura(p: Props) {
+  const soloCabecera = p.errores.every(
+    (e) => e.mensaje === "cabecera_invalida",
+  );
   return (
     <section
       data-testid="importar-origen"
@@ -71,12 +74,22 @@ export function OrigenFactura(p: Props) {
         </p>
       )}
       {p.errores.length > 0 && (
-        <ul role="alert" className="text-sm text-up-ink">
+        <ul
+          role={soloCabecera ? "alert" : "status"}
+          className={`text-sm ${soloCabecera ? "text-up-ink" : "text-warn-ink"}`}
+        >
           {p.errores.slice(0, 8).map((e) => (
             <li key={`${e.linea}-${e.mensaje}`}>
-              Línea {e.linea}: {e.mensaje.replace(/_/g, " ")}
+              {e.linea === 0
+                ? e.mensaje.replace(/_/g, " ")
+                : `Línea ${e.linea}: ${e.mensaje.replace(/_/g, " ")}`}
             </li>
           ))}
+          {!soloCabecera && (
+            <li>
+              Las filas con dudas se muestran en la revisión para corregirlas.
+            </li>
+          )}
         </ul>
       )}
       <div>

@@ -35,16 +35,18 @@ describe("leerListaCsv", () => {
     expect(r.listas[0].filas[0].cantidad).toBe(1.5);
   });
 
-  it("rechaza cabecera distinta, cantidad no numérica, unidad rara y .xlsx con su línea", () => {
-    expect(leerListaCsv("producto,cantidad\nPapa,1").errores[0]).toMatchObject({
+  it("rechaza una cabecera sin producto y un .xlsx, pero recupera celdas raras", () => {
+    expect(leerListaCsv("nombre,valor\nPapa,1").errores[0]).toMatchObject({
       linea: 1,
     });
-    expect(leerListaCsv(`${CAB}\n,Papa,mucho,kg,`).errores).toEqual([
-      { linea: 2, mensaje: "cantidad_invalida" },
-    ]);
-    expect(leerListaCsv(`${CAB}\n,Papa,1,costal,`).errores[0].mensaje).toBe(
-      "unidad_invalida",
-    );
+    const cantidad = leerListaCsv(`${CAB}\n,Papa,mucho,kg,`);
+    expect(cantidad.errores).toEqual([]);
+    expect(cantidad.listas[0].filas[0]).toMatchObject({ cantidad: 1 });
+    expect(cantidad.listas[0].filas[0].duda).toContain("cantidad");
+    const unidad = leerListaCsv(`${CAB}\n,Papa,1,costal,`);
+    expect(unidad.errores).toEqual([]);
+    expect(unidad.listas[0].filas[0]).toMatchObject({ unidad: "u" });
+    expect(unidad.listas[0].filas[0].duda).toContain("unidad");
     expect(
       leerListaCsv("PK\u0003\u0004[Content_Types].xml").errores[0],
     ).toMatchObject({ linea: 1 });
@@ -137,7 +139,7 @@ describe("sección «Casos» del prompt", () => {
     );
 
   it("cada respuesta de ejemplo se lee sin errores", () => {
-    expect(casos).toHaveLength(6);
+    expect(casos).toHaveLength(7);
     for (const c of casos) expect(c.errores).toEqual([]);
   });
 
@@ -181,9 +183,43 @@ describe("sección «Casos» del prompt", () => {
     ]);
   });
 
+  it("fuera de patrón deja dudas y no bloquea las filas", () => {
+    expect(casos[6].listas[0].filas).toHaveLength(3);
+    expect(casos[6].listas[0].filas[0]).toMatchObject({
+      producto: "Papa",
+      cantidad: 1.5,
+      unidad: "kg",
+    });
+    expect(casos[6].listas[0].filas[0].duda).toContain("1,5");
+    expect(casos[6].listas[0].filas[2].duda).toContain("precio");
+  });
+
   it("una fila sin cantidad ni unidad vale 1 u", () => {
     const r = leerListaCsv("lista,producto,cantidad,unidad,nota\n,Pan,,,");
     expect(r.errores).toEqual([]);
     expect(r.listas[0].filas[0]).toMatchObject({ cantidad: 1, unidad: "u" });
+  });
+
+  it("tolera fracciones, sinónimos de unidad y dudas por fila", () => {
+    const cab = "lista,producto,cantidad,unidad,nota,duda";
+    const r = leerListaCsv(
+      [
+        cab,
+        ',Harina,1/2,kilos,,"¿Era media libra?"',
+        ",Pan,1 1/2,unidades,,",
+        ",Huevos,1,docena,,",
+        ",Leche,2,litros,,",
+      ].join("\n"),
+    );
+    expect(r.errores).toEqual([]);
+    expect(
+      r.listas[0].filas.map((f) => [f.producto, f.cantidad, f.unidad]),
+    ).toEqual([
+      ["Harina", 0.5, "kg"],
+      ["Pan", 1.5, "u"],
+      ["Huevos", 12, "u"],
+      ["Leche", 2, "l"],
+    ]);
+    expect(r.listas[0].filas[0].duda).toBe("¿Era media libra?");
   });
 });

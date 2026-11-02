@@ -33,6 +33,57 @@ async function guardarRevisado(page: Page) {
   await page.getByRole("button", { name: "Guardar importación" }).click();
 }
 
+test("una fila con precio 0 o tienda vacía bloquea el guardado hasta corregirla o quitarla", async ({
+  page,
+}) => {
+  await abrirImportar(page);
+  const conDudas = [
+    "producto,cantidad,precio_total,tienda,fecha,duda",
+    "Arroz 500 g,1,0,D1,2026-10-30,¿El precio era 3.200?",
+    "Leche entera 1 L,1,4500,D1,2026-10-30,",
+    "Pan tajado 500 g,1,3200,,2026-10-30,¿En qué tienda lo compraste?",
+  ].join("\n");
+  await pegarYRevisar(page, conDudas);
+
+  await expect(
+    page.getByRole("status").filter({ hasText: "¿El precio era 3.200?" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Completa o quita 2 filas" }),
+  ).toBeVisible();
+  const guardar = page.getByRole("button", { name: "Guardar importación" });
+  await expect(guardar).toBeDisabled();
+
+  // Corregir el precio deja una sola fila incompleta.
+  await page.getByLabel("Precio total").first().fill("3200");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Completa o quita 1 fila" }),
+  ).toBeVisible();
+  await expect(guardar).toBeDisabled();
+
+  // Quitar la fila sin tienda desbloquea el guardado.
+  await page.getByRole("button", { name: "Quitar fila" }).last().click();
+  await expect(guardar).toBeEnabled();
+  await guardar.click();
+  await expect(page.getByTestId("importar-resultado")).toContainText(
+    "en este dispositivo",
+  );
+
+  const guardados = await page.evaluate(() =>
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("mercado-medellin:gastos:"))
+      .flatMap(
+        (k) =>
+          JSON.parse(localStorage.getItem(k) ?? "[]") as {
+            origen: string;
+            descripcion: string;
+          }[],
+      ),
+  );
+  expect(guardados.filter((g) => g.origen === "importado")).toHaveLength(2);
+  expect(guardados.map((g) => g.descripcion)).not.toContain("Pan tajado 500 g");
+});
+
 test("un .xlsx se rechaza con 'guárdalo como CSV' y no se lee", async ({
   page,
 }) => {

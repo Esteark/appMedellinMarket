@@ -17,8 +17,10 @@ type Props = {
   notas: string[];
   confirmaNuevos: boolean;
   guardando: boolean;
+  incompletas: number;
   onFila: (i: number, parche: Partial<FilaRevision>) => void;
   onGrupo: (g: Grupo, parche: { tienda?: string; fecha?: string }) => void;
+  onQuitar: (i: number) => void;
   onPublicar: (v: boolean) => void;
   onTotal: (clave: string, v: string) => void;
   onConfirma: (v: boolean) => void;
@@ -110,6 +112,12 @@ export function RevisionFactura(p: Props) {
             </p>
             {g.indices.map((i) => {
               const f = p.filas[i];
+              const faltantes = [
+                !f.producto.trim() && "producto",
+                !f.tienda.trim() && "tienda",
+                f.cantidad < 0.001 && "cantidad",
+                f.precioTotal < 1 && "precio",
+              ].filter(Boolean) as string[];
               return (
                 <fieldset
                   key={f.linea}
@@ -118,7 +126,27 @@ export function RevisionFactura(p: Props) {
                   <legend className="px-1 text-xs text-muted-foreground">
                     Línea {f.linea}
                     {p.conSesion && f.nuevo && " · producto nuevo"}
+                    {f.duda && " · con duda"}
+                    {!f.duda && faltantes.length > 0 && " · por completar"}
                   </legend>
+                  {(f.duda || faltantes.length > 0) && (
+                    <p
+                      role="status"
+                      className="text-xs text-warn-ink sm:col-span-6"
+                    >
+                      {f.duda && (
+                        <>
+                          <strong>Pregunta:</strong> {f.duda}{" "}
+                        </>
+                      )}
+                      {faltantes.length > 0 && (
+                        <>
+                          Falta {faltantes.join(", ")}: corrígelo o quita la
+                          fila.
+                        </>
+                      )}
+                    </p>
+                  )}
                   <input
                     aria-label="Producto"
                     className={`${campo} sm:col-span-3`}
@@ -195,6 +223,13 @@ export function RevisionFactura(p: Props) {
                       Publicar precio
                     </label>
                   )}
+                  <button
+                    type="button"
+                    className="rounded-[10px] border px-2 py-1 text-xs sm:col-span-2"
+                    onClick={() => p.onQuitar(i)}
+                  >
+                    Quitar fila
+                  </button>
                 </fieldset>
               );
             })}
@@ -211,6 +246,12 @@ export function RevisionFactura(p: Props) {
           Hay tiendas o productos que no existen en el catálogo; confirmo que se
           creen (se verán para todos).
         </label>
+      )}
+      {p.incompletas > 0 && (
+        <p role="status" className="text-sm text-warn-ink">
+          Completa o quita {p.incompletas}{" "}
+          {p.incompletas === 1 ? "fila" : "filas"} antes de guardar.
+        </p>
       )}
       <div className="flex flex-wrap gap-2">
         <button
@@ -231,7 +272,12 @@ export function RevisionFactura(p: Props) {
         )}
         <button
           type="button"
-          disabled={p.guardando || (nuevos && !p.confirmaNuevos)}
+          disabled={
+            p.guardando ||
+            p.filas.length === 0 ||
+            p.incompletas > 0 ||
+            (nuevos && !p.confirmaNuevos)
+          }
           onClick={p.onGuardar}
           className="rounded-[10px] bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-60"
         >

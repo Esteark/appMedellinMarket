@@ -7,6 +7,8 @@ export type FilaCsv = {
   tienda: string;
   fecha: string;
   codigo: string;
+  /** Pregunta sobre esta fila cuando algo no quedó claro; vacía si está completa. */
+  duda: string;
 };
 
 /** La fila en la pantalla de revisión: lo que la persona puede corregir antes de guardar. */

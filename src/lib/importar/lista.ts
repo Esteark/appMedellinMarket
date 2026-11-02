@@ -1,4 +1,10 @@
-import { dividir, MAX_BYTES } from "./csv";
+import {
+  aCantidad,
+  detectarDelimitador,
+  dividir,
+  MAX_BYTES,
+  normalizarCabecera,
+} from "./csv";
 import type { ErrorCsv } from "./tipos";
 
 export const UNIDADES_LISTA = ["kg", "g", "lb", "l", "ml", "u"] as const;
@@ -10,11 +16,75 @@ export type FilaLista = {
   cantidad: number;
   unidad: UnidadLista;
   nota: string;
+  /** Pregunta sobre esta fila cuando algo no quedó claro; vacía si está completa. */
+  duda: string;
 };
 export type ListaLeida = { nombre: string; filas: FilaLista[] };
-export type LecturaLista = { listas: ListaLeida[]; errores: ErrorCsv[] };
+export type LecturaLista = {
+  listas: ListaLeida[];
+  errores: ErrorCsv[];
+  /** Líneas `# DUDOSA: …` que dejó la IA para el archivo completo. */
+  notas: string[];
+};
 
-const COLUMNAS = ["lista", "producto", "cantidad", "unidad", "nota"];
+const ALIAS: Record<string, string> = {
+  lista: "lista",
+  seccion: "lista",
+  periodo: "lista",
+  grupo: "lista",
+  producto: "producto",
+  articulo: "producto",
+  item: "producto",
+  descripcion: "producto",
+  cantidad: "cantidad",
+  cant: "cantidad",
+  unidad: "unidad",
+  unidad_medida: "unidad",
+  medida: "unidad",
+  nota: "nota",
+  notas: "nota",
+  detalle: "nota",
+  observacion: "nota",
+  comentario: "nota",
+  duda: "duda",
+  pregunta: "duda",
+  aviso: "duda",
+};
+
+const UNIDADES: Record<string, UnidadLista> = {
+  kg: "kg",
+  kgs: "kg",
+  kilo: "kg",
+  kilos: "kg",
+  kilogramo: "kg",
+  kilogramos: "kg",
+  g: "g",
+  gr: "g",
+  grs: "g",
+  gramo: "g",
+  gramos: "g",
+  lb: "lb",
+  lbs: "lb",
+  libra: "lb",
+  libras: "lb",
+  l: "l",
+  lt: "l",
+  lts: "l",
+  litro: "l",
+  litros: "l",
+  ml: "ml",
+  mililitro: "ml",
+  mililitros: "ml",
+  u: "u",
+  un: "u",
+  und: "u",
+  unds: "u",
+  unidad: "u",
+  unidades: "u",
+  docena: "u",
+  docenas: "u",
+};
+
 const MAX_FILAS = 200;
 const MAX_LISTAS = 5;
 
@@ -32,60 +102,117 @@ export function agruparPorLista(
 
 export function leerListaCsv(texto: string): LecturaLista {
   const errores: ErrorCsv[] = [];
+  const notas: string[] = [];
   const error = (linea: number, mensaje: string) =>
     errores.push({ linea, mensaje });
   if (new TextEncoder().encode(texto).length > MAX_BYTES) {
     error(0, "archivo_muy_grande");
-    return { listas: [], errores };
+    return { listas: [], errores, notas };
   }
   const filas: (FilaLista & { lista: string })[] = [];
   let delimitador = ",";
-  let cabecera = false;
-  const lineas = texto.replace(/^﻿/, "").replace(/\r\n?/g, "\n").split("\n");
+  let mapa: string[] | null = null;
+  const lineas = texto
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
 
   for (const [i, cruda] of lineas.map((l) => l.trim()).entries()) {
-    if (!cruda || cruda.startsWith("```") || cruda.startsWith("#")) continue;
+    if (!cruda || cruda.startsWith("```")) continue;
     const linea = i + 1;
-    if (!cabecera) {
-      delimitador =
-        cruda.split(";").length > cruda.split(",").length ? ";" : ",";
-      const h = dividir(cruda, delimitador).map((c) =>
-        c.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(),
-      );
-      if (h.join() !== COLUMNAS.join()) {
-        error(linea, "cabecera_invalida");
-        return { listas: [], errores };
-      }
-      cabecera = true;
+
+    if (cruda.startsWith("#")) {
+      if (/^#\s*DUDOSA:/i.test(cruda))
+        notas.push(cruda.replace(/^#\s*DUDOSA:\s*/i, ""));
+      else if (/^#\s*ERROR:/i.test(cruda))
+        error(linea, cruda.replace(/^#\s*ERROR:\s*/i, ""));
       continue;
     }
+
+    if (!mapa) {
+      delimitador = detectarDelimitador(cruda);
+      const m = dividir(cruda, delimitador).map(
+        (c) => ALIAS[normalizarCabecera(c)] ?? "",
+      );
+      const usadas = m.filter(Boolean);
+      const valida =
+        usadas.includes("producto") && new Set(usadas).size === usadas.length;
+      if (!valida) {
+        error(linea, "cabecera_invalida");
+        return { listas: [], errores, notas };
+      }
+      mapa = m;
+      continue;
+    }
+
     if (filas.length >= MAX_FILAS) {
       error(linea, "demasiadas_filas");
       break;
     }
+
     const campos = dividir(cruda, delimitador);
-    if (campos.length !== COLUMNAS.length) {
-      error(linea, "columnas_distintas");
+    const columnas = mapa;
+    const valor = (columna: string) => {
+      const k = columnas.indexOf(columna);
+      return k >= 0 ? (campos[k] ?? "") : "";
+    };
+
+    let producto = valor("producto").trim();
+    if (!producto) {
+      error(linea, "producto_invalido");
       continue;
     }
-    const [lista, producto, cant, u, nota] = campos;
-    // Una IA que deja la celda en blanco no debe romper la carga: sin cantidad es 1 y sin unidad, u.
-    const cantidad = !cant
-      ? 1
-      : /^\d+([.,]\d+)?$/.test(cant)
-        ? Number(cant.replace(",", "."))
-        : NaN;
-    const unidad = (u.toLowerCase() || "u") as UnidadLista;
-    if (!producto || producto.length > 120) error(linea, "producto_invalido");
-    else if (!(cantidad > 0 && cantidad <= 9999))
-      error(linea, "cantidad_invalida");
-    else if (!UNIDADES_LISTA.includes(unidad)) error(linea, "unidad_invalida");
-    else filas.push({ linea, lista, producto, cantidad, unidad, nota });
+    const dudas: string[] = [];
+    if (producto.length > 120) {
+      producto = producto.slice(0, 120);
+      dudas.push("El nombre era muy largo y se recortó.");
+    }
+
+    const textoCantidad = valor("cantidad").trim();
+    let cantidad = textoCantidad ? aCantidad(textoCantidad) : 1;
+    if (cantidad === null) {
+      cantidad = 1;
+      dudas.push(`No entendí la cantidad «${textoCantidad}»; asumí 1.`);
+    }
+
+    const textoUnidad = valor("unidad").trim();
+    let unidad = textoUnidad ? UNIDADES[normalizarCabecera(textoUnidad)] : "u";
+    if (!unidad) {
+      unidad = "u";
+      dudas.push(`No entendí la unidad «${textoUnidad}»; asumí u.`);
+    }
+
+    // La docena es una forma coloquial de doce unidades, no una unidad aparte.
+    if (normalizarCabecera(textoUnidad).startsWith("docena")) {
+      cantidad *= 12;
+      unidad = "u";
+    }
+
+    if (!(cantidad > 0 && cantidad <= 9999)) {
+      cantidad = 1;
+      dudas.push(
+        `La cantidad «${textoCantidad}» está fuera de rango; asumí 1.`,
+      );
+    }
+
+    const textoDuda = valor("duda").trim();
+    if (textoDuda) dudas.push(textoDuda);
+
+    filas.push({
+      linea,
+      lista: valor("lista").trim(),
+      producto,
+      cantidad,
+      unidad,
+      nota: valor("nota").trim(),
+      duda: dudas.join(" ").trim(),
+    });
   }
-  if (!cabecera && errores.length === 0) error(1, "archivo_vacio");
+
+  if (!mapa && errores.length === 0) error(1, "archivo_vacio");
   const listas = agruparPorLista(filas);
   if (listas.length > MAX_LISTAS) error(0, "demasiadas_listas");
-  return { listas, errores };
+  return { listas, errores, notas };
 }
 
 const A_BASE = {

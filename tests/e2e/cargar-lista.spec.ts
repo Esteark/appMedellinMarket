@@ -19,6 +19,32 @@ async function cargar(page: Page, csv = CSV) {
 const toast = (page: Page, texto: string) =>
   page.getByRole("status").filter({ hasText: texto });
 
+test("una fila con duda muestra la pregunta, se corrige y se puede usar", async ({
+  page,
+}) => {
+  const conDuda = [
+    "lista,producto,cantidad,unidad,nota,duda",
+    ',Aguacate hass,1/2,kilos,,"¿Era media libra o medio kilo?"',
+  ].join("\n");
+  await cargar(page, conDuda);
+  const sec = page.getByTestId("seccion-Lista importada");
+  await expect(sec).toBeVisible();
+  await expect(
+    sec.getByText("Pregunta: ¿Era media libra o medio kilo?"),
+  ).toBeVisible();
+  // La fracción y el sinónimo de unidad se leen igual, sin bloquear la fila.
+  await expect(page.getByLabel("Unidad de Aguacate hass")).toHaveValue("kg");
+  await expect(
+    page.getByLabel("Cantidad escrita de Aguacate hass"),
+  ).toHaveValue("0.5");
+
+  await page.getByLabel("Cantidad escrita de Aguacate hass").fill("3");
+  await sec.getByRole("button", { name: "Usar como mi lista" }).click();
+  await expect(toast(page, "es ahora tu lista")).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByTestId("tarjeta-aguacate")).toContainText("3");
+});
+
 test("sin sesión: revisar, usar como mi lista, guardar en el dispositivo, repetir nombre y recordar el alias", async ({
   page,
 }) => {

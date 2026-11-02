@@ -35,6 +35,13 @@ import { RevisionFactura } from "./revision";
 
 type Props = { productos: ProductoCatalogo[]; onImportado: () => void };
 
+/** Una fila sin producto, tienda, cantidad o precio no se puede guardar todavía. */
+const estaCompleta = (f: FilaRevision) =>
+  Boolean(f.producto.trim()) &&
+  Boolean(f.tienda.trim()) &&
+  f.cantidad >= 0.001 &&
+  f.precioTotal >= 1;
+
 export function ImportarFactura({ productos, onImportado }: Props) {
   const [paso, setPaso] = useState<"origen" | "revision" | "resultado">(
     "origen",
@@ -72,12 +79,19 @@ export function ImportarFactura({ productos, onImportado }: Props) {
   };
 
   const previsualizar = async (base: FilaRevision[]) => {
-    const r = await previsualizarCompra(aPayload(base));
+    const completas = base.filter(estaCompleta);
+    if (completas.length === 0) return setFilas(base);
+    const r = await previsualizarCompra(aPayload(completas));
     setConSesion(r.ok || r.error !== "sin_sesion");
-    if (!r.ok) return;
+    if (!r.ok) return setFilas(base);
+    // El RPC numera las filas recibidas (1..N), no las líneas del CSV: se
+    // emparejan por posición con las filas completas que se enviaron.
+    const porLinea = new Map(
+      completas.map((f, i) => [f.linea, r.filas[i]] as const),
+    );
     setFilas(
-      base.map((f, i) => {
-        const v = r.filas[i];
+      base.map((f) => {
+        const v = porLinea.get(f.linea);
         if (!v) return f;
         return {
           ...f,
@@ -93,7 +107,7 @@ export function ImportarFactura({ productos, onImportado }: Props) {
   const revisar = async () => {
     const lectura = leerCsv(texto);
     setErrores(lectura.errores);
-    if (lectura.errores.length > 0 || lectura.filas.length === 0) return;
+    if (lectura.filas.length === 0) return;
     const base = lectura.filas.map((f) => aRevision(f, productos));
     const claves = new Set(
       base.map((f) => `${f.tienda}|${f.fecha || fechaLote}`),
@@ -111,6 +125,8 @@ export function ImportarFactura({ productos, onImportado }: Props) {
   };
 
   const guardar = async () => {
+    const activas = filas.filter(estaCompleta);
+    if (activas.length === 0) return;
     setGuardando(true);
     const hash = await hashLote(texto, fechaLote);
     const lotes = leerImportacionesLocal();
@@ -122,7 +138,7 @@ export function ImportarFactura({ productos, onImportado }: Props) {
         archivo,
         publicar,
         hash,
-        filas: aPayload(filas),
+        filas: aPayload(activas),
       });
       if (r.ok) {
         setResultado(r);
@@ -132,19 +148,19 @@ export function ImportarFactura({ productos, onImportado }: Props) {
         onImportado();
       } else avisar(claveAviso(r.error));
     } else {
-      guardarLocal(filas, fechaLote);
+      guardarLocal(activas, fechaLote);
       guardarImportacionesLocal([
         {
           hash,
           fecha: fechaLote,
-          filas: filas.length,
+          filas: activas.length,
           creado: new Date().toISOString(),
         },
         ...lotes,
       ]);
       setResultado(null);
       setPaso("resultado");
-      avisar("importacion_lista", { gastos: filas.length, precios: 0 });
+      avisar("importacion_lista", { gastos: activas.length, precios: 0 });
       onImportado();
     }
     setGuardando(false);
@@ -204,9 +220,11 @@ export function ImportarFactura({ productos, onImportado }: Props) {
         notas={notas}
         confirmaNuevos={confirma}
         guardando={guardando}
+        incompletas={filas.filter((f) => !estaCompleta(f)).length}
         onFila={(i, p) =>
           setFilas((fs) => fs.map((f, k) => (k === i ? { ...f, ...p } : f)))
         }
+        onQuitar={(i) => setFilas((fs) => fs.filter((_, k) => k !== i))}
         onGrupo={cambiarGrupo}
         onPublicar={setPublicar}
         onTotal={(c, v) => setTotales((t) => ({ ...t, [c]: v }))}
