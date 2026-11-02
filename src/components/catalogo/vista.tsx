@@ -1,19 +1,32 @@
 import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
+import { ANTOJOS } from "@/data/grupos";
 import { catalogo, usuario } from "@/lib/datos";
 import { Catalogo } from "./catalogo";
 
-async function Datos({ grupos }: { grupos: string[] }) {
+async function Datos({
+  grupos,
+  conOtros,
+}: {
+  grupos: string[];
+  conOtros?: boolean;
+}) {
   const [{ productos, tiendas, seguidos }, u] = await Promise.all([
     catalogo(),
     usuario(),
   ]);
+  // Un producto creado con otro grupo («Otros» o uno propio) no puede quedar sin pantalla.
+  const extra = conOtros
+    ? [...new Set(productos.map((p) => p.grupo))]
+        .filter((g) => !grupos.includes(g) && !ANTOJOS.includes(g))
+        .sort()
+    : [];
   return (
     <Catalogo
       productos={productos}
       tiendas={tiendas}
       seguidos={seguidos}
-      grupos={grupos}
+      grupos={[...grupos, ...extra]}
       conSesion={!!u}
     />
   );
@@ -52,9 +65,12 @@ function Esqueleto() {
 export function VistaCatalogo({
   titulo,
   grupos,
+  conOtros,
 }: {
   titulo: string;
   grupos: string[];
+  /** Suma los grupos que no son de otra vista (la Canasta recoge «Otros»). */
+  conOtros?: boolean;
 }) {
   return (
     <main className="flex flex-1 flex-col">
@@ -62,7 +78,7 @@ export function VistaCatalogo({
         {titulo}
       </h1>
       <Suspense fallback={<Esqueleto />}>
-        <Datos grupos={grupos} />
+        <Datos grupos={grupos} conOtros={conOtros} />
       </Suspense>
     </main>
   );
