@@ -798,10 +798,10 @@
     "files": [
       "src/components/planes/dieta/semanas.tsx",
       "src/components/planes/dieta/semana-editor.tsx",
-      "src/components/planes/dieta/buscar-producto.tsx",
+      "src/components/planes/dieta/lista-comida.tsx",
       "src/lib/avisos.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E43-T4",

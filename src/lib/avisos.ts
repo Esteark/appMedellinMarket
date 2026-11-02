@@ -133,6 +133,21 @@ export const AVISOS = {
     texto:
       "Ya tienes 20 presupuestos guardados. Elimina uno para guardar otro.",
   },
+  semana_agregada: {
+    tipo: "exito",
+    emoji: "🗓️",
+    texto: "Semana {n} agregada al plan.",
+  },
+  semana_quitada: {
+    tipo: "info",
+    emoji: "🗓️",
+    texto: "Semana {n} quitada del plan.",
+  },
+  comida_repetida: {
+    tipo: "exito",
+    emoji: "🔁",
+    texto: "{comida} copiada a los 7 días.",
+  },
   lista_guardada: {
     tipo: "exito",
     emoji: "💾",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
+import { Semanas } from "@/components/planes/dieta/semanas";
 import { DietaTablas } from "@/components/planes/dieta-tablas";
 import { PlanConDatos } from "@/components/planes/plan-con-datos";
 import { PlanEditable } from "@/components/planes/plan-editable";
@@ -15,39 +16,42 @@ export const metadata: Metadata = { title: "Dieta · Mercado Medellín" };
 async function Datos() {
   const { productos } = await catalogo();
   return (
-    <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
-      <h2 className="text-lg font-bold">Cargar el plan en tu lista</h2>
-      <BotonesPlan
-        ids={productos.map((p) => p.id)}
-        acciones={[
-          {
-            plan: "semana",
-            modo: "reemplazar",
-            texto: "Lista base de la semana",
-            primaria: true,
-          },
-          { plan: "mes", modo: "reemplazar", texto: "Plan del mes completo" },
-          {
-            plan: "semana",
-            modo: "sumar",
-            texto: "Sumar lista base a mi lista",
-          },
-        ]}
-      />
-      <p className="text-xs text-muted-foreground">
-        Equivalencias usadas: 10 limones ≈ 1 kg; la cebolla “morada y blanca” se
-        reparte mitad y mitad. Las cantidades con decimales suben al entero
-        siguiente.
-      </p>
-      <details>
-        <summary className="cursor-pointer text-sm font-semibold">
-          {PLANES.semana.nombre}
-        </summary>
-        <div className="mt-2">
-          <PlanEditable productos={productos} />
-        </div>
-      </details>
-    </section>
+    <>
+      <Semanas productos={productos} />
+      <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
+        <h2 className="text-lg font-bold">Cargar el plan en tu lista</h2>
+        <BotonesPlan
+          ids={productos.map((p) => p.id)}
+          acciones={[
+            {
+              plan: "semana",
+              modo: "reemplazar",
+              texto: "Lista base de la semana",
+              primaria: true,
+            },
+            { plan: "mes", modo: "reemplazar", texto: "Plan del mes completo" },
+            {
+              plan: "semana",
+              modo: "sumar",
+              texto: "Sumar lista base a mi lista",
+            },
+          ]}
+        />
+        <p className="text-xs text-muted-foreground">
+          Equivalencias usadas: 10 limones ≈ 1 kg; la cebolla “morada y blanca”
+          se reparte mitad y mitad. Las cantidades con decimales suben al entero
+          siguiente.
+        </p>
+        <details>
+          <summary className="cursor-pointer text-sm font-semibold">
+            {PLANES.semana.nombre}
+          </summary>
+          <div className="mt-2">
+            <PlanEditable productos={productos} />
+          </div>
+        </details>
+      </section>
+    </>
   );
 }
 
