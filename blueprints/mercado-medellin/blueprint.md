@@ -2195,3 +2195,42 @@ Desde el paso 2 hace falta Supabase local arriba: `pnpm exec supabase start` y d
   - **Proyección fin de mes** = `round(gastado ÷ días transcurridos × días del mes)`: ritmo lineal, 0 el día 0. No es un pronóstico de precios (regla 10) ni usa IA. Debajo de la cifra la UI muestra la fórmula con los días reales.
 - **Agregar gasto:** «Unidad (opcional)» sigue siendo texto libre (máx. 10 caracteres) con `<datalist>` de sugeridas (`kg, lb, g, l, ml, und, docena, panal, paquete, bolsa, caja, botella, atado`); elegir un producto del catálogo la rellena. «Cantidad» sigue siendo numérica libre y suma chips predefinidos (`0.25, 0.5, 1, 2, 3, 6, 12`) que solo rellenan el campo.
 - **Hecho cuando:** el gate pasa; E2E `tests/e2e/presupuesto-claro.spec.ts`: fijar Carnes en 200000 se refleja en el Resumen, que muestra la fórmula de la proyección; escribir una unidad fuera de la lista se guarda tal cual y un chip de cantidad rellena el campo.
+
+**43. Dieta planeada semana a semana, por comida, con compras derivadas.** *(pedido del 2-nov-2026: "organizado y todo editable", 4 a 5 semanas, desayuno/almuerzo/cena, y generar listas desde ahí; revisión UX de `/dieta` del mismo día)*
+- **Depende de:** pasos 29 (planes editables) y 40 (guardados con nombre y animación). **Sin migración y sin dependencias nuevas.** El plan nuevo vive dentro de `config` (jsonb) de `planes_usuario` y `planes_guardados`; ambas tablas aceptan cualquier objeto (las copias, hasta 200 000 bytes), así que no se toca el esquema. Un pgTAP lo comprueba guardando un `config` con 5 semanas.
+- **Por qué:** la revisión de `/dieta` encontró (a) una sola lista base repetida cada semana, (b) tablas fijas del PDF (`DietaTablas`) que suman $1.1 M cuando el plan dice $800 000, (c) un aviso con cifras escritas a mano que no cambia al editar y (d) «Compras por semana» con dos totales ($1.165.500 y $1.260.000) distintos del plan. Es el mismo defecto que se quitó de Hogar en el paso 40: más de un desglose.
+- **Modelo (`src/lib/planes/semanas.ts`, puro, sin React):**
+  ```ts
+  type Comida = "desayuno" | "almuerzo" | "cena";
+  type Cantidades = Record<string /* id de producto */, number /* entero 1..999 */>;
+  type Semana = {
+    dias: { desayuno: Cantidades; almuerzo: Cantidades; cena: Cantidades }[]; // exactamente 7, lunes a domingo
+    despensa: Cantidades; // compras de la semana que no son de una comida (aseo, especias, lista base)
+  };
+  // configPlan gana: semanas?: Semana[]  (mín. 4, máx. 5), opcional
+  ```
+  - `semanas` es **opcional**: un plan sin ella sigue siendo válido (`version` sigue en 1) y los planes y copias ya guardados se leen igual. Límites: 40 productos por comida y 80 en la despensa.
+  - `items` se conserva como la «lista base» de compatibilidad. Si hay `semanas`, el costo del mes es la suma de las compras de todas las semanas; `items` solo alimenta «Traer la lista base» y el plan sugerido de fábrica.
+  - `semanaVacia()`, `agregarSemana(config)` (hasta 5), `quitarSemana(config)` (hasta 4, solo la última), `repetirEnTodosLosDias(semana, dia, comida)` y `traerListaBase(config, indice)` (copia `items` a la despensa de esa semana). Todas devuelven un `ConfigPlan` nuevo sin mutar el anterior.
+- **Compras derivadas (`src/lib/planes/compras.ts`, puro):**
+  - `comprasDeSemana(semana)`: suma por producto todas las comidas de los 7 días más la despensa.
+  - `costoDeCompras(compras, precios)`: cada línea usa el precio efectivo del catálogo (`precio_efectivo`); un producto **sin precio no se estima ni se cuenta**: sale como «sin dato» y el total dice «+ N sin precio». Regla 7: nunca se inventa un precio.
+  - `comprasDelMes(config)`: suma de las semanas, base de la comparación contra los rubros.
+- **UI (`"use client"` solo en la hoja interactiva; ningún archivo > 250 líneas):**
+  - `src/components/planes/dieta/semanas.tsx`: pestañas «Semana 1 … 4» (+ «5» si existe), «Agregar semana 5» y «Quitar semana 5» (confirmación en línea; no borra las 4 primeras).
+  - `src/components/planes/dieta/semana-editor.tsx`: selector de día y tres columnas Desayuno / Almuerzo / Cena (una a la vez en móvil, con selector de comida); cada comida es una lista de productos con cantidad, como el stepper de `plan-editable.tsx`; «Repetir en todos los días» copia esa comida a los otros 6 días y pide confirmación en línea si ya tenían algo; «Despensa de la semana» al final y «Traer la lista base».
+  - `src/components/planes/dieta/buscar-producto.tsx`: agrega un producto del catálogo o uno propio (reutiliza `propios` del plan).
+  - `src/components/planes/dieta/compras-semana.tsx`: panel «Compras de la semana N» (producto, cantidad, costo, total animado con `ValorAnimado`), «Usar como mi lista» y «Sumar a mi lista» con `BotonesPlan`, y la fila del mes completo.
+  - `src/components/planes/compara-presupuesto.tsx` lee `comprasDelMes` cuando hay `semanas` (Hogar sigue usando `items`).
+- **Orden de la pantalla (`src/app/dieta/page.tsx`):** resumen editable → rubros → planificador semanal → compras de la semana → comparación con el presupuesto → «Consejos» (en un `<details>`: «Dónde comprar» y «Ahorros puntuales», que son texto, no cifras).
+- **Se eliminan:** `src/components/planes/dieta-tablas.tsx` (tablas del PDF) y el aviso amarillo con cifras escritas a mano. «Proteína por porción» queda fuera de este paso (no es un plan editable; puede volver como cálculo del plan).
+- **Guardado:** `semanas` viaja dentro de `config`, así que el plan activo, las copias con nombre, la fusión por `actualizada` y `sincronizarPlanes` funcionan sin cambiar su contrato; `configPlan` es lo único que valida. Una copia con semanas corruptas se descarta como cualquier otra (`leerGuardado`).
+- **Avisos** (`src/lib/avisos.ts`): `semana_agregada`, `semana_quitada` y `comida_repetida`; la información nunca vive solo en un toast.
+- **Fuera de alcance:** recetas, calorías o macros, más de 5 semanas, compartir un plan entre cuentas y los avisos superpuestos de «precios viejos» del encabezado (se tratan aparte).
+- **Hecho cuando:**
+  - `tests/unit/semanas.test.ts`: `configPlan` acepta un plan sin `semanas` y otro con 4 y con 5; rechaza 3 y 6 semanas, un día de menos y una cantidad 0; `agregarSemana` falla con 5 y `quitarSemana` con 4; `repetirEnTodosLosDias` copia a los 7 días sin tocar las otras comidas; ninguna función muta su entrada.
+  - `tests/unit/compras.test.ts`: dos comidas con el mismo producto suman en una línea; la despensa se suma; un producto sin precio no entra al total y cuenta en «sin precio»; `comprasDelMes` es la suma de las semanas.
+  - pgTAP (`supabase/tests/planes_guardados.test.sql` ampliado): un `config` con 5 semanas se guarda y se lee como `authenticated`; `anon` sigue sin acceso.
+  - E2E `tests/e2e/dieta-semanas.spec.ts`: sin sesión, agregar un producto al almuerzo del lunes, «Repetir en todos los días», ver la cantidad × 7 en «Compras de la semana 1», pasar a la semana 2 (vacía), «Agregar semana 5» y recargar conserva todo; «Usar como mi lista» carga las compras; con sesión, guardar una copia con nombre, borrar el almacenamiento local y recuperarla. Axe de `/dieta` sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px.
+  - Siguen pasando `tests/e2e/planes.spec.ts`, `planes-editables.spec.ts` y `planes-guardados.spec.ts`.
+  - El gate (`pnpm typecheck && pnpm lint && pnpm test`).

@@ -723,5 +723,136 @@
       "tests/e2e/presupuesto-claro.spec.ts"
     ],
     "status": "done"
+  },
+  {
+    "id": "E43-T1",
+    "title": "Modelo de semanas en configPlan",
+    "epic": "43-dieta-semanas",
+    "dependencies": [
+      "E40-T2"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN un plan no trae `semanas` THE SYSTEM SHALL aceptarlo como válido.",
+      "WHEN `semanas` trae 4 o 5 elementos con 7 días cada uno THE SYSTEM SHALL aceptarlo.",
+      "WHEN trae 3 o 6 semanas, un día de menos o una cantidad 0 THE SYSTEM SHALL rechazarlo.",
+      "WHEN se agrega una semana con 5 ya presentes, o se quita con 4 THE SYSTEM SHALL fallar sin cambiar el plan.",
+      "WHEN se repite una comida en todos los días THE SYSTEM SHALL copiarla a los 7 días sin tocar las otras comidas ni mutar la entrada."
+    ],
+    "verify": [
+      "pnpm test tests/unit/semanas.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-43a",
+    "files": [
+      "src/lib/planes/config.ts",
+      "src/lib/planes/semanas.ts",
+      "tests/unit/semanas.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E43-T2",
+    "title": "Compras y costo derivados del plan",
+    "epic": "43-dieta-semanas",
+    "dependencies": [
+      "E43-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN dos comidas llevan el mismo producto THE SYSTEM SHALL sumarlas en una sola línea.",
+      "THE SYSTEM SHALL sumar también la despensa de la semana.",
+      "WHEN un producto no tiene precio THE SYSTEM SHALL excluirlo del total y contarlo como «sin precio», sin estimarlo.",
+      "THE SYSTEM SHALL calcular el mes como la suma de las semanas."
+    ],
+    "verify": [
+      "pnpm test tests/unit/compras.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-43b",
+    "files": [
+      "src/lib/planes/compras.ts",
+      "tests/unit/compras.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E43-T3",
+    "title": "Planificador semanal editable",
+    "epic": "43-dieta-semanas",
+    "dependencies": [
+      "E43-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "THE SYSTEM SHALL mostrar pestañas de semana y, por día, tres comidas editables con productos del catálogo y propios.",
+      "WHEN se pulsa «Repetir en todos los días» sobre una comida y otros días ya tienen datos THE SYSTEM SHALL pedir confirmación en línea.",
+      "WHEN se agrega o quita la semana 5 THE SYSTEM SHALL avisar con `semana_agregada` o `semana_quitada` y conservar las 4 primeras.",
+      "THE SYSTEM SHALL no desbordar horizontalmente en 390 px (una comida a la vez con selector)."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/dieta-semanas.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-43c",
+    "files": [
+      "src/components/planes/dieta/semanas.tsx",
+      "src/components/planes/dieta/semana-editor.tsx",
+      "src/components/planes/dieta/buscar-producto.tsx",
+      "src/lib/avisos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E43-T4",
+    "title": "Compras de la semana y comparación con el presupuesto",
+    "epic": "43-dieta-semanas",
+    "dependencies": [
+      "E43-T2",
+      "E43-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "THE SYSTEM SHALL mostrar «Compras de la semana N» con cantidad y costo por producto y un total animado.",
+      "WHEN se pulsa «Usar como mi lista» THE SYSTEM SHALL reemplazar la lista con las compras de esa semana, y «Sumar» conservar lo que ya había.",
+      "WHEN el plan tiene `semanas` THE SYSTEM SHALL comparar los rubros contra `comprasDelMes`."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/dieta-semanas.spec.ts tests/e2e/planes.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-43d",
+    "files": [
+      "src/components/planes/dieta/compras-semana.tsx",
+      "src/components/planes/compara-presupuesto.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E43-T5",
+    "title": "Limpiar /dieta y pruebas de extremo a extremo",
+    "epic": "43-dieta-semanas",
+    "dependencies": [
+      "E43-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "THE SYSTEM SHALL no mostrar las tablas del PDF ni el aviso con cifras fijas, y dejar «Dónde comprar» y «Ahorros puntuales» en un `<details>`.",
+      "WHEN con sesión se guarda una copia con 5 semanas y se borra el almacenamiento local THE SYSTEM SHALL recuperarla de la cuenta.",
+      "THE SYSTEM SHALL pasar axe en `/dieta` sin violaciones serias ni críticas."
+    ],
+    "verify": [
+      "pnpm exec supabase test db",
+      "pnpm test:e2e tests/e2e/dieta-semanas.spec.ts tests/e2e/planes-editables.spec.ts tests/e2e/planes-guardados.spec.ts tests/e2e/publico.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-43e",
+    "files": [
+      "src/app/dieta/page.tsx",
+      "src/components/planes/dieta-tablas.tsx",
+      "supabase/tests/planes_guardados.test.sql",
+      "tests/e2e/dieta-semanas.spec.ts"
+    ],
+    "status": "pending"
   }
 ]
