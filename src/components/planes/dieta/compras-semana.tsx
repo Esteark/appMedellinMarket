@@ -3,8 +3,13 @@
 import { fusionar } from "@/components/avisos/sincronizar-lista";
 import { leerLista, reemplazarLista } from "@/components/carrito/use-lista";
 import { avisar } from "@/lib/avisos";
+import type { ProductoCatalogo } from "@/lib/datos";
 import { pesos } from "@/lib/formato";
-import { comprasDeSemana, costoDeCompras } from "@/lib/planes/compras";
+import {
+  comprasDeSemana,
+  costoDeCompras,
+  paraLista,
+} from "@/lib/planes/compras";
 import type { Semana } from "@/lib/planes/semanas";
 import type { Precios } from "@/lib/precios/lista";
 import { ValorAnimado } from "../valor-animado";
@@ -17,16 +22,17 @@ export function ComprasSemana({
   semana,
   indice,
   productos,
-  precios,
   tiendas,
 }: {
   semana: Semana;
   indice: number;
-  productos: ProductoPlan[];
-  precios: Precios;
+  productos: (ProductoPlan & Pick<ProductoCatalogo, "precios">)[];
   tiendas: string[];
 }) {
   const compras = comprasDeSemana(semana);
+  const precios: Precios = Object.fromEntries(
+    productos.map((p) => [p.id, p.precios]),
+  );
   const { lineas, total, sinPrecio } = costoDeCompras(
     compras,
     precios,
@@ -37,7 +43,9 @@ export function ComprasSemana({
 
   const usar = () => {
     const previa = leerLista();
-    reemplazarLista(compras, null);
+    const { lista, recortado } = paraLista(compras);
+    reemplazarLista(lista, null);
+    if (recortado) avisar("lista_recortada");
     avisar(
       "plan_usado",
       { plan, n: lineas.length },
@@ -46,8 +54,9 @@ export function ComprasSemana({
   };
   const sumar = () => {
     const previa = leerLista();
-    const nueva = fusionar(previa, compras);
+    const { lista: nueva, recortado } = paraLista(fusionar(previa, compras));
     reemplazarLista(nueva);
+    if (recortado) avisar("lista_recortada");
     avisar("plan_sumado", {
       plan,
       n: Object.keys(nueva).filter((id) => nueva[id] !== previa[id]).length,
@@ -86,7 +95,8 @@ export function ComprasSemana({
       </p>
       {sinPrecio > 0 && (
         <p className="text-xs text-muted-foreground">
-          Sin precio: {sinPrecio} productos (no entran al total).
+          Sin precio: {sinPrecio} {sinPrecio === 1 ? "producto" : "productos"}{" "}
+          (no entran al total).
         </p>
       )}
       <div className="flex flex-wrap gap-2">

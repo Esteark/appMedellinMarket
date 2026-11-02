@@ -57,6 +57,12 @@ export const AVISOS = {
     texto:
       "Unimos la lista de este dispositivo con la guardada ({n} productos).",
   },
+  lista_recortada: {
+    tipo: "aviso",
+    emoji: "✂️",
+    texto:
+      "Algunas compras pasaban el máximo de la lista (999 unidades por producto, 200 productos) y se recortaron.",
+  },
   lista_no_guardada: {
     tipo: "error",
     emoji: "☁️",

@@ -20,11 +20,7 @@ async function Datos() {
   const idsTienda = tiendas.map((t) => t.id);
   return (
     <>
-      <Semanas
-        productos={productos}
-        precios={Object.fromEntries(productos.map((p) => [p.id, p.precios]))}
-        tiendas={idsTienda}
-      />
+      <Semanas productos={productos} tiendas={idsTienda} />
       <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
         <h2 className="text-lg font-bold">Cargar el plan en tu lista</h2>
         <BotonesPlan

@@ -30,7 +30,8 @@ export const configPlan = z.object({
     .max(50),
   nota: z.string().max(1000),
   /** Solo Dieta; opcional, así los planes anteriores siguen siendo válidos. */
-  semanas: semanas.optional(),
+  // `.catch`: unas semanas dañadas no deben tirar el presupuesto, los rubros ni los items.
+  semanas: semanas.optional().catch(undefined),
   actualizada: z.iso.datetime({ offset: true }),
 });
 export type ConfigPlan = z.infer<typeof configPlan>;

@@ -77,15 +77,21 @@ export function repetirEnTodosLosDias(
   };
 }
 
-/** Pone la lista base (`items`) en la despensa de la semana `indice`; `null` si no existe o no cabe. */
+/** Mismos productos con las mismas cantidades, sin importar el orden en que se agregaron. */
+export function mismasCantidades(a: Cantidades, b: Cantidades): boolean {
+  const ka = Object.keys(a);
+  return ka.length === Object.keys(b).length && ka.every((k) => a[k] === b[k]);
+}
+
+/** Suma la lista base (`items`) a la despensa de la semana `indice` sin pisar lo que ya puso; `null` si no existe o no cabe. */
 export function traerListaBase(
   config: ConfigPlan,
   indice: number,
 ): ConfigPlan | null {
   const s = config.semanas?.[indice];
   if (!config.semanas || !s) return null;
-  const despensa = { ...s.despensa, ...config.items };
-  if (!cantidades(80).safeParse(despensa).success) return null;
+  const despensa = { ...config.items, ...s.despensa };
+  if (!semana.safeParse({ ...s, despensa }).success) return null;
   return {
     ...config,
     semanas: config.semanas.map((x, i) =>

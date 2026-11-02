@@ -3,6 +3,7 @@ import {
   comprasDelMes,
   comprasDeSemana,
   costoDeCompras,
+  paraLista,
 } from "@/lib/planes/compras";
 import { semanaVacia } from "@/lib/planes/semanas";
 
@@ -43,5 +44,18 @@ describe("compras derivadas del plan", () => {
     const sal = r.lineas.find((l) => l.id === "sal");
     expect(sal).toMatchObject({ tienda: null, costo: null });
     expect(r.lineas.find((l) => l.id === "arroz")?.costo).toBe(15000);
+  });
+});
+
+describe("paraLista", () => {
+  it("recorta a 999 por producto y a 200 productos y avisa", () => {
+    const grande = Object.fromEntries(
+      Array.from({ length: 205 }, (_, i) => [`p${i}`, i === 0 ? 1500 : 1]),
+    );
+    const r = paraLista(grande);
+    expect(Object.keys(r.lista)).toHaveLength(200);
+    expect(r.lista.p0).toBe(999);
+    expect(r.recortado).toBe(true);
+    expect(paraLista({ a: 3 })).toEqual({ lista: { a: 3 }, recortado: false });
   });
 });

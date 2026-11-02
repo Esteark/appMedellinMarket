@@ -3,6 +3,8 @@ import { configPlan, planSugerido } from "@/lib/planes/config";
 import {
   agregarSemana,
   conSemanas,
+  semanas as esquemaSemanas,
+  mismasCantidades,
   quitarSemana,
   repetirEnTodosLosDias,
   type Semana,
@@ -24,8 +26,9 @@ describe("semanas del plan", () => {
   it("acepta 4 y 5 semanas y rechaza 3 y 6", () => {
     expect(configPlan.safeParse(con(4)).success).toBe(true);
     expect(configPlan.safeParse(con(5)).success).toBe(true);
-    expect(configPlan.safeParse(con(3)).success).toBe(false);
-    expect(configPlan.safeParse(con(6)).success).toBe(false);
+    // El esquema de semanas es estricto; `configPlan` solo descarta las semanas dañadas.
+    expect(esquemaSemanas.safeParse(con(3).semanas).success).toBe(false);
+    expect(esquemaSemanas.safeParse(con(6).semanas).success).toBe(false);
   });
 
   it("rechaza un día de menos y una cantidad 0", () => {
@@ -33,16 +36,14 @@ describe("semanas del plan", () => {
       ...semanaVacia(),
       dias: semanaVacia().dias.slice(1),
     };
-    expect(
-      configPlan.safeParse({ ...con(4), semanas: [corta, ...con(3).semanas] })
-        .success,
-    ).toBe(false);
+    expect(esquemaSemanas.safeParse([corta, ...con(3).semanas]).success).toBe(
+      false,
+    );
     const cero = semanaVacia();
     cero.dias[0].almuerzo = { arroz: 0 };
-    expect(
-      configPlan.safeParse({ ...con(4), semanas: [cero, ...con(3).semanas] })
-        .success,
-    ).toBe(false);
+    expect(esquemaSemanas.safeParse([cero, ...con(3).semanas]).success).toBe(
+      false,
+    );
   });
 
   it("conSemanas crea 4 vacías y no cambia un plan que ya las tiene", () => {
@@ -83,5 +84,32 @@ describe("semanas del plan", () => {
     expect(r?.semanas?.[0].despensa).toEqual({});
     expect(traerListaBase(c, 9)).toBeNull();
     expect(traerListaBase(base, 0)).toBeNull();
+  });
+
+  it("traerListaBase conserva lo que ya estaba en la despensa y no cabe si pasa de 80", () => {
+    const c = con(4);
+    c.semanas[0].despensa = { arroz: 7 };
+    const r = traerListaBase({ ...c, items: { arroz: 3, sal: 1 } }, 0);
+    expect(r?.semanas?.[0].despensa).toEqual({ arroz: 7, sal: 1 });
+    const muchos = Object.fromEntries(
+      Array.from({ length: 81 }, (_, i) => [`p${i}`, 1]),
+    );
+    expect(traerListaBase({ ...c, items: muchos }, 0)).toBeNull();
+  });
+
+  it("mismasCantidades no depende del orden de las claves", () => {
+    expect(mismasCantidades({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
+    expect(mismasCantidades({ a: 1 }, { a: 2 })).toBe(false);
+    expect(mismasCantidades({ a: 1 }, { a: 1, b: 1 })).toBe(false);
+  });
+
+  it("unas semanas dañadas no tiran el resto del plan", () => {
+    const r = configPlan.safeParse({
+      ...base,
+      semanas: [{ dias: [], despensa: { "X Y": 1.5 } }],
+    });
+    expect(r.success).toBe(true);
+    expect(r.success && r.data.semanas).toBeUndefined();
+    expect(r.success && r.data.rubros).toEqual(base.rubros);
   });
 });

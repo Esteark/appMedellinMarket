@@ -151,3 +151,13 @@ test("con sesión, una copia con 5 semanas vuelve aunque se borre el dispositivo
     page.getByRole("button", { name: "Semana 5", exact: true }),
   ).toBeVisible();
 });
+
+test("con semanas vacías la comparación sigue usando la lista cargada", async ({
+  page,
+}) => {
+  await page.goto("/dieta");
+  await page.getByTestId("plan-semana-reemplazar").click();
+  await page.getByRole("button", { name: "Empezar el planificador" }).click();
+  await expect(page.getByTestId("compara")).toBeVisible();
+  await expect(page.getByTestId("sin-lista")).toHaveCount(0);
+});

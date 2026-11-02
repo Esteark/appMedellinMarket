@@ -6,6 +6,7 @@ import {
   type Cantidades,
   COMIDAS,
   type Comida,
+  mismasCantidades,
   repetirEnTodosLosDias,
   type Semana,
   traerListaBase,
@@ -29,9 +30,6 @@ const TITULO: Record<Comida, string> = {
 };
 const CHIP = "rounded-full px-3 py-1.5 text-sm font-medium border";
 const activo = "bg-primary text-primary-foreground border-primary";
-
-const igual = (a: Cantidades, b: Cantidades) =>
-  JSON.stringify(a) === JSON.stringify(b);
 
 /** Una semana: día, tres comidas y la despensa. En móvil se ve una comida a la vez. */
 export function SemanaEditor({
@@ -67,7 +65,7 @@ export function SemanaEditor({
       (d, i) =>
         i !== dia &&
         Object.keys(d[c]).length > 0 &&
-        !igual(d[c], semana.dias[dia][c]),
+        !mismasCantidades(d[c], semana.dias[dia][c]),
     );
   const conLista = traerListaBase(config, indice);
 
@@ -175,6 +173,12 @@ export function SemanaEditor({
         >
           Traer la lista base
         </button>
+        {!conLista && Object.keys(config.items).length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            La lista base no cabe: la despensa y la lista base juntas pasan de
+            80 productos.
+          </p>
+        )}
       </fieldset>
     </div>
   );

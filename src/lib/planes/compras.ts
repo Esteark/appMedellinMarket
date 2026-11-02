@@ -21,6 +21,18 @@ export function comprasDelMes(semanas: Semana[] | undefined): Lista {
   return total;
 }
 
+/** Máximos de una lista (`guardarLista`): 999 por producto y 200 productos. */
+export function paraLista(compras: Lista): {
+  lista: Lista;
+  recortado: boolean;
+} {
+  const entradas = Object.entries(compras);
+  const lista: Lista = {};
+  for (const [id, n] of entradas.slice(0, 200)) lista[id] = Math.min(999, n);
+  const recortado = entradas.length > 200 || entradas.some(([, n]) => n > 999);
+  return { lista, recortado };
+}
+
 export type LineaCompra = {
   id: string;
   cantidad: number;

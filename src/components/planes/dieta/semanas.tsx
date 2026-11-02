@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { avisar } from "@/lib/avisos";
+import type { ProductoCatalogo } from "@/lib/datos";
 import {
   agregarSemana,
   conSemanas,
@@ -9,7 +10,6 @@ import {
   MIN_SEMANAS,
   quitarSemana,
 } from "@/lib/planes/semanas";
-import type { Precios } from "@/lib/precios/lista";
 import { usePlan } from "../plan-provider";
 import { ComprasSemana } from "./compras-semana";
 import type { ProductoPlan } from "./lista-comida";
@@ -20,11 +20,9 @@ const CHIP = "rounded-full px-3 py-1.5 text-sm font-medium border";
 /** Planificador de 4 a 5 semanas; cada una con desayuno, almuerzo, cena y despensa. */
 export function Semanas({
   productos,
-  precios,
   tiendas,
 }: {
-  productos: ProductoPlan[];
-  precios: Precios;
+  productos: (ProductoPlan & Pick<ProductoCatalogo, "precios">)[];
   tiendas: string[];
 }) {
   const { config, cambiar } = usePlan();
@@ -55,6 +53,7 @@ export function Semanas({
     const n = agregarSemana(config);
     if (!n) return;
     cambiar({ semanas: n.semanas });
+    setQuitando(false);
     setSel(semanas.length);
     avisar("semana_agregada", { n: semanas.length + 1 });
   };
@@ -128,12 +127,16 @@ export function Semanas({
             </button>
           ))}
       </fieldset>
-      <SemanaEditor semana={semanas[i]} indice={i} productos={productos} />
+      <SemanaEditor
+        key={i}
+        semana={semanas[i]}
+        indice={i}
+        productos={productos}
+      />
       <ComprasSemana
         semana={semanas[i]}
         indice={i}
         productos={productos}
-        precios={precios}
         tiendas={tiendas}
       />
     </section>

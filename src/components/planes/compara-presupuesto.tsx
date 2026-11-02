@@ -22,8 +22,10 @@ export function ComparaPresupuesto({
   const [listaActiva] = useLista();
   const { config } = usePlan();
   // Con semanas planeadas se compara el plan del mes, no la lista del dispositivo.
-  const conSemanas = !!config.semanas;
-  const lista = conSemanas ? comprasDelMes(config.semanas) : listaActiva;
+  // Si las semanas aún están vacías se sigue comparando la lista, que es lo que la persona cargó.
+  const mes = comprasDelMes(config.semanas);
+  const conSemanas = Object.keys(mes).length > 0;
+  const lista = conSemanas ? mes : listaActiva;
 
   if (!Object.keys(lista).length)
     return (
@@ -31,9 +33,8 @@ export function ComparaPresupuesto({
         className="rounded-[14px] border border-dashed bg-card p-4 text-sm text-muted-foreground"
         data-testid="sin-lista"
       >
-        {conSemanas
-          ? "Las semanas aún no tienen productos. Agrégalos arriba para compararlos con tus rubros."
-          : "Tu lista está vacía. Carga el plan de arriba para compararlo con tus rubros."}
+        Tu lista está vacía. Carga el plan de arriba o arma las semanas para
+        compararlo con tus rubros.
       </p>
     );
 
@@ -138,7 +139,8 @@ export function ComparaPresupuesto({
       </div>
       {optimo.faltantes.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Sin precio: {optimo.faltantes.length} productos.
+          Sin precio: {optimo.faltantes.length}{" "}
+          {optimo.faltantes.length === 1 ? "producto" : "productos"}.
         </p>
       )}
     </section>
