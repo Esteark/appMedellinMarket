@@ -70,7 +70,7 @@ test("la lista por tienda suma el total, se pliega y conserva las cantidades al 
   const vista = page.getByRole("group", { name: "Cómo ver la lista" });
   await vista.getByRole("button", { name: "Por grupo" }).click();
   await expect(secciones.first()).toBeVisible();
-  await vista.getByRole("button", { name: "Todo" }).click();
+  await vista.getByRole("button", { name: "Todo", exact: true }).click();
   await expect(page.getByTestId("fila-lista")).toHaveCount(PRODUCTOS.length);
   await expect(page.getByTestId("seccion-lista")).toHaveCount(0);
 
@@ -90,7 +90,7 @@ test.describe("móvil", () => {
     await page.getByTestId("abrir-lista").click();
     const hoja = page.getByRole("dialog");
     await expect(hoja).toBeVisible();
-    await hoja.getByRole("button", { name: "Todo" }).click();
+    await hoja.getByRole("button", { name: "Todo", exact: true }).click();
 
     await hoja.evaluate((el) => el.scrollTo(0, el.scrollHeight));
     const resumen = page.getByTestId("lista-resumen");
@@ -106,4 +106,19 @@ test.describe("móvil", () => {
     ]);
     expect(ancho[0]).toBeLessThanOrEqual(ancho[1]);
   });
+});
+
+test("«Por grupo» y «Todo» dicen a qué tienda va cada producto; «Por tienda» no lo repite", async ({
+  page,
+}) => {
+  await llenarLista(page);
+  const vista = page.getByTestId("lista-secciones");
+  await page.getByRole("button", { name: "Por grupo" }).click();
+  const filas = vista.getByTestId("fila-lista");
+  expect(await filas.count()).toBe(PRODUCTOS.length);
+  await expect(vista.getByTestId("tienda-fila")).toHaveCount(PRODUCTOS.length);
+  await page.getByRole("button", { name: "Todo", exact: true }).click();
+  await expect(vista.getByTestId("tienda-fila")).toHaveCount(PRODUCTOS.length);
+  await page.getByRole("button", { name: "Por tienda" }).click();
+  await expect(vista.getByTestId("tienda-fila")).toHaveCount(0);
 });

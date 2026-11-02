@@ -45,6 +45,10 @@ export function ListaVista({ lista, productos, tiendas, alVaciar }: Props) {
       ),
     [modo, lista, productos, tiendas],
   );
+  const nombresTienda = useMemo(
+    () => new Map(tiendas.map((t) => [t.id, t.nombre])),
+    [tiendas],
+  );
   const muchos = Object.keys(lista).length > PLEGAR_DESDE;
   const titulo = (clave: string) =>
     clave === SIN_PRECIO
@@ -91,6 +95,7 @@ export function ListaVista({ lista, productos, tiendas, alVaciar }: Props) {
             }
             porId={porId}
             plana={modo === "todo"}
+            nombresTienda={modo === "tienda" ? undefined : nombresTienda}
           />
         ))}
       </div>

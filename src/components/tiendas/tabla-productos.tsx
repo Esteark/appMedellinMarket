@@ -131,6 +131,14 @@ export function TablaProductos({
                   ) : (
                     <>
                       {p.emoji} {p.nombre}
+                      {p.tiendas.length === 0 && (
+                        <span
+                          data-testid="sin-tienda"
+                          className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground"
+                        >
+                          Sin tienda
+                        </span>
+                      )}
                       {porRevisar(p) && (
                         <span
                           data-testid="por-revisar"

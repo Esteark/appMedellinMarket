@@ -27,17 +27,19 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
     () => [...new Set(productos.map((p) => p.grupo))].sort(),
     [productos],
   );
+  const tienda = tiendas.find((t) => t.id === tiendaId) ?? tiendas[0];
   const enOtros = productos.filter((p) => p.grupo === "Otros").length;
   const pendientes = productos.filter(porRevisar).length;
   const visibles = useMemo(() => {
     const q = normalizarNombre(busqueda);
     return productos.filter(
       (p) =>
+        // Cada pestaña muestra lo que esa tienda sigue; un producto sin ninguna tienda sale en todas para poder ubicarlo.
+        (p.tiendas.includes(tienda?.id ?? "") || p.tiendas.length === 0) &&
         (!soloRevisar || porRevisar(p)) &&
         (!q || normalizarNombre(p.nombre).includes(q)),
     );
-  }, [productos, busqueda, soloRevisar]);
-  const tienda = tiendas.find((t) => t.id === tiendaId) ?? tiendas[0];
+  }, [productos, busqueda, soloRevisar, tienda]);
 
   return (
     <div

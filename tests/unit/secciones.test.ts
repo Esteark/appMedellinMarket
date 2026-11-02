@@ -58,10 +58,31 @@ describe("seccionar", () => {
     );
     const ultima = s[s.length - 1];
     expect(ultima).toMatchObject({ clave: SIN_PRECIO, total: 0 });
-    expect(ultima.filas).toEqual([{ id: "trufa", cantidad: 1, precio: null }]);
+    expect(ultima.filas).toEqual([
+      { id: "trufa", cantidad: 1, precio: null, tienda: null },
+    ]);
   });
 
   it("lista vacía: sin secciones", () => {
     expect(seccionar("tienda", {}, productos, precios, tiendas)).toEqual([]);
+  });
+
+  it("cada fila trae su tienda más barata y null si ninguna tiene precio", () => {
+    const s = seccionar(
+      "grupo",
+      { ...lista, trufa: 1 },
+      productos,
+      precios,
+      tiendas,
+    );
+    const filas = Object.fromEntries(
+      s.flatMap((x) => x.filas).map((f) => [f.id, f.tienda]),
+    );
+    expect(filas).toEqual({
+      arroz: "d1",
+      leche: "euro",
+      queso: "exito",
+      trufa: null,
+    });
   });
 });

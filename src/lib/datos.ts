@@ -277,12 +277,12 @@ export async function catalogo(): Promise<Catalogo> {
       todas(
         (d, h) =>
           db
-            .from("precio_efectivo")
+            .from("precio_catalogo")
             .select(COLUMNAS_EFECTIVO)
             .order("producto_id")
             .order("tienda_id")
             .range(d, h),
-        "precio_efectivo",
+        "precio_catalogo",
       ),
       todas(
         (d, h) =>
@@ -371,7 +371,7 @@ export async function detalle(id: string): Promise<Detalle | null> {
         .maybeSingle(),
       db.from("tiendas").select("id, nombre, color").order("nombre"),
       db
-        .from("precio_efectivo")
+        .from("precio_catalogo")
         .select(COLUMNAS_EFECTIVO)
         .eq("producto_id", id),
       // ≤ 10 tiendas × 31 días: por debajo del tope de 1000.
@@ -538,7 +538,7 @@ export type TiendaConConteos = TiendaCatalogo & {
   origen: string;
   /** Productos con un precio efectivo en esta tienda. */
   productos: number;
-  /** Filas de `precio_efectivo` de esta tienda, incluidas las sin dato. */
+  /** Filas de `precio_catalogo` de esta tienda, incluidas las sin dato. */
   precios: number;
   ultimaFecha: string | null;
 };
@@ -555,12 +555,12 @@ export async function catalogoTiendas(): Promise<TiendaConConteos[]> {
     todas(
       (d, h) =>
         db
-          .from("precio_efectivo")
+          .from("precio_catalogo")
           .select("tienda_id, precio, fecha")
           .order("producto_id")
           .order("tienda_id")
           .range(d, h),
-      "precio_efectivo",
+      "precio_catalogo",
     ),
   ]);
   if (tiendas.error) throw new Error(tiendas.error.message);
@@ -589,15 +589,17 @@ export type ProductoGestion = {
   frecuencia: string;
   revisado: boolean;
   origen: string;
-  /** Precio efectivo y su fecha por tienda. */
+  /** Precio efectivo y su fecha por tienda (solo las que siguen el producto). */
   precios: Record<string, { precio: number | null; fecha: string | null }>;
+  /** Tiendas que siguen este producto (`catalogo_tienda` activo); vacío = aún sin tienda. */
+  tiendas: string[];
 };
 
 /** Todos los productos con sus campos editables y el precio efectivo por tienda; para /tiendas. */
 export async function productosGestion(): Promise<ProductoGestion[]> {
   await connection();
   const db = await clienteServidor();
-  const [productos, efectivos] = await Promise.all([
+  const [productos, efectivos, seguidos] = await Promise.all([
     todas(
       (d, h) =>
         db
@@ -613,17 +615,30 @@ export async function productosGestion(): Promise<ProductoGestion[]> {
     todas(
       (d, h) =>
         db
-          .from("precio_efectivo")
+          .from("precio_catalogo")
           .select("producto_id, tienda_id, precio, fecha")
           .order("producto_id")
           .order("tienda_id")
           .range(d, h),
-      "precio_efectivo",
+      "precio_catalogo",
+    ),
+    todas(
+      (d, h) =>
+        db
+          .from("catalogo_tienda")
+          .select("producto_id, tienda_id")
+          .eq("activo", true)
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "catalogo_tienda",
     ),
   ]);
   const porProducto = agrupar(efectivos, (e) => e.producto_id);
+  const seguidoPor = agrupar(seguidos, (c) => c.producto_id);
   return productos.map((p) => ({
     ...p,
+    tiendas: (seguidoPor.get(p.id) ?? []).map((c) => c.tienda_id),
     precios: Object.fromEntries(
       (porProducto.get(p.id) ?? []).map((e) => [
         e.tienda_id,

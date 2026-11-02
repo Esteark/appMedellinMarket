@@ -159,3 +159,21 @@ test("con sesión: un producto por revisar sale del filtro al darle grupo, y fus
     )
     .toBe(3000);
 });
+
+test("cada pestaña muestra solo los productos que esa tienda sigue", async ({
+  page,
+}) => {
+  await page.goto("/tiendas");
+  // La papaya solo tiene precio en La Minorista: no está en el catálogo de PriceSmart.
+  await page
+    .getByTestId("tienda-minorista")
+    .getByRole("button", { name: "Ver precios" })
+    .click();
+  await expect(fila(page, "Papaya")).toHaveCount(1);
+  await page
+    .getByTestId("tienda-pricesmart")
+    .getByRole("button", { name: "Ver precios" })
+    .click();
+  await expect(fila(page, "Papaya")).toHaveCount(0);
+  await expect(fila(page, "Papa pastusa")).toHaveCount(1);
+});

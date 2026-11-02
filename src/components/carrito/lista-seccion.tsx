@@ -17,6 +17,8 @@ type Props = {
   porId: Map<string, ProductoCatalogo>;
   /** En "Todo" no hay encabezado que plegar. */
   plana?: boolean;
+  /** Nombres de tienda; si viene, cada fila dice a qué tienda va (en "Por tienda" ya es el encabezado). */
+  nombresTienda?: Map<string, string>;
 };
 
 const paso =
@@ -30,6 +32,7 @@ export function ListaSeccion({
   alAlternar,
   porId,
   plana,
+  nombresTienda,
 }: Props) {
   const cuerpo = useRef<HTMLUListElement>(null);
   const primera = useRef(true);
@@ -59,8 +62,18 @@ export function ListaSeccion({
             data-testid="fila-lista"
             className="flex min-h-12 items-center gap-2 border-t py-1 text-sm first:border-t-0"
           >
-            <span className="min-w-0 flex-1 line-clamp-2 leading-tight">
-              {p?.emoji} {p?.nombre ?? f.id}
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="line-clamp-2">
+                {p?.emoji} {p?.nombre ?? f.id}
+              </span>
+              {nombresTienda && f.tienda && (
+                <span
+                  data-testid="tienda-fila"
+                  className="block text-xs text-muted-foreground"
+                >
+                  en {nombresTienda.get(f.tienda) ?? f.tienda}
+                </span>
+              )}
             </span>
             <span className="flex flex-none items-center gap-1.5 tabular-nums">
               <button

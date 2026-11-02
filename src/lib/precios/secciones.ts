@@ -7,6 +7,8 @@ export type FilaSeccion = {
   cantidad: number;
   /** Precio unitario en la tienda más barata del producto; `null` si ninguna tiene precio. */
   precio: number | null;
+  /** Tienda más barata de esta fila (la del óptimo dividido); `null` si ninguna tiene precio. */
+  tienda: string | null;
 };
 
 export type Seccion = {
@@ -43,7 +45,7 @@ export function seccionar(
           ? (tienda ?? SIN_PRECIO)
           : (grupoDe.get(id) ?? "Otros");
     const s = secciones.get(clave) ?? { clave, filas: [], total: 0 };
-    s.filas.push({ id, cantidad, precio });
+    s.filas.push({ id, cantidad, precio, tienda: tienda ?? null });
     if (precio != null) s.total += precio * cantidad;
     secciones.set(clave, s);
   }
