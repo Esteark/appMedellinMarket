@@ -258,3 +258,7 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 
 - **Gastos editables y dinero con formato (paso 46).** La tabla de gastos solo permitía «Eliminar» aunque `editarGasto` ya existía en el servidor sin ninguna pantalla que lo usara. Ahora la fila se edita en línea (decisión suya, sobre una hoja o celdas siempre editables) con fecha, rubro, tienda, monto, nota, producto, cantidad y descripción. Los campos de dinero de `/presupuesto` muestran el separador de miles al escribir; lo que se guarda sigue siendo un entero. La cantidad de unidades queda sin formato porque admite decimales. Editar un gasto de una factura no lo saca de su lote: «Deshacer importación» sigue borrando todo el lote.
   - **Se reabre si:** la familia quiere el mismo formato en Hogar, Dieta, la corrección de precio o la revisión de facturas, o necesita que lo editado quede protegido al deshacer una importación.
+
+- **Producto nuevo de un gasto crea el producto (ajuste del paso 46).** «Agregar producto nuevo» solo guardaba el nombre en la nota y dejaba el gasto como «Manual»: nada que editar después. Ahora, con sesión, crea el producto en el catálogo (grupo, tienda e ícono) y liga el gasto; sin sesión sigue siendo texto y lo dice. En la fila de edición el producto se elige en una lista con buscador.
+  - **Se reabre si:** se quiere crear productos sin sesión (habría que guardarlos pendientes y subirlos al iniciar sesión, como los gastos `local-…`).
+

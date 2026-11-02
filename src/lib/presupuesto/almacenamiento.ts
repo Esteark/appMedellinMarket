@@ -3,6 +3,7 @@ import type {
   PresupuestoCierreSnapshot,
   PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
+import { RUBROS_SUGERIDOS } from "./defaults";
 
 const CLAVE_HOGAR = "mercado-medellin:presupuesto:hogar";
 const CLAVE_DIETA = "mercado-medellin:presupuesto:dieta";
@@ -148,4 +149,13 @@ export function fusionarGastos(
     `${g.fecha}|${g.rubro}|${g.monto}|${g.descripcion ?? g.nota ?? ""}`;
   const delServidor = new Set(servidor.map(clave));
   return [...servidor, ...locales.filter((g) => !delServidor.has(clave(g)))];
+}
+
+/** Rubros con los que arranca `/presupuesto`: los de Hogar, si no los de Dieta, si no los sugeridos en 0. */
+export function rubrosIniciales(): PresupuestoRubro[] {
+  if (typeof window === "undefined") return [];
+  const h = leerPresupuestoHogar();
+  const usados = h?.length ? h : leerPresupuestoDieta();
+  if (usados && usados.length > 0) return usados;
+  return RUBROS_SUGERIDOS.map((r, i) => ({ rubro: r, monto: 0, orden: i }));
 }

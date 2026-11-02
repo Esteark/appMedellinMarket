@@ -440,3 +440,82 @@ test("/presupuesto con una fila en edición: axe sin violaciones serias ni crít
     graves.map((v) => ({ id: v.id, nodos: v.nodes.map((n) => n.target) })),
   ).toEqual([]);
 });
+
+test.describe("«Agregar producto nuevo» en un gasto", () => {
+  async function elegirNuevo(page: Page, nombre: string) {
+    await abrirFormulario(page);
+    await page.getByLabel("Tipo").selectOption("nuevo");
+    await page.getByLabel("Producto", { exact: true }).fill(nombre);
+  }
+
+  test("con sesión crea el producto en el catálogo, ligado al gasto y editable por completo", async ({
+    page,
+  }) => {
+    await page.goto("/registro");
+    await page.getByLabel("Correo").fill(`e2e-pn-${Date.now()}@ejemplo.test`);
+    await page.getByLabel(/^Contraseña/).fill("clave-e2e-segura");
+    await page.getByRole("button", { name: "Crear cuenta" }).click();
+    await expect(page.getByTestId("usuario")).toBeVisible();
+
+    const nombre = `E2E Producto Gasto ${Date.now()}`;
+    await elegirNuevo(page, nombre);
+    await page.getByLabel("Monto total").pressSequentially("4500");
+
+    // Sin tienda no se crea: lo dice y no agrega el gasto.
+    await page.getByRole("button", { name: "Agregar gasto" }).last().click();
+    await expect(
+      page.getByText("Elige la tienda donde lo compraste"),
+    ).toBeVisible();
+    await expect(
+      tabla(page).getByRole("row").filter({ hasText: nombre }),
+    ).toHaveCount(0);
+
+    const nuevo = page.getByTestId("producto-nuevo");
+    await nuevo.getByLabel("Grupo", { exact: true }).selectOption("Mecato");
+    await nuevo
+      .getByLabel("Tienda donde lo compraste")
+      .selectOption({ label: "La Minorista" });
+    await page.getByRole("button", { name: "Agregar gasto" }).last().click();
+
+    // El gasto queda ligado al producto nuevo y a la tienda.
+    const fila = tabla(page).getByRole("row").filter({ hasText: nombre });
+    await expect(fila).toContainText("La Minorista");
+    await expect(fila).toContainText("4.500");
+
+    // El producto existe en el catálogo, en el grupo y la tienda elegidos, y se edita por completo.
+    await page.goto("/tiendas");
+    await page
+      .getByTestId("tienda-minorista")
+      .getByRole("button", { name: "Ver precios" })
+      .click();
+    await page.getByLabel("Buscar producto", { exact: true }).fill(nombre);
+    const enTiendas = page.getByRole("row").filter({ hasText: nombre });
+    await expect(enTiendas).toContainText("Mecato");
+    await enTiendas
+      .getByRole("button", { name: "Editar", exact: true })
+      .click();
+    await page.getByLabel("Nombre", { exact: true }).fill(`${nombre} editado`);
+    await page.getByRole("button", { name: "Guardar", exact: true }).click();
+    await page
+      .getByLabel("Buscar producto", { exact: true })
+      .fill(`${nombre} editado`);
+    await expect(
+      page.getByRole("row").filter({ hasText: `${nombre} editado` }),
+    ).toBeVisible();
+  });
+
+  test("sin sesión avisa que solo queda como texto y lo guarda en la nota", async ({
+    page,
+  }) => {
+    const nombre = `E2E Texto ${Date.now()}`;
+    await elegirNuevo(page, nombre);
+    await expect(
+      page.getByText("Sin sesión el producto nuevo queda solo como texto"),
+    ).toBeVisible();
+    await expect(page.getByTestId("producto-nuevo")).toHaveCount(0);
+    await page.getByLabel("Monto total").pressSequentially("3000");
+    await page.getByRole("button", { name: "Agregar gasto" }).last().click();
+    const fila = tabla(page).getByRole("row").filter({ hasText: nombre });
+    await expect(fila).toContainText("Manual");
+  });
+});

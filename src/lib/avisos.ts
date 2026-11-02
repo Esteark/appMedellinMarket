@@ -394,6 +394,11 @@ export const AVISOS = {
     emoji: "☁️",
     texto: "Subimos {n} gastos de este dispositivo a tu cuenta.",
   },
+  gasto_producto_sin_tienda: {
+    tipo: "aviso",
+    emoji: "🏪",
+    texto: "Elige la tienda donde lo compraste para crear el producto nuevo.",
+  },
   gasto_edicion_invalida: {
     tipo: "error",
     emoji: "❌",

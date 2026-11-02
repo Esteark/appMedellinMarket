@@ -2,13 +2,22 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Spinner } from "@/components/cargando";
 import { PresupuestoCliente } from "@/components/presupuesto/presupuesto-cliente";
-import { catalogo } from "@/lib/datos";
+import { catalogo, usuario } from "@/lib/datos";
 
 export const metadata: Metadata = { title: "Presupuesto · Mercado Medellín" };
 
 async function PresupuestoDatos() {
-  const { productos, tiendas } = await catalogo();
-  return <PresupuestoCliente productos={productos} tiendas={tiendas} />;
+  const [{ productos, tiendas }, u] = await Promise.all([
+    catalogo(),
+    usuario(),
+  ]);
+  return (
+    <PresupuestoCliente
+      productos={productos}
+      tiendas={tiendas}
+      conSesion={!!u}
+    />
+  );
 }
 
 export default function PresupuestoPage() {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   agregarGasto,
@@ -11,7 +12,9 @@ import { CampoMoneda } from "@/components/campo-moneda";
 import { ImportarFactura } from "@/components/importar/importar-factura";
 import { avisar, textoAviso } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
+import { hoyBogota } from "@/lib/fecha";
 import { pesos } from "@/lib/formato";
+import { claveAviso } from "@/lib/importar/factura";
 import {
   agregarCierreLocal,
   fusionarGastos,
@@ -20,8 +23,7 @@ import {
   guardarPresupuestoHogar,
   leerCierresLocal,
   leerGastosLocal as leerGastosMes,
-  leerPresupuestoDieta,
-  leerPresupuestoHogar,
+  rubrosIniciales,
 } from "@/lib/presupuesto/almacenamiento";
 import { generarAprendizajes } from "@/lib/presupuesto/aprendizajes";
 import { compararPresupuestadoVsGastado } from "@/lib/presupuesto/calculos";
@@ -34,7 +36,17 @@ import type {
   PresupuestoCierreSnapshot,
   PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
+import {
+  CANTIDADES_GASTO,
+  UNIDADES_GASTO,
+} from "@/lib/presupuesto/unidades-gasto";
 import type { CambiosGasto } from "./fila-gasto";
+import {
+  crearProductoDeGasto,
+  PRODUCTO_NUEVO_VACIO,
+  ProductoNuevo,
+} from "./producto-nuevo";
+import { SugerenciasProducto } from "./sugerencias-producto";
 import { TablaGastos } from "./tabla-gastos";
 
 type Tab =
@@ -46,49 +58,21 @@ type Tab =
   | "historico"
   | "importar";
 
-function hoyBogota(): string {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const bogota = new Date(utc + -5 * 3600000);
-  return bogota.toISOString().slice(0, 10);
-}
-
-function mesActual(): string {
-  return hoyBogota().slice(0, 7);
-}
-
-function inicializarRubros(): PresupuestoRubro[] {
-  if (typeof window === "undefined") return [];
-  const h = leerPresupuestoHogar();
-  const d = leerPresupuestoDieta();
-  const usados = h?.length ? h : d;
-  if (usados && usados.length > 0) return usados;
-  return RUBROS_SUGERIDOS.map((r, i) => ({ rubro: r, monto: 0, orden: i }));
-}
+const mesActual = () => hoyBogota().slice(0, 7);
 
 type Props = {
   productos?: ProductoCatalogo[];
   tiendas?: { id: string; nombre: string }[];
+  conSesion?: boolean;
 };
 
-const UNIDADES_GASTO = [
-  "kg",
-  "lb",
-  "g",
-  "l",
-  "ml",
-  "und",
-  "docena",
-  "panal",
-  "paquete",
-  "bolsa",
-  "caja",
-  "botella",
-  "atado",
-];
-const CANTIDADES_GASTO = ["0.25", "0.5", "1", "2", "3", "6", "12"];
-
-export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
+export function PresupuestoCliente({
+  productos = [],
+  tiendas = [],
+  conSesion = false,
+}: Props) {
+  const router = useRouter();
+  const [nuevo, setNuevo] = useState(PRODUCTO_NUEVO_VACIO);
   const [tab, setTab] = useState<Tab>("resumen");
   const [version, setVersion] = useState(0);
   const [mes, setMes] = useState("");
@@ -133,7 +117,7 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `version` solo fuerza la recarga
   useEffect(() => {
-    setRubros(inicializarRubros());
+    setRubros(rubrosIniciales());
     setCierres(leerCierresLocal());
     if (!mes) return;
     try {
@@ -234,11 +218,29 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
     if (!monto || monto <= 0) return;
     const cant = form.cantidad ? Number(form.cantidad) : null;
     const pu = form.precioUnitario ? Number(form.precioUnitario) : null;
+    // Con sesión, «producto nuevo» crea el producto en el catálogo y el gasto queda ligado a él.
+    let creado: { id: string; tienda: string } | null = null;
+    if (form.modo === "nuevo" && form.productoNombre.trim() && conSesion) {
+      const r = await crearProductoDeGasto(
+        form.productoNombre,
+        form.unidad,
+        nuevo,
+      );
+      if (!r.ok)
+        return avisar(
+          r.error === "tienda_requerida"
+            ? "gasto_producto_sin_tienda"
+            : claveAviso(r.error),
+        );
+      creado = { id: r.id, tienda: nuevo.tiendaId };
+      avisar(r.existente ? "producto_existente_agregado" : "producto_creado", {
+        nombre: form.productoNombre.trim(),
+        tienda: tiendas.find((t) => t.id === nuevo.tiendaId)?.nombre ?? "",
+      });
+      router.refresh();
+    }
     const partesNota: string[] = [];
-    if (form.modo === "catalogo" && form.productoNombre)
-      partesNota.push(form.productoNombre);
-    if (form.modo === "nuevo" && form.productoNombre)
-      partesNota.push(form.productoNombre);
+    if (form.productoNombre && !creado) partesNota.push(form.productoNombre);
     if (cant && cant > 0)
       partesNota.push(`Cant: ${cant}${form.unidad ? ` ${form.unidad}` : ""}`);
     if (pu && pu > 0 && !form.usarTotal)
@@ -253,9 +255,10 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
       mes: form.fecha.slice(0, 7),
       rubro: form.rubro,
       monto: Math.floor(monto),
-      tienda_id: null,
+      tienda_id: creado?.tienda ?? null,
       producto_id:
-        form.modo === "catalogo" && form.productoId ? form.productoId : null,
+        creado?.id ??
+        (form.modo === "catalogo" && form.productoId ? form.productoId : null),
       origen: "manual",
       nota: notaFinal,
       created_at: new Date().toISOString(),
@@ -276,6 +279,7 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
       usarTotal: false,
       modo: "catalogo",
     }));
+    setNuevo(PRODUCTO_NUEVO_VACIO);
     avisar("gasto_agregado", { monto: gasto.monto, rubro: gasto.rubro });
     try {
       await agregarGasto({
@@ -286,6 +290,7 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
         origen: "manual",
         nota: notaFinal,
         producto_id: gasto.producto_id,
+        tienda_id: gasto.tienda_id,
       });
       setVersion((v) => v + 1);
     } catch {
@@ -502,37 +507,29 @@ export function PresupuestoCliente({ productos = [], tiendas = [] }: Props) {
               />
             </label>
             {form.modo === "catalogo" && form.productoNombre && (
-              <div className="sm:col-span-2 -mt-1 flex max-h-40 flex-col overflow-auto rounded-[10px] border">
-                {catalogoFiltrado.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({
-                        ...f,
-                        productoId: p.id,
-                        productoNombre: p.nombre,
-                        rubro: grupoARubro(p.grupo),
-                        unidad: p.unidad || f.unidad,
-                      }))
-                    }
-                    className="flex items-center justify-between px-2 py-1.5 text-left text-sm hover:bg-muted"
-                  >
-                    <span>
-                      {p.nombre}{" "}
-                      <span className="text-muted-foreground">· {p.grupo}</span>
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {p.unidad}
-                    </span>
-                  </button>
-                ))}
-                {catalogoFiltrado.length === 0 && (
-                  <p className="px-2 py-1.5 text-xs text-muted-foreground">
-                    Sin resultados. Puedes usar "Agregar producto nuevo".
-                  </p>
-                )}
-              </div>
+              <SugerenciasProducto
+                productos={catalogoFiltrado}
+                onElegir={(p) =>
+                  setForm((f) => ({
+                    ...f,
+                    productoId: p.id,
+                    productoNombre: p.nombre,
+                    rubro: grupoARubro(p.grupo),
+                    unidad: p.unidad || f.unidad,
+                  }))
+                }
+              />
+            )}
+            {form.modo === "nuevo" && (
+              <ProductoNuevo
+                valor={nuevo}
+                onChange={setNuevo}
+                grupos={[
+                  ...new Set(["Otros", ...productos.map((p) => p.grupo)]),
+                ].sort()}
+                tiendas={tiendas}
+                conSesion={conSesion}
+              />
             )}
             <label className="text-sm">
               Rubro / Grupo
