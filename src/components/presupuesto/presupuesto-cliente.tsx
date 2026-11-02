@@ -66,6 +66,23 @@ type Props = {
   productos?: ProductoCatalogo[];
 };
 
+const UNIDADES_GASTO = [
+  "kg",
+  "lb",
+  "g",
+  "l",
+  "ml",
+  "und",
+  "docena",
+  "panal",
+  "paquete",
+  "bolsa",
+  "caja",
+  "botella",
+  "atado",
+];
+const CANTIDADES_GASTO = ["0.25", "0.5", "1", "2", "3", "6", "12"];
+
 export function PresupuestoCliente({ productos = [] }: Props) {
   const [tab, setTab] = useState<Tab>("resumen");
   const [version, setVersion] = useState(0);
@@ -154,16 +171,37 @@ export function PresupuestoCliente({ productos = [] }: Props) {
     [rubros, gastos, hoy, mes],
   );
 
-  const filasDesfase = useMemo(() => {
-    const filas = rubros
-      .map((r) => ({
-        rubro: r.rubro,
-        presupuestado: r.monto,
-        gastado: porRubro.get(r.rubro) ?? 0,
-      }))
-      .filter((f) => f.presupuestado > 0 || f.gastado > 0);
-    return calcularDesfases(filas, hoy, mes);
-  }, [rubros, porRubro, hoy, mes]);
+  const filasDesfase = useMemo(
+    () =>
+      calcularDesfases(
+        rubros.map((r) => ({
+          rubro: r.rubro,
+          presupuestado: r.monto,
+          gastado: porRubro.get(r.rubro) ?? 0,
+        })),
+        hoy,
+        mes,
+      ),
+    [rubros, porRubro, hoy, mes],
+  );
+  // La tabla lista todos los rubros (para poder fijar el monto); calcularDesfases omite los vacíos.
+  const filasTabla = useMemo(
+    () =>
+      rubros.map(
+        (r) =>
+          filasDesfase.find((f) => f.rubro === r.rubro) ?? {
+            rubro: r.rubro,
+            presupuestado: r.monto,
+            gastado: 0,
+            esperadoHastaHoy: 0,
+            proyeccion: 0,
+            porcentajeUsado: 0,
+            desfasePct: 0,
+            estado: "al_dia" as const,
+          },
+      ),
+    [rubros, filasDesfase],
+  );
 
   const aprendizajes = useMemo(
     () => generarAprendizajes(resumen, filasDesfase),
@@ -346,6 +384,10 @@ export function PresupuestoCliente({ productos = [] }: Props) {
               <p className="text-lg font-bold tabular-nums">
                 {pesos(resumen.presupuestado)}
               </p>
+              <p className="text-[11px] text-muted-foreground">
+                Suma de los montos que escribes por rubro en «Seguimiento por
+                rubro»
+              </p>
             </div>
             <div className="rounded-[12px] border p-2.5">
               <p className="text-xs text-muted-foreground">Gastado</p>
@@ -365,6 +407,10 @@ export function PresupuestoCliente({ productos = [] }: Props) {
               </p>
               <p className="text-lg font-bold tabular-nums">
                 {pesos(resumen.proyeccionFinMes)}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Gastado ÷ {resumen.diasTranscurridos} días ×{" "}
+                {resumen.diasDelMes} del mes (ritmo actual)
               </p>
             </div>
           </div>
@@ -477,13 +523,19 @@ export function PresupuestoCliente({ productos = [] }: Props) {
             <label className="text-sm">
               Unidad (opcional)
               <input
+                list="unidades-gasto"
                 value={form.unidad}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, unidad: e.target.value }))
                 }
-                placeholder="kg, lb, und, panal..."
+                placeholder="Elige o escribe: kg, lb, und, panal..."
                 className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
               />
+              <datalist id="unidades-gasto">
+                {UNIDADES_GASTO.map((u) => (
+                  <option key={u} value={u} />
+                ))}
+              </datalist>
             </label>
             <label className="text-sm">
               Cantidad
@@ -497,6 +549,18 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                 }
                 className="mt-1 w-full rounded-[10px] border px-2 py-1.5"
               />
+              <span className="mt-1 flex flex-wrap gap-1">
+                {CANTIDADES_GASTO.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, cantidad: c }))}
+                    className="rounded-full bg-secondary px-2.5 py-1 text-xs"
+                  >
+                    {c}
+                  </button>
+                ))}
+              </span>
             </label>
             <label className="text-sm">
               <span className="flex items-center justify-between">
@@ -637,11 +701,35 @@ export function PresupuestoCliente({ productos = [] }: Props) {
                 </tr>
               </thead>
               <tbody className="tabular-nums">
-                {filasDesfase.map((f) => (
+                {filasTabla.map((f) => (
                   <tr key={f.rubro} className="border-t">
                     <td className="py-1.5 pr-2">{f.rubro}</td>
                     <td className="px-2 text-right">
-                      {pesos(f.presupuestado)}
+                      <input
+                        type="number"
+                        min={0}
+                        step={1000}
+                        inputMode="numeric"
+                        aria-label={`Presupuesto de ${f.rubro}`}
+                        value={f.presupuestado || ""}
+                        placeholder="0"
+                        onChange={(e) =>
+                          guardarRubros(
+                            rubros.map((r) =>
+                              r.rubro === f.rubro
+                                ? {
+                                    ...r,
+                                    monto: Math.max(
+                                      0,
+                                      Number(e.target.value) || 0,
+                                    ),
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                        className="w-28 rounded-[10px] border px-2 py-1 text-right"
+                      />
                     </td>
                     <td className="px-2 text-right">{pesos(f.gastado)}</td>
                     <td className="px-2 text-right">
