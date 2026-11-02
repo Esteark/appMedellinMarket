@@ -72,7 +72,8 @@ select results_eq(
     (select count(*) from clima_causas where producto_id = 'p2')::int,
     (select count(*) from gastos_reales where producto_id = 'p2')::int,
     (select count(*) from alertas where producto_id = 'p2')::int$$,
-  $$values (1, 1, 1, 1, 1, 1, 1)$$,
+  -- el catálogo trae 2: la fila explícita (t1) y la que el anotado de t2 reactiva (paso 44).
+  $$values (1, 1, 1, 2, 1, 1, 1)$$,
   'historial, manuales, anotados, catálogo, clima, gastos y alertas pasan al destino');
 select results_eq(
   $$select (select count(*) from producto_alias where producto_id = 'p2')::int,

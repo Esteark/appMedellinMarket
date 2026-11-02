@@ -574,6 +574,14 @@ isOneToOne: true
                   Relationships: [
                     
                   ]
+                },"precio_catalogo": {
+                  Row: {
+                    "estado": string | null,"fecha": string | null,"fuente": string | null,"precio": number | null,"producto_id": string | null,"revisar": boolean | null,"tienda_id": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
                 },"precio_efectivo": {
                   Row: {
                     "estado": string | null,"fecha": string | null,"fuente": string | null,"precio": number | null,"producto_id": string | null,"revisar": boolean | null,"tienda_id": string | null
@@ -593,7 +601,10 @@ isOneToOne: true
                 }
           }
           Functions: {
-            "corregir_precio":
+            "agregar_a_tienda":
+{ Args: { "p_producto": string,"p_tiendas": (string)[] }; Returns: number
+                           },
+"corregir_precio":
 { Args: { "p_precio": number,"p_producto": string,"p_tienda": string }; Returns: undefined
                            },
 "crear_producto":
@@ -623,6 +634,9 @@ isOneToOne: true
             }[]
                            },
 "quitar_correccion":
+{ Args: { "p_producto": string,"p_tienda": string }; Returns: boolean
+                           },
+"quitar_de_tienda":
 { Args: { "p_producto": string,"p_tienda": string }; Returns: boolean
                            },
 "slug_tienda":

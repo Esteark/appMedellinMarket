@@ -18,6 +18,7 @@ export async function agregarProducto(id: unknown): Promise<Resultado> {
   const { data } = await db
     .from("catalogo_tienda")
     .select("orden")
+    .eq("tienda_id", "barrio")
     .order("orden", { ascending: false })
     .limit(1);
   const { error } = await db.from("catalogo_tienda").upsert(

@@ -111,7 +111,11 @@ export async function alertasUsuarios(db: Admin, hoy: string): Promise<number> {
   // Tienda de barrio: qué productos se le siguen y cuándo fue el último precio manual de cada uno.
   const [{ data: catalogoDb }, { data: anotadosDb }, { data: productosDb }] =
     await Promise.all([
-      db.from("catalogo_tienda").select("producto_id").eq("activo", true),
+      db
+        .from("catalogo_tienda")
+        .select("producto_id")
+        .eq("tienda_id", "barrio")
+        .eq("activo", true),
       db
         .from("anotados")
         .select("producto_id, fecha")

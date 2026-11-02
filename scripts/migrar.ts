@@ -106,12 +106,16 @@ async function upsert<T extends Tabla>(
   tabla: T,
   filas: TablesInsert<T>[],
   onConflict: string,
+  ignoreDuplicates = false,
 ) {
   for (let i = 0; i < filas.length; i += 1000) {
     const { error } = await db
       .from(tabla)
       // biome-ignore lint/suspicious/noExplicitAny: el genérico de supabase-js no se estrecha con T
-      .upsert(filas.slice(i, i + 1000) as any, { onConflict });
+      .upsert(filas.slice(i, i + 1000) as any, {
+        onConflict,
+        ignoreDuplicates,
+      });
     if (error) throw new Error(`${tabla}: ${error.message}`);
   }
 }
@@ -244,6 +248,19 @@ await upsert("productos", filasProductos, "id");
   if (error) throw new Error(`catalogo_tienda: ${error.message}`);
 }
 await upsert("precios_actuales", filasPrecios, "producto_id,tienda_id");
+// Catálogo por tienda: cada tienda sigue los productos que ya tienen precio en ella. Tras `supabase db reset`
+// la migración sembró antes de que hubiera datos. Si la fila existe no se toca: quitar es `activo = false`.
+{
+  const vistos = new Set<string>();
+  const filas = [...filasPrecios, ...filasAnotados]
+    .filter((f) => f.precio != null)
+    .filter((f) => {
+      const clave = `${f.producto_id}|${f.tienda_id}`;
+      return !vistos.has(clave) && vistos.add(clave);
+    })
+    .map((f) => ({ producto_id: f.producto_id, tienda_id: f.tienda_id }));
+  await upsert("catalogo_tienda", filas, "producto_id,tienda_id", true);
+}
 await upsert("producto_fuente", filasFuente, "producto_id,tienda_id");
 await upsert(
   "precios_historial",

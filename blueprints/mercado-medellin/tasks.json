@@ -867,7 +867,7 @@
       "WHEN corre la migración THE SYSTEM SHALL crear una fila activa de `catalogo_tienda` por cada producto y tienda con precio efectivo no nulo, sin crear ninguna con precio nulo ni tocar las filas de Barrio que ya existen.",
       "WHEN un producto está en `activo = false` para una tienda THE SYSTEM SHALL excluirlo de la vista `precio_catalogo` de esa tienda sin borrar su fila ni sus precios.",
       "WHEN se ejecuta `agregar_a_tienda` o `quitar_de_tienda` THE SYSTEM SHALL reactivar o poner `activo = false` con el autor de la sesión, y rechazar a `anon`.",
-      "WHEN `corregir_precio` o `importar_compra` registran un precio en una tienda THE SYSTEM SHALL dejar el producto activo en el catálogo de esa tienda."
+      "WHEN se registra un precio en `anotados` para una tienda THE SYSTEM SHALL dejar el producto activo en el catálogo de esa tienda."
     ],
     "verify": [
       "pnpm exec supabase db reset && pnpm migrar",
@@ -881,7 +881,7 @@
       "scripts/migrar.ts",
       "src/lib/supabase/tipos.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E44-T2",

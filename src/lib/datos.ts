@@ -764,7 +764,10 @@ export async function catalogoBarrio(): Promise<{
       .from("productos")
       .select("id, nombre, emoji, unidad, grupo, frecuencia")
       .order("nombre"),
-    db.from("catalogo_tienda").select("producto_id, activo, orden"),
+    db
+      .from("catalogo_tienda")
+      .select("producto_id, activo, orden")
+      .eq("tienda_id", "barrio"),
     db
       .from("anotados")
       .select("producto_id, precio, fecha")
