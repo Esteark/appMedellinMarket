@@ -98,3 +98,56 @@ test("compras de la semana: usar como mi lista, sumar y comparar con los rubros"
   await expect(page.getByTestId("compara")).toBeVisible();
   await expect(page.getByTestId("sin-lista")).toHaveCount(0);
 });
+
+test("/dieta ya no muestra las tablas del PDF y los consejos están plegados", async ({
+  page,
+}) => {
+  await page.goto("/dieta");
+  await expect(page.getByText("Compras por semana")).toHaveCount(0);
+  await expect(page.getByText("Por categoría (según el PDF)")).toHaveCount(0);
+  await expect(page.getByText(/\$316\.000/)).toHaveCount(0);
+  const consejos = page.locator("details").filter({ hasText: "Dónde comprar" });
+  await expect(consejos).not.toHaveAttribute("open", "");
+  await consejos.locator("summary").click();
+  await expect(page.getByText("Ahorros puntuales")).toBeVisible();
+});
+
+test("con sesión, una copia con 5 semanas vuelve aunque se borre el dispositivo", async ({
+  page,
+}) => {
+  await page.goto("/registro");
+  await page.getByLabel("Correo").fill(`e2e-dieta-${Date.now()}@ejemplo.test`);
+  await page.getByLabel(/^Contraseña/).fill("clave-e2e-segura");
+  await page.getByRole("button", { name: "Crear cuenta" }).click();
+  await expect(page.getByTestId("usuario")).toBeVisible();
+
+  await page.goto("/dieta");
+  await page.getByRole("button", { name: "Empezar el planificador" }).click();
+  await page.getByRole("button", { name: "Agregar semana 5" }).click();
+  await page
+    .locator("summary")
+    .filter({ hasText: "Mis presupuestos guardados" })
+    .click();
+  await page
+    .getByLabel("Guardar el presupuesto actual como")
+    .fill("Cinco semanas");
+  await page.getByRole("button", { name: "Guardar actual" }).click();
+  await expect(
+    page.locator("summary").filter({ hasText: "Mis presupuestos guardados" }),
+  ).toHaveText("Mis presupuestos guardados (1)");
+  await page.waitForLoadState("networkidle");
+
+  await page.evaluate(() => {
+    for (const k of Object.keys(localStorage))
+      if (k.startsWith("mercado-medellin:plan")) localStorage.removeItem(k);
+  });
+  await page.reload();
+  await page
+    .locator("summary")
+    .filter({ hasText: "Mis presupuestos guardados" })
+    .click();
+  await page.getByRole("button", { name: "Cargar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Semana 5", exact: true }),
+  ).toBeVisible();
+});

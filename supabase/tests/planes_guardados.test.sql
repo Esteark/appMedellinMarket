@@ -1,7 +1,7 @@
 -- RLS y reglas de planes_guardados (pgTAP). Corre con: pnpm exec supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@prueba.co'),
@@ -26,6 +26,15 @@ reset role;
 select throws_ok(
   $$insert into planes_guardados (user_id, tipo, nombre, config) values ('00000000-0000-0000-0000-00000000000a', 'hogar', ' octubre ', '{}')$$,
   '23505', null, 'el mismo nombre no se repite para el mismo tipo');
+
+-- Una copia de Dieta con 5 semanas se guarda y se recupera completa.
+insert into planes_guardados (user_id, tipo, nombre, config) values
+  ('00000000-0000-0000-0000-00000000000a', 'dieta', 'Cinco semanas',
+   jsonb_build_object('version', 1, 'semanas', jsonb_build_array(1, 2, 3, 4, 5)));
+select is(
+  (select jsonb_array_length(config -> 'semanas') from planes_guardados
+    where user_id = '00000000-0000-0000-0000-00000000000a' and tipo = 'dieta'),
+  5, 'una copia de Dieta con 5 semanas se recupera con sus 5 semanas');
 
 set local role anon;
 select throws_ok('select * from planes_guardados', '42501', null,

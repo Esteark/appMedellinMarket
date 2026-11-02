@@ -4,11 +4,12 @@ import { Spinner } from "@/components/cargando";
 import { BotonesPlan } from "@/components/planes/botones-plan";
 import { ComparaPresupuesto } from "@/components/planes/compara-presupuesto";
 import { Semanas } from "@/components/planes/dieta/semanas";
-import { DietaTablas } from "@/components/planes/dieta-tablas";
+import { MisPresupuestos } from "@/components/planes/mis-presupuestos";
 import { PlanConDatos } from "@/components/planes/plan-con-datos";
 import { PlanEditable } from "@/components/planes/plan-editable";
 import { PresupuestoEditable } from "@/components/planes/presupuesto-editable";
 import { RepartoInteractivo } from "@/components/planes/reparto-interactivo";
+import { Consejos } from "@/components/planes/tabla";
 import { PLANES } from "@/data/planes";
 import { catalogo } from "@/lib/datos";
 
@@ -78,14 +79,10 @@ export default function Dieta() {
       >
         <PlanConDatos tipo="dieta">
           <RepartoInteractivo />
-          <p className="rounded-xl bg-warn-bg px-3.5 py-2.5 text-sm text-warn-ink transition-all duration-200 motion-reduce:transition-none">
-            Los totales semanales del PDF están por debajo de lo que suman sus
-            propios artículos: la lista de verduras de cada semana suma $79.000,
-            o sea $316.000 al mes y no $234.000.
-          </p>
           <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5 transition-all duration-200 motion-reduce:transition-none">
             <PresupuestoEditable />
           </section>
+          <MisPresupuestos />
           <Suspense
             fallback={
               <p
@@ -99,7 +96,31 @@ export default function Dieta() {
           >
             <Datos />
           </Suspense>
-          <DietaTablas />
+          <details className="rounded-[14px] border bg-card px-3.5 py-2.5">
+            <summary className="cursor-pointer text-sm font-semibold">
+              Consejos para comprar
+            </summary>
+            <div className="mt-2 grid gap-5 sm:grid-cols-2">
+              <Consejos
+                titulo="Dónde comprar"
+                items={[
+                  "Verduras y frutas: Plaza Minorista o galerías del barrio, hasta 30 % más barato.",
+                  "Huevos, yogurt, pastas, maicitos: D1.",
+                  "Carnes: carnicería de confianza, comparando precio por kg.",
+                  "Leguminosas a granel: naturistas o tienda del barrio.",
+                ]}
+              />
+              <Consejos
+                titulo="Ahorros puntuales"
+                items={[
+                  "Olla grande de lentejas o garbanzos el domingo, dura 4–5 días.",
+                  "Queso costeño duro (~$12.000/250 g) en vez de parmesano.",
+                  "Pasta de ajo casera: 2 cabezas + 3 cdas de aceite + sal, ~$4.000 vs $10.000.",
+                  "Aguacate verde para madurar en casa; cilantro en vaso con agua; lechuga en papel absorbente.",
+                ]}
+              />
+            </div>
+          </details>
         </PlanConDatos>
       </Suspense>
     </main>

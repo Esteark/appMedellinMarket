@@ -853,6 +853,6 @@
       "supabase/tests/planes_guardados.test.sql",
       "tests/e2e/dieta-semanas.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   }
 ]
