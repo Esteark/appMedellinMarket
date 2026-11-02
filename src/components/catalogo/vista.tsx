@@ -4,7 +4,7 @@ import { catalogo, usuario } from "@/lib/datos";
 import { Catalogo } from "./catalogo";
 
 async function Datos({ grupos }: { grupos: string[] }) {
-  const [{ productos, tiendas }, u] = await Promise.all([
+  const [{ productos, tiendas, seguidos }, u] = await Promise.all([
     catalogo(),
     usuario(),
   ]);
@@ -12,6 +12,7 @@ async function Datos({ grupos }: { grupos: string[] }) {
     <Catalogo
       productos={productos}
       tiendas={tiendas}
+      seguidos={seguidos}
       grupos={grupos}
       conSesion={!!u}
     />

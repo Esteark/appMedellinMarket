@@ -8,6 +8,7 @@ import { Carrito } from "@/components/carrito/carrito";
 import { useLista } from "@/components/carrito/use-lista";
 import { Deslizador } from "@/components/deslizador";
 import { CorregirPrecio } from "@/components/precios/corregir-precio";
+import { AgregarProducto } from "@/components/tiendas/agregar-producto";
 import { cascada, pulso, volar } from "@/lib/animaciones";
 import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo, TiendaCatalogo } from "@/lib/datos";
@@ -23,6 +24,8 @@ const normal = (s: string) =>
 type Props = {
   productos: ProductoCatalogo[];
   tiendas: TiendaCatalogo[];
+  /** Tiendas que siguen cada producto; sirve para «Agregar producto». */
+  seguidos: Record<string, string[]>;
   /** Grupos de esta vista (básicos o antojos). */
   grupos: string[];
   conSesion: boolean;
@@ -54,7 +57,13 @@ function Chip({
   );
 }
 
-export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
+export function Catalogo({
+  productos,
+  tiendas,
+  seguidos,
+  grupos,
+  conSesion,
+}: Props) {
   const router = useRouter();
   const [corrigiendo, setCorrigiendo] = useState<{
     producto: ProductoCatalogo;
@@ -124,6 +133,19 @@ export function Catalogo({ productos, tiendas, grupos, conSesion }: Props) {
             ))}
           </Deslizador>
         </fieldset>
+        {conSesion && (
+          <AgregarProducto
+            productos={productos.map((p) => ({
+              id: p.id,
+              nombre: p.nombre,
+              emoji: p.emoji,
+              tiendas: seguidos[p.id] ?? [],
+            }))}
+            tiendas={tiendas}
+            grupos={[...new Set(productos.map((p) => p.grupo))].sort()}
+            tiendaInicial={tienda ?? undefined}
+          />
+        )}
         <fieldset data-tour="chips-tienda" className="min-w-0">
           <legend className="sr-only">Tiendas</legend>
           <Deslizador className="gap-1.5 pb-0.5" data-testid="chips-tiendas">

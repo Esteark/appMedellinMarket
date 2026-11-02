@@ -174,13 +174,13 @@ export function VistaTiendas({ tiendas, productos, conSesion }: Props) {
       )}
       {agregando && tienda && (
         <AgregarATienda
-          tienda={tienda}
+          tiendaInicial={tienda.id}
           tiendas={tiendas}
           productos={productos}
           alCerrar={() => setAgregando(false)}
-          alCrear={() => {
+          alCrear={(tiendaId) => {
             setAgregando(false);
-            setFormulario({ tipo: "producto", tiendaInicial: tienda.id });
+            setFormulario({ tipo: "producto", tiendaInicial: tiendaId });
           }}
         />
       )}

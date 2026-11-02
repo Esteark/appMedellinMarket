@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EmojiSelector } from "@/components/emoji-selector";
 import { pesos } from "@/lib/formato";
 import { usePlan } from "./plan-provider";
 
@@ -11,6 +12,7 @@ const MAX_NOTA = 1000;
 export function PlanExtras() {
   const { config, cambiar } = usePlan();
   const [nombre, setNombre] = useState("");
+  const [emoji, setEmoji] = useState("");
   const [precio, setPrecio] = useState("");
   const valor = Number(precio.replace(/[.\s$]/g, ""));
   const valido =
@@ -35,7 +37,9 @@ export function PlanExtras() {
             key={p.nombre}
             className="flex items-center justify-between gap-2 text-sm"
           >
-            <span className="min-w-0 flex-1 truncate">{p.nombre}</span>
+            <span className="min-w-0 flex-1 truncate">
+              {p.emoji} {p.nombre}
+            </span>
             <span className="tabular-nums">{pesos(p.precio)}</span>
             <button
               type="button"
@@ -56,10 +60,15 @@ export function PlanExtras() {
             cambiar({
               propios: [
                 ...config.propios,
-                { nombre: nombre.trim(), precio: valor },
+                {
+                  nombre: nombre.trim(),
+                  precio: valor,
+                  ...(emoji && { emoji }),
+                },
               ],
             });
             setNombre("");
+            setEmoji("");
             setPrecio("");
           }}
           className="flex flex-wrap gap-1.5"
@@ -87,6 +96,9 @@ export function PlanExtras() {
           >
             Agregar propio
           </button>
+          <div className="basis-full">
+            <EmojiSelector valor={emoji} onChange={setEmoji} />
+          </div>
         </form>
         <p className="text-xs text-muted-foreground">
           {config.propios.length}/{MAX_PROPIOS}. Son estimaciones tuyas: no

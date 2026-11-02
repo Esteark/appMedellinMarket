@@ -978,8 +978,8 @@
     "priority": "p0",
     "acceptance": [
       "WHEN se pulsa «Agregar producto» en la Canasta THE SYSTEM SHALL abrir la hoja de agregar con la tienda del chip activo preseleccionada.",
-      "WHEN se pulsa «Agregar producto a {tienda}» en Anotados THE SYSTEM SHALL abrirla para esa tienda, y la tabla SHALL mostrar solo el catálogo de cada tienda.",
-      "WHEN se crea un producto propio en Barrio, en un plan o en la revisión de una importación THE SYSTEM SHALL ofrecer el selector de emojis y guardar el valor elegido.",
+      "WHEN se pulsa «Agregar producto a una tienda» en Anotados THE SYSTEM SHALL abrir la hoja con un selector de tienda, y la tabla SHALL dejar fuera (sin poder anotar) la celda de una tienda que no sigue el producto.",
+      "WHEN se crea un producto propio en un plan o el producto destino de una fusión THE SYSTEM SHALL ofrecer el selector de emojis y guardar el valor elegido.",
       "THE SYSTEM SHALL aceptar `propios` de planes anteriores sin `emoji`."
     ],
     "verify": [
@@ -995,7 +995,7 @@
       "src/components/tiendas/dialogo-fusion.tsx",
       "src/lib/planes/config.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E44-T6",

@@ -131,6 +131,8 @@ export type ProductoCatalogo = ResumenPrecio & {
 export type Catalogo = {
   tiendas: TiendaCatalogo[];
   productos: ProductoCatalogo[];
+  /** Por producto, las tiendas que lo siguen (`catalogo_tienda` activo), con o sin precio. */
+  seguidos: Record<string, string[]>;
 };
 
 /** Precios por tienda, la más barata, sus etiquetas y la causa climática de un producto. */
@@ -267,54 +269,73 @@ export async function catalogo(): Promise<Catalogo> {
   await connection();
   const hoy = hoyBogota();
   const db = await clienteServidor();
-  const [productos, tiendas, efectivos, historial, series, causas, contexto] =
-    await Promise.all([
-      db
-        .from("productos")
-        .select("id, nombre, grupo, unidad, emoji, frecuencia")
-        .order("nombre"),
-      db.from("tiendas").select("id, nombre, color").order("nombre"),
-      todas(
-        (d, h) =>
-          db
-            .from("precio_catalogo")
-            .select(COLUMNAS_EFECTIVO)
-            .order("producto_id")
-            .order("tienda_id")
-            .range(d, h),
-        "precio_catalogo",
-      ),
-      todas(
-        (d, h) =>
-          db
-            .from("precios_historial")
-            .select("producto_id, tienda_id, precio")
-            .gte("fecha", restarDias(hoy, 7))
-            .lt("fecha", hoy)
-            .not("precio", "is", null)
-            .order("id")
-            .range(d, h),
-        "precios_historial",
-      ),
-      // Una fila por producto con hasta 60 puntos (144 filas, por debajo del tope de 1000).
-      db.from("serie_pronostico").select("producto_id, puntos"),
-      todas(
-        (d, h) =>
-          db
-            .from("clima_causas")
-            .select("producto_id, fecha, es_clima, texto")
-            .gte("fecha", restarDias(hoy, 7))
-            .order("producto_id")
-            .order("fecha")
-            .range(d, h),
-        "clima_causas",
-      ),
-      db
-        .from("contexto_mercado")
-        .select("ipc_alimentos, actualizado")
-        .order("mes", { ascending: false })
-        .limit(1),
-    ]);
+  const [
+    productos,
+    tiendas,
+    efectivos,
+    historial,
+    series,
+    causas,
+    contexto,
+    seguidos,
+  ] = await Promise.all([
+    db
+      .from("productos")
+      .select("id, nombre, grupo, unidad, emoji, frecuencia")
+      .order("nombre"),
+    db.from("tiendas").select("id, nombre, color").order("nombre"),
+    todas(
+      (d, h) =>
+        db
+          .from("precio_catalogo")
+          .select(COLUMNAS_EFECTIVO)
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "precio_catalogo",
+    ),
+    todas(
+      (d, h) =>
+        db
+          .from("precios_historial")
+          .select("producto_id, tienda_id, precio")
+          .gte("fecha", restarDias(hoy, 7))
+          .lt("fecha", hoy)
+          .not("precio", "is", null)
+          .order("id")
+          .range(d, h),
+      "precios_historial",
+    ),
+    // Una fila por producto con hasta 60 puntos (144 filas, por debajo del tope de 1000).
+    db.from("serie_pronostico").select("producto_id, puntos"),
+    todas(
+      (d, h) =>
+        db
+          .from("clima_causas")
+          .select("producto_id, fecha, es_clima, texto")
+          .gte("fecha", restarDias(hoy, 7))
+          .order("producto_id")
+          .order("fecha")
+          .range(d, h),
+      "clima_causas",
+    ),
+    db
+      .from("contexto_mercado")
+      .select("ipc_alimentos, actualizado")
+      .order("mes", { ascending: false })
+      .limit(1),
+    todas(
+      (d, h) =>
+        db
+          .from("catalogo_tienda")
+          .select("producto_id, tienda_id")
+          .eq("activo", true)
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "catalogo_tienda",
+    ),
+  ]);
   for (const r of [productos, tiendas, series, contexto])
     if (r.error) throw new Error(r.error.message);
 
@@ -332,8 +353,12 @@ export async function catalogo(): Promise<Catalogo> {
   const ctx = contextoDe(contexto.data?.[0], hoy);
   const ids = (tiendas.data ?? []).map((t) => t.id);
 
+  const seguidoPor = agrupar(seguidos, (c) => c.producto_id);
   return {
     tiendas: tiendas.data ?? [],
+    seguidos: Object.fromEntries(
+      [...seguidoPor].map(([id, fs]) => [id, fs.map((c) => c.tienda_id)]),
+    ),
     productos: (productos.data ?? []).map((p) => {
       const completa = seriesDe.get(p.id) ?? [];
       const serie = completa.filter((m) => m.fecha >= restarDias(hoy, 30));
@@ -671,8 +696,10 @@ export type FilaAnotados = {
   emoji: string | null;
   unidad: string;
   grupo: string;
-  /** Precio efectivo y su origen por tienda (real, anotado, estimado…). */
+  /** Precio efectivo y su origen por tienda (real, anotado, estimado…), solo de las tiendas que lo siguen. */
   celdas: Record<string, { precio: number | null; estado: string | null }>;
+  /** Tiendas que siguen este producto; en las demás la celda no se anota. */
+  tiendas: string[];
 };
 
 /** Tabla de /anotados: todos los productos × todas las tiendas, incluidas las manuales. */
@@ -682,7 +709,7 @@ export async function tablaAnotados(): Promise<{
 }> {
   await connection();
   const db = await clienteServidor();
-  const [productos, tiendas, efectivos] = await Promise.all([
+  const [productos, tiendas, efectivos, seguidos] = await Promise.all([
     db
       .from("productos")
       .select("id, nombre, emoji, unidad, grupo")
@@ -691,17 +718,29 @@ export async function tablaAnotados(): Promise<{
     todas(
       (d, h) =>
         db
-          .from("precio_efectivo")
+          .from("precio_catalogo")
           .select("producto_id, tienda_id, precio, estado")
           .order("producto_id")
           .order("tienda_id")
           .range(d, h),
-      "precio_efectivo",
+      "precio_catalogo",
+    ),
+    todas(
+      (d, h) =>
+        db
+          .from("catalogo_tienda")
+          .select("producto_id, tienda_id")
+          .eq("activo", true)
+          .order("producto_id")
+          .order("tienda_id")
+          .range(d, h),
+      "catalogo_tienda",
     ),
   ]);
   for (const r of [productos, tiendas])
     if (r.error) throw new Error(r.error.message);
   const porProducto = agrupar(efectivos, (e) => e.producto_id);
+  const seguidoPor = agrupar(seguidos, (c) => c.producto_id);
   // Una tienda manual sin ningún precio no agrega una columna vacía a 144 filas;
   // las automáticas se muestran siempre para que una fuente caída no borre su columna.
   const conPrecio = new Set(
@@ -713,6 +752,7 @@ export async function tablaAnotados(): Promise<{
     ),
     filas: (productos.data ?? []).map((p) => ({
       ...p,
+      tiendas: (seguidoPor.get(p.id) ?? []).map((c) => c.tienda_id),
       celdas: Object.fromEntries(
         (porProducto.get(p.id) ?? []).map((e) => [
           e.tienda_id,

@@ -25,7 +25,12 @@ export const configPlan = z.object({
     .refine((i) => Object.keys(i).length <= 200),
   propios: z
     .array(
-      z.object({ nombre: z.string().trim().min(1).max(60), precio: monto }),
+      z.object({
+        nombre: z.string().trim().min(1).max(60),
+        precio: monto,
+        /** Ícono opcional; los planes anteriores no lo traen. */
+        emoji: z.string().trim().max(8).optional(),
+      }),
     )
     .max(50),
   nota: z.string().max(1000),

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useMemo, useState } from "react";
 import { crearProducto, fusionarProductos } from "@/app/tiendas/acciones";
+import { EmojiSelector } from "@/components/emoji-selector";
 import { Hoja } from "@/components/hoja";
 import { avisar } from "@/lib/avisos";
 import type { ProductoGestion } from "@/lib/datos";
@@ -26,6 +27,7 @@ export function DialogoFusion({ origen, productos, alCerrar }: Props) {
     null,
   );
   const [nombreNuevo, setNombreNuevo] = useState("");
+  const [emojiNuevo, setEmojiNuevo] = useState(origen.emoji ?? "");
   const [confirmacion, setConfirmacion] = useState("");
   const [enviando, setEnviando] = useState(false);
 
@@ -43,7 +45,7 @@ export function DialogoFusion({ origen, productos, alCerrar }: Props) {
       grupo: origen.grupo,
       unidad: origen.unidad,
       frecuencia: origen.frecuencia,
-      emoji: origen.emoji,
+      emoji: emojiNuevo || null,
     });
     if (!r.ok) return avisar(claveAviso(r.error));
     setNuevo({ id: r.id, nombre: nombreNuevo.trim() });
@@ -124,6 +126,7 @@ export function DialogoFusion({ origen, productos, alCerrar }: Props) {
             Crear
           </button>
         </div>
+        <EmojiSelector valor={emojiNuevo} onChange={setEmojiNuevo} />
         {elegido && (
           <p className="rounded-[12px] border bg-warn-bg p-2.5 text-sm text-warn-ink">
             {textoFusion(origen.nombre, elegido.nombre)}

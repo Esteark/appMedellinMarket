@@ -10,24 +10,31 @@ import { normalizarNombre } from "@/lib/importar/emparejar";
 import { claveAviso } from "@/lib/importar/factura";
 
 type Tienda = { id: string; nombre: string };
+type Producto = Pick<ProductoGestion, "id" | "nombre" | "emoji" | "tiendas">;
 
 /** Hoja para sumar al catálogo de una tienda un producto que ya existe, o para crear uno nuevo. */
 export function AgregarATienda({
-  tienda,
+  tiendaInicial,
   tiendas,
   productos,
   alCerrar,
   alCrear,
 }: {
-  tienda: Tienda;
+  tiendaInicial?: string;
   tiendas: Tienda[];
-  productos: ProductoGestion[];
+  productos: Producto[];
   alCerrar: () => void;
-  /** Abre «Nuevo producto» con esta tienda ya marcada. */
-  alCrear: () => void;
+  /** Abre «Nuevo producto» con la tienda elegida ya marcada. */
+  alCrear: (tiendaId: string) => void;
 }) {
   const router = useRouter();
   const titulo = useId();
+  const [tiendaId, setTiendaId] = useState(
+    tiendas.some((t) => t.id === tiendaInicial)
+      ? (tiendaInicial as string)
+      : (tiendas[0]?.id ?? ""),
+  );
+  const tienda = tiendas.find((t) => t.id === tiendaId) ?? tiendas[0];
   const [q, setQ] = useState("");
   const [enviando, setEnviando] = useState<string | null>(null);
   const nombres = useMemo(
@@ -38,15 +45,15 @@ export function AgregarATienda({
   const candidatos = useMemo(() => {
     const n = normalizarNombre(q);
     return productos
-      .filter((p) => !p.tiendas.includes(tienda.id))
+      .filter((p) => !p.tiendas.includes(tiendaId))
       .filter((p) => !n || normalizarNombre(p.nombre).includes(n))
       .slice(0, 50);
-  }, [productos, q, tienda.id]);
+  }, [productos, q, tiendaId]);
 
-  const agregar = async (p: ProductoGestion) => {
+  const agregar = async (p: Producto) => {
     setEnviando(p.id);
     try {
-      const r = await agregarATienda({ producto: p.id, tiendas: [tienda.id] });
+      const r = await agregarATienda({ producto: p.id, tiendas: [tiendaId] });
       if (!r.ok) return avisar(claveAviso(r.error));
       avisar("producto_agregado_a_tienda", {
         nombre: p.nombre,
@@ -64,8 +71,22 @@ export function AgregarATienda({
     <Hoja titulo={titulo} alCerrar={alCerrar}>
       <div className="flex flex-col gap-3" data-testid="agregar-a-tienda">
         <h2 id={titulo} className="pr-20 text-lg font-bold">
-          Agregar a {tienda.nombre}
+          Agregar a {tienda?.nombre}
         </h2>
+        <label className="flex items-center gap-2 text-sm">
+          Tienda
+          <select
+            value={tiendaId}
+            onChange={(e) => setTiendaId(e.target.value)}
+            className="h-10 min-w-0 flex-1 rounded-[10px] border border-input bg-card px-2 text-base sm:text-sm"
+          >
+            {tiendas.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
         <input
           type="search"
           aria-label="Buscar producto para agregar"
@@ -108,7 +129,7 @@ export function AgregarATienda({
         </ul>
         <button
           type="button"
-          onClick={alCrear}
+          onClick={() => alCrear(tiendaId)}
           className="self-start text-sm font-medium underline underline-offset-2"
         >
           ¿No está? Crear un producto nuevo

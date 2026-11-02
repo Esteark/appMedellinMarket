@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AgregarProducto } from "@/components/tiendas/agregar-producto";
 import type { FilaAnotados, TiendaCatalogo } from "@/lib/datos";
 import { Celda } from "./celda";
 
@@ -36,6 +37,14 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
           </Link>{" "}
           para anotar los que veas en la tienda.
         </p>
+      )}
+      {conSesion && (
+        <AgregarProducto
+          productos={filas}
+          tiendas={tiendas}
+          grupos={[...new Set(filas.map((f) => f.grupo))].sort()}
+          texto="Agregar producto a una tienda"
+        />
       )}
       <input
         type="search"
@@ -111,6 +120,21 @@ export function TablaAnotados({ tiendas, filas, conSesion }: Props) {
                   {tiendas.map((t) => {
                     const c = f.celdas[t.id];
                     const clave = `${f.id}|${t.id}`;
+                    if (!f.tiendas.includes(t.id))
+                      return (
+                        <td key={t.id} className="px-1 py-1 align-top">
+                          <span
+                            data-testid={`fuera-${f.id}-${t.id}`}
+                            title={`${t.nombre} no sigue este producto`}
+                            className="block px-2 py-1.5 text-right text-muted-foreground"
+                          >
+                            <span aria-hidden="true">·</span>
+                            <span className="sr-only">
+                              {t.nombre} no sigue {f.nombre}
+                            </span>
+                          </span>
+                        </td>
+                      );
                     return (
                       <td key={t.id} className="px-1 py-1 align-top">
                         <Celda
