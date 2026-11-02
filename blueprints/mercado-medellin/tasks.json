@@ -1047,7 +1047,7 @@
       "src/lib/planes/config.ts",
       "tests/unit/rubros.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E45-T2",

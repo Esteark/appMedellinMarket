@@ -20,6 +20,17 @@ export const configPlan = z.object({
   rubros: z
     .record(z.string().min(1).max(40), monto)
     .refine((r) => Object.keys(r).length <= 50),
+  /** Orden de los rubros que eligió la persona (`jsonb` no conserva el de las claves de `rubros`). */
+  orden: z.array(z.string().min(1).max(40)).max(50).optional().catch(undefined),
+  /** Rubro → grupos de producto que cuenta; sin esto se usan los de fábrica. */
+  grupos: z
+    .record(
+      z.string().min(1).max(40),
+      z.array(z.string().min(1).max(40)).max(30),
+    )
+    .refine((g) => Object.keys(g).length <= 50)
+    .optional()
+    .catch(undefined),
   items: z
     .record(id, z.number().int().min(1).max(999))
     .refine((i) => Object.keys(i).length <= 200),
