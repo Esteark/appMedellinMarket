@@ -749,7 +749,7 @@
       "src/lib/planes/semanas.ts",
       "tests/unit/semanas.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E43-T2",
