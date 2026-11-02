@@ -854,5 +854,173 @@
       "tests/e2e/dieta-semanas.spec.ts"
     ],
     "status": "done"
+  },
+  {
+    "id": "E44-T1",
+    "title": "Migrar catálogo por tienda, siembra y funciones",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E43-T5"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN corre la migración THE SYSTEM SHALL crear una fila activa de `catalogo_tienda` por cada producto y tienda con precio efectivo no nulo, sin crear ninguna con precio nulo ni tocar las filas de Barrio que ya existen.",
+      "WHEN un producto está en `activo = false` para una tienda THE SYSTEM SHALL excluirlo de la vista `precio_catalogo` de esa tienda sin borrar su fila ni sus precios.",
+      "WHEN se ejecuta `agregar_a_tienda` o `quitar_de_tienda` THE SYSTEM SHALL reactivar o poner `activo = false` con el autor de la sesión, y rechazar a `anon`.",
+      "WHEN `corregir_precio` o `importar_compra` registran un precio en una tienda THE SYSTEM SHALL dejar el producto activo en el catálogo de esa tienda."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset && pnpm migrar",
+      "pnpm exec supabase test db",
+      "pnpm gen:tipos && pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44a",
+    "files": [
+      "supabase/migrations/20261102000000_catalogo_por_tienda.sql",
+      "supabase/tests/catalogo_por_tienda.test.sql",
+      "scripts/migrar.ts",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E44-T2",
+    "title": "Leer los precios por catálogo y mostrar la tienda en el carrito",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E44-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN un producto no está en el catálogo de una tienda THE SYSTEM SHALL no mostrarlo en la pestaña de esa tienda en `/tiendas`, no contar su precio en ese catálogo y no ofrecer esa tienda en el chip de la Canasta.",
+      "WHEN la lista se ve en «Por grupo» o «Todo» THE SYSTEM SHALL mostrar en cada fila el nombre de la tienda más barata, o «sin precio» si ninguna lo tiene.",
+      "THE SYSTEM SHALL contar «N productos» de cada tienda a partir de su catálogo."
+    ],
+    "verify": [
+      "pnpm test tests/unit/secciones.test.ts",
+      "pnpm test:e2e tests/e2e/lista-vista.spec.ts tests/e2e/tiendas.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44b",
+    "files": [
+      "src/lib/datos.ts",
+      "src/lib/precios/secciones.ts",
+      "src/components/carrito/lista-seccion.tsx",
+      "src/components/tiendas/vista.tsx",
+      "tests/unit/secciones.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E44-T3",
+    "title": "Selector de emojis para el ícono del producto",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E44-T2"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se abre el selector THE SYSTEM SHALL mostrar los emojis por categoría, filtrarlos al escribir en español y permitir escribir uno propio de hasta 8 caracteres o elegir «Sin ícono».",
+      "WHEN con `pointer: coarse` THE SYSTEM SHALL mostrar cada celda con al menos 44 px y permitir cerrarlo con `Esc`.",
+      "WHEN se elige un emoji en «Nuevo producto» o en la edición en línea THE SYSTEM SHALL guardarlo en `productos.emoji` y mostrarlo en la tarjeta."
+    ],
+    "verify": [
+      "pnpm test tests/unit/emojis.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44c",
+    "files": [
+      "src/data/emojis.ts",
+      "src/components/emoji-selector.tsx",
+      "src/components/tiendas/formularios.tsx",
+      "src/components/tiendas/tabla-productos.tsx",
+      "tests/unit/emojis.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E44-T4",
+    "title": "Agregar y quitar productos por tienda en /tiendas",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E44-T1",
+      "E44-T2",
+      "E44-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se pulsa «Agregar a esta tienda» y se elige un producto existente THE SYSTEM SHALL agregarlo al catálogo de esa tienda con el autor de la sesión, sin crear un producto duplicado.",
+      "WHEN se crea un producto con una o varias tiendas THE SYSTEM SHALL reutilizar el existente si su nombre normalizado ya existe y agregarlo solo a las tiendas marcadas, exigiendo al menos una.",
+      "WHEN se pulsa «Quitar de esta tienda» y se confirma THE SYSTEM SHALL poner `activo = false` sin borrar precios ni historial.",
+      "WHEN no hay sesión THE SYSTEM SHALL ocultar estas acciones."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/tiendas.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44d",
+    "files": [
+      "src/app/tiendas/acciones.ts",
+      "src/components/tiendas/agregar-a-tienda.tsx",
+      "src/components/tiendas/formularios.tsx",
+      "src/components/tiendas/vista.tsx",
+      "src/lib/avisos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E44-T5",
+    "title": "Agregar desde la Canasta y Anotados, y ícono en el resto de flujos",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E44-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se pulsa «Agregar producto» en la Canasta THE SYSTEM SHALL abrir la hoja de agregar con la tienda del chip activo preseleccionada.",
+      "WHEN se pulsa «Agregar producto a {tienda}» en Anotados THE SYSTEM SHALL abrirla para esa tienda, y la tabla SHALL mostrar solo el catálogo de cada tienda.",
+      "WHEN se crea un producto propio en Barrio, en un plan o en la revisión de una importación THE SYSTEM SHALL ofrecer el selector de emojis y guardar el valor elegido.",
+      "THE SYSTEM SHALL aceptar `propios` de planes anteriores sin `emoji`."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/anotados.spec.ts tests/e2e/barrio.spec.ts tests/e2e/importar.spec.ts tests/e2e/planes-editables.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44e",
+    "files": [
+      "src/components/catalogo/catalogo.tsx",
+      "src/components/anotados/tabla.tsx",
+      "src/components/anotados/barrio.tsx",
+      "src/components/listas/cargar-lista.tsx",
+      "src/components/tiendas/dialogo-fusion.tsx",
+      "src/lib/planes/config.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E44-T6",
+    "title": "E2E del catálogo por tienda y documentación",
+    "epic": "44-catalogo-por-tienda",
+    "dependencies": [
+      "E44-T5"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se crea un producto solo en La Minorista THE SYSTEM SHALL no mostrarlo en la pestaña ni en el chip de PriceSmart, y mostrarlo en ambas después de agregarlo a PriceSmart.",
+      "WHEN se quita un producto de una tienda THE SYSTEM SHALL conservar su precio en el historial.",
+      "THE SYSTEM SHALL pasar axe en `/tiendas` sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px.",
+      "THE SYSTEM SHALL documentar en `CLAUDE.md` la fuente única `precio_catalogo` y que el catálogo por tienda no se borra."
+    ],
+    "verify": [
+      "pnpm exec supabase test db",
+      "pnpm test:e2e tests/e2e/catalogo-por-tienda.spec.ts tests/e2e/tiendas.spec.ts tests/e2e/barrio.spec.ts tests/e2e/anotados.spec.ts tests/e2e/lista-vista.spec.ts tests/e2e/importar.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-44f",
+    "files": [
+      "tests/e2e/catalogo-por-tienda.spec.ts",
+      "CLAUDE.md"
+    ],
+    "status": "pending"
   }
 ]
