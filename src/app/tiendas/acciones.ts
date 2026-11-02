@@ -108,17 +108,6 @@ export async function crearProducto(
   const p = esquemaProducto.safeParse(entrada);
   if (!p.success) return { ok: false, error: "nombre_invalido" };
   const db = await clienteServidor();
-  // Si el nombre ya existe se reutiliza tal cual: no se pisa su ícono, unidad ni grupo.
-  const { data: norma } = await db.rpc("normalizar_nombre", {
-    p_texto: p.data.nombre,
-  });
-  const { data: previo } = norma
-    ? await db
-        .from("productos")
-        .select("id")
-        .eq("nombre_norm", norma)
-        .maybeSingle()
-    : { data: null };
   const { data, error } = await db.rpc("crear_producto", {
     p_nombre: p.data.nombre,
     p_grupo: p.data.grupo,
@@ -126,7 +115,17 @@ export async function crearProducto(
   });
   if (error || !data)
     return { ok: false, error: traducir(error?.message ?? "") };
-  if (!previo)
+  // `crear_producto` devuelve el existente si el nombre ya estaba. Solo se completa un producto que
+  // esta misma persona acaba de crear (origen «compra»): el de otra persona o el sembrado no se pisa, y
+  // si el paso siguiente falla, reintentar sigue completándolo.
+  const u = await usuario();
+  const { data: fila } = await db
+    .from("productos")
+    .select("creado_por, origen")
+    .eq("id", data)
+    .maybeSingle();
+  const nuevo = !!u && fila?.creado_por === u.id && fila.origen === "compra";
+  if (nuevo)
     await db
       .from("productos")
       .update({
@@ -136,12 +135,13 @@ export async function crearProducto(
         origen: "manual",
         revisado: true,
       })
-      .eq("id", data);
+      .eq("id", data)
+      .eq("origen", "compra");
   if (p.data.tiendas.length) {
     const r = await agregar(data, p.data.tiendas);
     if (!r.ok) return r;
   }
-  return { ok: true, id: data, existente: !!previo };
+  return { ok: true, id: data, existente: !nuevo };
 }
 
 async function agregar(

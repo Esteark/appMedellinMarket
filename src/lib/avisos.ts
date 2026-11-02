@@ -431,6 +431,12 @@ export const AVISOS = {
     emoji: "🏪",
     texto: "«{nombre}» ahora está en {tienda}.",
   },
+  producto_existente_agregado: {
+    tipo: "info",
+    emoji: "🏪",
+    texto:
+      "«{nombre}» ya existía: se agregó a {tienda} con su ícono, unidad y grupo de siempre.",
+  },
   producto_quitado_de_tienda: {
     tipo: "info",
     emoji: "🏪",

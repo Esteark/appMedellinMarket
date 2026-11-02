@@ -23,7 +23,8 @@ insert into precios_manuales_historial (producto_id, tienda_id, precio, fecha, a
 insert into anotados (producto_id, tienda_id, precio, fecha, autor)
   values ('p1', 't2', 4500, '2026-10-30', '00000000-0000-0000-0000-00000000000a');
 insert into producto_fuente (producto_id, tienda_id, url) values ('p1', 't2', 'https://ejemplo.test/p1');
-insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't1');
+-- el disparador de precios_actuales ya la creó; se deja explícita por claridad.
+insert into catalogo_tienda (producto_id, tienda_id) values ('p1', 't1') on conflict do nothing;
 insert into clima_causas (producto_id, fecha, texto, es_clima) values ('p1', '2026-10-30', 'lluvias', true);
 insert into producto_alias (alias_norm, tienda_id, producto_id) values
   ('alias unico', null, 'p1'), ('alias de tienda', 't1', 'p1'), ('alias propio', null, 'p2');

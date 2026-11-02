@@ -2,7 +2,7 @@
 -- Corre con: pnpm exec supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(16);
 
 insert into tiendas (id, nombre, color) values ('tx', 'Tienda X', '#000000'), ('ty', 'Tienda Y', '#111111');
 insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia) values
@@ -50,6 +50,34 @@ select is_empty($$select 1 from precio_catalogo where producto_id = 'q2' and tie
 select corregir_precio('q2', 'ty', 3500);
 select results_eq($$select activo from catalogo_tienda where producto_id = 'q2' and tienda_id = 'ty'$$,
   array[true], 'anotar un precio reactiva el producto en la tienda');
+
+-- Un precio nuevo de la corrida (precios_actuales) crea la fila que falta, pero no reactiva lo quitado.
+reset role;
+insert into productos (id, nombre, grupo, unidad, unidad_base, cantidad_base, frecuencia)
+  values ('q3', 'Producto Q3', 'Frutas', 'kg', 'g', 1000, 'diaria');
+insert into precios_actuales (producto_id, tienda_id, precio, fecha, estado) values
+  ('q3', 'tx', 1800, (now() at time zone 'America/Bogota')::date, 'real'),
+  ('q3', 'ty', null, (now() at time zone 'America/Bogota')::date, 'sin_dato');
+select results_eq($$select tienda_id from catalogo_tienda where producto_id = 'q3'$$, array['tx'],
+  'un precio de la corrida agrega el producto a la tienda; uno nulo no');
+
+update catalogo_tienda set activo = false where producto_id = 'q3' and tienda_id = 'tx';
+update precios_actuales set precio = 1900 where producto_id = 'q3' and tienda_id = 'tx';
+select results_eq($$select activo from catalogo_tienda where producto_id = 'q3' and tienda_id = 'tx'$$,
+  array[false], 'un precio nuevo de la corrida no reactiva un producto quitado');
+
+-- Anotar el mismo precio otra vez no reactiva; un precio distinto sí.
+insert into anotados (producto_id, tienda_id, precio, fecha, autor)
+  values ('q3', 'tx', 2000, (now() at time zone 'America/Bogota')::date, '00000000-0000-0000-0000-00000000000a');
+update catalogo_tienda set activo = false where producto_id = 'q3' and tienda_id = 'tx';
+update anotados set fecha = fecha where producto_id = 'q3' and tienda_id = 'tx';
+select results_eq($$select activo from catalogo_tienda where producto_id = 'q3' and tienda_id = 'tx'$$,
+  array[false], 'tocar un anotado sin cambiar su precio no reactiva el producto');
+update anotados set precio = 2100 where producto_id = 'q3' and tienda_id = 'tx';
+select results_eq($$select activo from catalogo_tienda where producto_id = 'q3' and tienda_id = 'tx'$$,
+  array[true], 'cambiar el precio anotado sí lo reactiva');
+select is((select count(*)::int from catalogo_tienda where producto_id = 'q3'), 1,
+  'sigue una sola fila por producto y tienda');
 
 select * from finish();
 rollback;

@@ -73,7 +73,7 @@ export function HojaFormulario({
       else if (formulario.tipo === "renombrar")
         avisar("tienda_renombrada", { nombre });
       else if ("existente" in r && r.existente)
-        avisar("producto_agregado_a_tienda", {
+        avisar("producto_existente_agregado", {
           nombre,
           tienda: tiendas
             .filter((t) => marcadas.includes(t.id))

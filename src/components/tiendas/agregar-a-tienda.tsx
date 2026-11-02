@@ -51,6 +51,7 @@ export function AgregarATienda({
   }, [productos, q, tiendaId]);
 
   const agregar = async (p: Producto) => {
+    if (!tienda) return;
     setEnviando(p.id);
     try {
       const r = await agregarATienda({ producto: p.id, tiendas: [tiendaId] });

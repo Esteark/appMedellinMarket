@@ -50,13 +50,13 @@ export async function alertasUsuarios(db: Admin, hoy: string): Promise<number> {
   for (const p of await todas(
     (d, h) =>
       db
-        .from("precio_efectivo")
+        .from("precio_catalogo")
         .select("producto_id, tienda_id, precio")
         .in("producto_id", ids)
         .order("producto_id")
         .order("tienda_id")
         .range(d, h),
-    "precio_efectivo",
+    "precio_catalogo",
   )) {
     if (!p.producto_id || !p.tienda_id) continue;
     precios[p.producto_id] ??= {};
