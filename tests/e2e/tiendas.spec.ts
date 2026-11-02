@@ -177,3 +177,28 @@ test("cada pestaña muestra solo los productos que esa tienda sigue", async ({
   await expect(fila(page, "Papaya")).toHaveCount(0);
   await expect(fila(page, "Papa pastusa")).toHaveCount(1);
 });
+
+test("con sesión: elegir un ícono en el selector lo guarda y lo muestra; Esc lo cierra", async ({
+  page,
+}) => {
+  const producto = `E2E Con Icono ${Date.now()}`;
+  await crearCuenta(page);
+  await page.goto("/tiendas");
+  await page.getByRole("button", { name: "Nuevo producto" }).click();
+  await page.getByLabel("Nombre").fill(producto);
+
+  await page.getByRole("button", { name: "Elegir ícono" }).click();
+  const selector = page.getByTestId("selector-emoji");
+  await selector.getByLabel("Buscar ícono").fill("PIÑA");
+  await expect(selector.getByRole("button", { name: "pina" })).toBeVisible();
+  await selector.getByRole("button", { name: "pina" }).click();
+  await expect(selector).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Cambiar ícono" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("selector-emoji")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await page.getByLabel("Buscar producto").fill(producto);
+  await expect(fila(page, producto)).toContainText("🍍");
+});

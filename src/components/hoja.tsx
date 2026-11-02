@@ -44,7 +44,8 @@ export function Hoja({ titulo, alCerrar, children }: Props) {
         else f();
       });
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cerrar();
+      // Un control interno (p. ej. el selector de emoji) que ya atendió Esc lo marca con preventDefault.
+      if (e.key === "Escape" && !e.defaultPrevented) cerrar();
     };
     document.addEventListener("keydown", tecla);
     return () => {

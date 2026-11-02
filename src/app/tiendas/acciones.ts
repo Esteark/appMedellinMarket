@@ -114,7 +114,7 @@ export async function crearProducto(
     .update({
       unidad: p.data.unidad,
       ...unidadBase(p.data.unidad),
-      emoji: p.data.emoji ?? null,
+      emoji: p.data.emoji || null,
       origen: "manual",
       revisado: true,
     })
@@ -144,7 +144,7 @@ export async function editarProducto(
     .from("productos")
     .update({
       ...c.data,
-      emoji: c.data.emoji ?? null,
+      emoji: c.data.emoji || null,
       ...base,
       // Asignarle un grupo real a un producto "Por revisar" lo da por revisado.
       ...(c.data.grupo !== "Otros" ? { revisado: true } : {}),

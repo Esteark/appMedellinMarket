@@ -7,6 +7,7 @@ import {
   crearTienda,
   renombrarTienda,
 } from "@/app/tiendas/acciones";
+import { EmojiSelector } from "@/components/emoji-selector";
 import { Hoja } from "@/components/hoja";
 import { avisar } from "@/lib/avisos";
 import { claveAviso } from "@/lib/importar/factura";
@@ -119,15 +120,10 @@ export function HojaFormulario({ formulario, grupos, alCerrar }: Props) {
                 <option value="semanal">Semanal</option>
               </select>
             </label>
-            <label className="text-sm">
-              Emoji (opcional)
-              <input
-                maxLength={8}
-                value={emoji}
-                onChange={(e) => setEmoji(e.target.value)}
-                className={campo}
-              />
-            </label>
+            <div className="text-sm sm:col-span-2">
+              Ícono (opcional)
+              <EmojiSelector valor={emoji} onChange={setEmoji} />
+            </div>
           </div>
         )}
         <button type="submit" disabled={enviando} className={boton}>

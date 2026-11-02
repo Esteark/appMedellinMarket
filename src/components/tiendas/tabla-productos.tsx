@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { editarProducto, marcarRevisado } from "@/app/tiendas/acciones";
+import { EmojiSelector } from "@/components/emoji-selector";
 import { CorregirPrecio } from "@/components/precios/corregir-precio";
 import { avisar } from "@/lib/avisos";
 import type { ProductoGestion } from "@/lib/datos";
@@ -113,19 +114,16 @@ export function TablaProductos({
               >
                 <td className="px-3 py-2">
                   {abierta ? (
-                    <span className="flex gap-1">
-                      <input
-                        aria-label="Emoji"
-                        maxLength={8}
-                        className={`${campo} max-w-14`}
-                        value={borrador.emoji ?? ""}
-                        onChange={(ev) => cambiar({ emoji: ev.target.value })}
-                      />
+                    <span className="flex flex-col gap-1.5">
                       <input
                         aria-label="Nombre"
                         className={campo}
                         value={borrador.nombre}
                         onChange={(ev) => cambiar({ nombre: ev.target.value })}
+                      />
+                      <EmojiSelector
+                        valor={borrador.emoji ?? ""}
+                        onChange={(emoji) => cambiar({ emoji })}
                       />
                     </span>
                   ) : (
