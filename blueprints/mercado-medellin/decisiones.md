@@ -248,3 +248,13 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 
 - **Catálogo por tienda (paso 44).** Los 144 productos siguen siendo globales, pero cada tienda ofrece solo los de su `catalogo_tienda`. Lo motivó ver un producto agregado a La Minorista en la pestaña de PriceSmart. Se siembra con los productos que hoy tienen precio en cada tienda y se lee por la vista `precio_catalogo`; `precio_efectivo` queda como fuente del cálculo y de la corrida. La lista del carrito no recuerda una tienda por fila: se conserva el óptimo dividido y «Por grupo» muestra la tienda de cada fila. El ícono es un selector de emojis (sin imágenes, que pedirían Storage). Registrar un precio en una tienda reactiva el producto en su catálogo, para que un precio nunca quede oculto. Quitar es `activo = false`.
   - **Se reabre si:** la familia quiere comprar en una tienda que no es la más barata (habría que recordar la tienda por fila), o quiere subir fotos.
+
+## Cambio del 2-nov-2026 (paso 45)
+
+- **Rubros del plan editables (paso 45).** `PresupuestoEditable` solo dejaba cambiar montos. Ahora se agregan, renombran, quitan y reordenan rubros, y cada uno cuenta los **grupos de producto** que la persona le asigne (decisión suya, sobre las otras dos opciones: rubro solo de monto, o con gasto escrito a mano). Quitar un rubro manda sus grupos a «Otros», que no se renombra ni se quita. El orden se guarda en `orden` porque `jsonb` no conserva el de las claves. Los rubros de `/presupuesto` (gastos reales) siguen siendo otra cosa y no se tocan.
+  - **Se reabre si:** la familia necesita asignar productos sueltos y no grupos enteros, o rubros distintos por semana de Dieta.
+
+## Cambio del 2-nov-2026 (paso 46)
+
+- **Gastos editables y dinero con formato (paso 46).** La tabla de gastos solo permitía «Eliminar» aunque `editarGasto` ya existía en el servidor sin ninguna pantalla que lo usara. Ahora la fila se edita en línea (decisión suya, sobre una hoja o celdas siempre editables) con fecha, rubro, tienda, monto, nota, producto, cantidad y descripción. Los campos de dinero de `/presupuesto` muestran el separador de miles al escribir; lo que se guarda sigue siendo un entero. La cantidad de unidades queda sin formato porque admite decimales. Editar un gasto de una factura no lo saca de su lote: «Deshacer importación» sigue borrando todo el lote.
+  - **Se reabre si:** la familia quiere el mismo formato en Hogar, Dieta, la corrección de precio o la revisión de facturas, o necesita que lo editado quede protegido al deshacer una importación.

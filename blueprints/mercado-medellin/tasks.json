@@ -1022,5 +1022,240 @@
       "CLAUDE.md"
     ],
     "status": "done"
+  },
+  {
+    "id": "E45-T1",
+    "title": "Modelo de rubros editables y esquema del plan",
+    "epic": "45-rubros-editables",
+    "dependencies": [
+      "E44-T6"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se agrega un rubro con un nombre repetido (sin tildes ni mayúsculas), vacío, de más de 40 caracteres o «Otros», o cuando ya hay 50, THE SYSTEM SHALL rechazarlo sin cambiar el plan.",
+      "WHEN se renombra un rubro THE SYSTEM SHALL conservar su monto, su posición y sus grupos, y SHALL no permitir renombrar «Otros».",
+      "WHEN se quita un rubro THE SYSTEM SHALL borrar su monto, posición y grupos, dejar sus grupos en «Otros» y no permitir quitar «Otros».",
+      "THE SYSTEM SHALL aceptar un plan sin `orden` ni `grupos`, y descartar unos campos dañados sin perder los rubros ni los items."
+    ],
+    "verify": [
+      "pnpm test tests/unit/rubros.test.ts tests/unit/config-plan.test.ts tests/unit/planes.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-45a",
+    "files": [
+      "src/lib/planes/rubros.ts",
+      "src/lib/planes/config.ts",
+      "tests/unit/rubros.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E45-T2",
+    "title": "La comparación reparte el gasto por los rubros del plan",
+    "epic": "45-rubros-editables",
+    "dependencies": [
+      "E45-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN un rubro cuenta el grupo Mecato y la lista tiene un producto de Mecato THE SYSTEM SHALL sumar su gasto a ese rubro y no a otro.",
+      "WHEN ningún rubro cuenta el grupo de un producto THE SYSTEM SHALL sumarlo a «Otros».",
+      "WHEN el plan no tiene `grupos` THE SYSTEM SHALL repartir igual que antes de este paso (`rubroDe`)."
+    ],
+    "verify": [
+      "pnpm test tests/unit/rubros.test.ts",
+      "pnpm test:e2e tests/e2e/planes.spec.ts tests/e2e/dieta-semanas.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-45b",
+    "files": [
+      "src/components/planes/compara-presupuesto.tsx",
+      "src/lib/datos.ts",
+      "src/app/hogar/page.tsx",
+      "src/app/dieta/page.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E45-T3",
+    "title": "Editor de rubros: agregar, renombrar, quitar, reordenar y grupos",
+    "epic": "45-rubros-editables",
+    "dependencies": [
+      "E45-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se pulsa «Agregar rubro» con un nombre válido y un monto THE SYSTEM SHALL mostrarlo al final con ese monto y sumarlo al total del plan.",
+      "WHEN se pulsa «Quitar» y se confirma THE SYSTEM SHALL quitar el rubro y ofrecer «Deshacer», que lo restaura con su monto, posición y grupos.",
+      "WHEN se pulsa ↑ o ↓ THE SYSTEM SHALL mover el rubro una posición, y el orden SHALL conservarse al recargar y al guardar la copia.",
+      "WHEN se marca un grupo en un rubro que ya estaba en otro THE SYSTEM SHALL moverlo y decir de cuál lo sacó.",
+      "THE SYSTEM SHALL ofrecer estas acciones por igual en Hogar y en Dieta, con cada control de al menos 44 px con `pointer: coarse`."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/planes-editables.spec.ts tests/e2e/planes-guardados.spec.ts tests/e2e/presupuesto-claro.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-45c",
+    "files": [
+      "src/components/planes/presupuesto-editable.tsx",
+      "src/components/planes/rubro-fila.tsx",
+      "src/components/planes/rubro-nuevo.tsx",
+      "src/components/planes/rubro-grupos.tsx",
+      "src/lib/avisos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E45-T4",
+    "title": "E2E de rubros editables y documentación",
+    "epic": "45-rubros-editables",
+    "dependencies": [
+      "E45-T2",
+      "E45-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se agrega «Mascotas», se le asigna Mecato y la lista tiene un producto de Mecato THE SYSTEM SHALL mostrar su gasto en «Mascotas» en la comparación.",
+      "WHEN con sesión se borra el almacenamiento local THE SYSTEM SHALL recuperar de la cuenta los rubros, su orden y sus grupos.",
+      "THE SYSTEM SHALL pasar axe en `/hogar` y `/dieta` sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px.",
+      "THE SYSTEM SHALL documentar en `CLAUDE.md` que los rubros del plan son editables y que los de `/presupuesto` son aparte."
+    ],
+    "verify": [
+      "pnpm exec supabase test db",
+      "pnpm test:e2e tests/e2e/rubros.spec.ts tests/e2e/planes.spec.ts tests/e2e/planes-editables.spec.ts tests/e2e/planes-guardados.spec.ts tests/e2e/publico.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-45d",
+    "files": [
+      "tests/e2e/rubros.spec.ts",
+      "CLAUDE.md"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E46-T1",
+    "title": "Formato de pesos mientras se escribe y campo de moneda",
+    "epic": "46-gastos-editables",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se escribe `3000` en un campo de moneda THE SYSTEM SHALL mostrar `3.000`, y `1250000` como `1.250.000`, entregando al estado solo los dígitos.",
+      "WHEN se pega `$ 1.250.000` o `1250000` THE SYSTEM SHALL dejar el mismo valor, y un texto sin dígitos SHALL dejar el campo vacío.",
+      "WHEN se escribe o se borra en medio del número THE SYSTEM SHALL mantener el cursor tras el mismo dígito.",
+      "THE SYSTEM SHALL limitar el valor a 50 000 000 y no aceptar decimales."
+    ],
+    "verify": [
+      "pnpm test tests/unit/moneda.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-46a",
+    "files": [
+      "src/lib/moneda.ts",
+      "src/components/campo-moneda.tsx",
+      "tests/unit/moneda.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E46-T2",
+    "title": "Aplicar el campo de moneda en /presupuesto",
+    "epic": "46-gastos-editables",
+    "dependencies": [
+      "E46-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se escribe en «Precio por unidad», «Precio total» o «Monto total» THE SYSTEM SHALL mostrar el separador de miles y guardar un entero sin formato.",
+      "WHEN se escribe en el presupuesto de un rubro del seguimiento THE SYSTEM SHALL mostrar el separador de miles y guardar un entero.",
+      "THE SYSTEM SHALL dejar el campo «Cantidad» sin formato de miles y con decimales.",
+      "THE SYSTEM SHALL no aumentar el tamaño de `presupuesto-cliente.tsx`."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/presupuesto-claro.spec.ts tests/e2e/importar.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-46b",
+    "files": [
+      "src/components/presupuesto/presupuesto-cliente.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E46-T3",
+    "title": "Ampliar editarGasto con producto, cantidad y descripción",
+    "epic": "46-gastos-editables",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se edita un gasto propio con un producto, una cantidad y una descripción válidos THE SYSTEM SHALL guardarlos.",
+      "WHEN el `producto_id` no existe o la cantidad es negativa o mayor de 100 000 THE SYSTEM SHALL rechazar la edición sin cambiar el gasto.",
+      "WHEN la persona intenta editar el gasto de otra THE SYSTEM SHALL no cambiar nada.",
+      "WHEN cambia la fecha a otro mes THE SYSTEM SHALL recalcular `mes`."
+    ],
+    "verify": [
+      "pnpm test tests/integracion/editar-gasto.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-46c",
+    "files": [
+      "src/app/presupuesto/acciones.ts",
+      "src/lib/avisos.ts",
+      "tests/integracion/editar-gasto.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E46-T4",
+    "title": "Tabla de gastos editable en línea",
+    "epic": "46-gastos-editables",
+    "dependencies": [
+      "E46-T1",
+      "E46-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se pulsa «Editar» en un gasto THE SYSTEM SHALL convertir la fila en campos (fecha, producto, rubro, tienda, monto, cantidad, descripción y nota) con «Guardar» y «Cancelar».",
+      "WHEN se guarda THE SYSTEM SHALL actualizar la fila, el resumen y el seguimiento del mes, y avisar con `gasto_editado`; con sesión SHALL llamar a `editarGasto`.",
+      "WHEN no hay sesión THE SYSTEM SHALL editar el gasto en `mercado-medellin:gastos:{mes}` y, si la fecha cambia de mes, moverlo al mes nuevo.",
+      "WHEN se pulsa `Esc` THE SYSTEM SHALL cancelar sin guardar, y WHEN se pulsa `Enter` SHALL guardar.",
+      "WHEN el gasto viene de una factura THE SYSTEM SHALL mostrar su cantidad y descripción bajo el producto."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/presupuesto-claro.spec.ts tests/e2e/importar.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-46d",
+    "files": [
+      "src/components/presupuesto/tabla-gastos.tsx",
+      "src/components/presupuesto/fila-gasto.tsx",
+      "src/components/presupuesto/presupuesto-cliente.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E46-T5",
+    "title": "E2E de gastos editables y documentación",
+    "epic": "46-gastos-editables",
+    "dependencies": [
+      "E46-T2",
+      "E46-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se escribe 3000 en «Monto total» THE SYSTEM SHALL mostrar 3.000 y guardar 3000.",
+      "WHEN se importa una factura y se edita el producto y la cantidad de un gasto importado THE SYSTEM SHALL conservar el cambio al recargar.",
+      "THE SYSTEM SHALL pasar axe en `/presupuesto`, con una fila en edición, sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px.",
+      "THE SYSTEM SHALL documentar en `CLAUDE.md` el campo de moneda y que el dinero se guarda como entero sin formato."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/gastos-editables.spec.ts tests/e2e/presupuesto-claro.spec.ts tests/e2e/importar.spec.ts tests/e2e/publico.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-46e",
+    "files": [
+      "tests/e2e/gastos-editables.spec.ts",
+      "CLAUDE.md"
+    ],
+    "status": "pending"
   }
 ]
