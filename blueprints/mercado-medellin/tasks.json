@@ -1437,5 +1437,134 @@
       "CLAUDE.md"
     ],
     "status": "done"
+  },
+  {
+    "id": "E48-T1",
+    "title": "Migración: historial del presupuesto y guardado atómico por mes",
+    "epic": "48-presupuesto-mes",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se llama `guardar_presupuesto_mes` THE SYSTEM SHALL crear o actualizar los rubros del mes y borrar los que ya no vienen, en una sola transacción.",
+      "WHEN un monto se crea, cambia o se quita THE SYSTEM SHALL dejar una fila en `presupuestos_historial` con el monto anterior y el nuevo, y WHEN el monto no cambia THE SYSTEM SHALL no dejar fila.",
+      "WHEN otra persona consulta `presupuestos_historial` THE SYSTEM SHALL no devolverle filas ajenas, y WHEN el cliente intenta escribir en ella THE SYSTEM SHALL rechazarlo.",
+      "WHEN el mes no es `AAAA-MM` o un monto no es entero entre 0 y 50 000 000 THE SYSTEM SHALL rechazar el guardado."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset && pnpm migrar",
+      "pnpm exec supabase test db",
+      "pnpm gen:tipos && pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-48a",
+    "files": [
+      "supabase/migrations/20261103120000_presupuesto_historial.sql",
+      "supabase/tests/presupuesto_historial.test.sql",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E48-T2",
+    "title": "Lógica pura y almacenamiento local por mes",
+    "epic": "48-presupuesto-mes",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN el mes ya tiene presupuesto THE SYSTEM SHALL usarlo, y WHEN no lo tiene THE SYSTEM SHALL copiar el del mes anterior más reciente con datos (hasta 12 meses atrás, también cruzando de año).",
+      "WHEN no hay presupuesto en ningún mes THE SYSTEM SHALL usar lo que había en el dispositivo o los rubros sugeridos en cero.",
+      "THE SYSTEM SHALL guardar y leer el presupuesto local de cada mes por separado sin modificar los demás meses.",
+      "THE SYSTEM SHALL describir un cambio del historial como «antes → después», «nuevo» o «quitado»."
+    ],
+    "verify": [
+      "pnpm test tests/unit/por-mes.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-48b",
+    "files": [
+      "src/lib/presupuesto/por-mes.ts",
+      "src/lib/presupuesto/almacenamiento.ts",
+      "tests/unit/por-mes.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E48-T3",
+    "title": "Acciones del presupuesto por mes",
+    "epic": "48-presupuesto-mes",
+    "dependencies": [
+      "E48-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se guarda el presupuesto de noviembre THE SYSTEM SHALL no cambiar el de octubre.",
+      "WHEN se pide el presupuesto hasta un mes THE SYSTEM SHALL devolver los rubros de ese mes y de los 12 anteriores.",
+      "WHEN se pide el historial de un mes THE SYSTEM SHALL devolver los últimos 200 cambios de ese mes, el más nuevo primero.",
+      "THE SYSTEM SHALL validar con zod cada entrada y no devolver mensajes de error crudos de la base."
+    ],
+    "verify": [
+      "pnpm test tests/integracion/presupuesto-mes.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-48c",
+    "files": [
+      "src/app/presupuesto/acciones.ts",
+      "src/lib/avisos.ts",
+      "tests/integracion/presupuesto-mes.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E48-T4",
+    "title": "Pantalla: hook por mes, historial y sincronizador",
+    "epic": "48-presupuesto-mes",
+    "dependencies": [
+      "E48-T2",
+      "E48-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se cambia el mes THE SYSTEM SHALL mostrar el presupuesto de ese mes (el guardado, o el heredado con una nota que lo dice).",
+      "WHEN se edita un monto con sesión THE SYSTEM SHALL guardarlo en el dispositivo y en la cuenta con un retraso de 700 ms, y WHEN falla la cuenta THE SYSTEM SHALL avisarlo con `presupuesto_no_guardado`.",
+      "WHEN se abre «Histórico» THE SYSTEM SHALL listar los cambios del presupuesto del mes, y sin sesión SHALL decir que el historial se guarda al iniciar sesión.",
+      "THE SYSTEM SHALL dejar `presupuesto-cliente.tsx` sin más líneas que antes y cada componente nuevo en 250 líneas o menos."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/presupuesto-claro.spec.ts tests/e2e/gastos-editables.spec.ts tests/e2e/rubros.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-48d",
+    "files": [
+      "src/components/presupuesto/usar-presupuesto-mes.ts",
+      "src/components/presupuesto/historial-presupuesto.tsx",
+      "src/components/presupuesto/sincronizar-presupuesto.tsx",
+      "src/components/presupuesto/presupuesto-cliente.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E48-T5",
+    "title": "E2E y documentación",
+    "epic": "48-presupuesto-mes",
+    "dependencies": [
+      "E48-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se fija un monto, se recarga la página THE SYSTEM SHALL mostrar el mismo monto, y WHEN se abre la cuenta en otro contexto del navegador THE SYSTEM SHALL mostrarlo también.",
+      "WHEN se cambia a un mes sin presupuesto THE SYSTEM SHALL mostrar los montos del mes anterior con su nota.",
+      "THE SYSTEM SHALL mostrar el cambio en el historial.",
+      "THE SYSTEM SHALL documentar en `CLAUDE.md` que el presupuesto por rubro es por mes, vive en la cuenta y tiene historial."
+    ],
+    "verify": [
+      "pnpm exec supabase test db",
+      "pnpm test:e2e tests/e2e/presupuesto-mes.spec.ts tests/e2e/presupuesto-claro.spec.ts tests/e2e/gastos-editables.spec.ts tests/e2e/rubros.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-48e",
+    "files": [
+      "tests/e2e/presupuesto-mes.spec.ts",
+      "CLAUDE.md"
+    ],
+    "status": "pending"
   }
 ]

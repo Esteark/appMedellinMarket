@@ -273,3 +273,8 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 
 - **Importar facturas largas (paso 47).** Una factura real de 59 líneas (52 productos distintos, ninguno emparejado) chocó con el tope de 50 productos nuevos por día y falló entera. Se sube el tope a **200** (decisión del usuario) y se rehace la revisión: resumen con cupo, una decisión por fila (ya existe, crear, solo gasto), ícono, grupo y unidad propuestos por las palabras del nombre, sugerencias de producto existente que se confirman a mano, líneas repetidas juntas y «crear hasta el cupo y el resto solo gasto». El emparejamiento sigue siendo exacto y sin IA.
   - **Se reabre si:** 200 también se queda corto o se abusa del catálogo compartido, o si la sugerencia por palabras propone demasiados productos equivocados.
+
+## Cambio del 2-nov-2026 (paso 48)
+
+- **Presupuesto por rubro por mes, en la cuenta y con historial (paso 48).** Los montos del seguimiento por rubro vivían solo en el dispositivo y eran uno para todos los meses. Pasan a `presupuestos_mensuales` por mes, con un historial de cambios (`presupuestos_historial`, escrito por un disparador) y un mes nuevo arranca con los montos del mes anterior.
+  - **Se reabre si:** el historial crece demasiado (se podría resumir por día), o se quiere el mismo presupuesto para Hogar y Dieta.
