@@ -1263,5 +1263,172 @@
       "CLAUDE.md"
     ],
     "status": "done"
+  },
+  {
+    "id": "E47-T1",
+    "title": "Inferir ícono, grupo y unidad del nombre de la línea",
+    "epic": "47-importar-larga",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN una línea trae una cantidad con decimales THE SYSTEM SHALL proponer la unidad `kg`, y WHEN el nombre trae un tamaño como `2500g` THE SYSTEM SHALL proponer `g` con cantidad base 2500.",
+      "WHEN el nombre contiene una palabra conocida THE SYSTEM SHALL proponer su ícono y su grupo del catálogo, y SHALL dejar sin ícono y en «Otros» lo que no reconoce, sin inventar.",
+      "WHEN el nombre es una bolsa, un domicilio, un descuento o similar THE SYSTEM SHALL marcarlo como no producto.",
+      "THE SYSTEM SHALL proponer ícono y grupo para al menos 45 de los 52 productos distintos de la factura de prueba."
+    ],
+    "verify": [
+      "pnpm test tests/unit/inferir.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47a",
+    "files": [
+      "src/data/palabras-producto.ts",
+      "src/lib/importar/inferir.ts",
+      "tests/importar/factura-larga.csv",
+      "tests/unit/inferir.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E47-T2",
+    "title": "Sugerencias seguras de producto existente y resumen con cupo",
+    "epic": "47-importar-larga",
+    "dependencies": [
+      "E47-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN todas las palabras significativas de un producto del catálogo aparecen en la línea THE SYSTEM SHALL sugerirlo (máximo 3, el más específico primero), y WHEN falta alguna THE SYSTEM SHALL no sugerirlo.",
+      "THE SYSTEM SHALL no sugerir «Crema de leche» para una línea de leche común.",
+      "WHEN se resume la factura de prueba THE SYSTEM SHALL dar 59 líneas, 52 productos distintos, 7 repetidas juntas y 1 que no es producto.",
+      "WHEN las nuevas pasan del cupo THE SYSTEM SHALL dejar exactamente `cupo` por crear y el resto como solo gasto."
+    ],
+    "verify": [
+      "pnpm test tests/unit/sugerir.test.ts tests/unit/resumen.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47b",
+    "files": [
+      "src/lib/importar/sugerir.ts",
+      "src/lib/importar/resumen.ts",
+      "src/lib/importar/limites.ts",
+      "tests/unit/sugerir.test.ts",
+      "tests/unit/resumen.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E47-T3",
+    "title": "Migración: tope de 200 y productos creados con ícono, grupo y tamaño",
+    "epic": "47-importar-larga",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN una persona crea el producto 201 del día THE SYSTEM SHALL rechazarlo con `limite_productos`, y el 200 SHALL crearse.",
+      "WHEN `importar_compra` crea un producto y la fila trae `emoji`, `grupo`, `unidad` y `cantidad_base` THE SYSTEM SHALL crearlo con esos valores.",
+      "WHEN la fila no trae esos campos THE SYSTEM SHALL comportarse como antes de esta migración.",
+      "WHEN el producto ya existe THE SYSTEM SHALL no cambiar su ficha.",
+      "THE SYSTEM SHALL decir cuántos productos creó hoy la persona (día de Bogotá) con `cupoDeProductos()`."
+    ],
+    "verify": [
+      "pnpm exec supabase db reset && pnpm migrar",
+      "pnpm exec supabase test db",
+      "pnpm gen:tipos && pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47c",
+    "files": [
+      "supabase/migrations/20261102170000_importar_factura_larga.sql",
+      "supabase/tests/importar_factura_larga.test.sql",
+      "src/app/presupuesto/acciones.ts",
+      "src/lib/avisos.ts",
+      "src/lib/supabase/tipos.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E47-T4",
+    "title": "Modelo de la revisión: decisión por fila, repetidas juntas y payload",
+    "epic": "47-importar-larga",
+    "dependencies": [
+      "E47-T1",
+      "E47-T2",
+      "E47-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN una línea empareja con un producto del catálogo THE SYSTEM SHALL proponer `existente`; WHEN no empareja, `crear` con ícono, grupo y unidad inferidos; WHEN no es producto, `solo_gasto`.",
+      "WHEN la decisión es `solo_gasto` THE SYSTEM SHALL no crear producto ni publicar precio para esa línea.",
+      "WHEN varias líneas tienen el mismo producto, tienda, fecha, cantidad y precio THE SYSTEM SHALL mostrarlas juntas con su cantidad de repeticiones y aplicarles la misma decisión, y el payload SHALL llevar una línea por gasto.",
+      "THE SYSTEM SHALL enviar `emoji`, `grupo`, `unidad` y `cantidad_base` en el payload."
+    ],
+    "verify": [
+      "pnpm test tests/unit/importar.test.ts tests/unit/inferir.test.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47d",
+    "files": [
+      "src/lib/importar/tipos.ts",
+      "src/lib/importar/factura.ts",
+      "src/lib/importar/grupos.ts",
+      "tests/unit/importar.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E47-T5",
+    "title": "Pantalla de revisión: resumen, filtros, acciones masivas y barra de guardado",
+    "epic": "47-importar-larga",
+    "dependencies": [
+      "E47-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se abre la revisión THE SYSTEM SHALL mostrar el resumen de la factura y el cupo de productos del día.",
+      "WHEN las nuevas pasan del cupo THE SYSTEM SHALL ofrecer «Crear hasta el cupo y el resto solo gasto».",
+      "WHEN se filtra por Nuevas, Existentes, Solo gasto o Por revisar THE SYSTEM SHALL mostrar solo esas filas con su conteo, y WHEN se eligen varias THE SYSTEM SHALL permitir aplicarles una decisión a la vez.",
+      "WHEN una línea tiene una sugerencia THE SYSTEM SHALL mostrar «¿Será X?» y solo emparejarla al aceptarla.",
+      "WHEN hay filas incompletas THE SYSTEM SHALL mostrar un resumen de errores enfocable que enlace a cada una.",
+      "THE SYSTEM SHALL mantener cada archivo de componente en 250 líneas o menos."
+    ],
+    "verify": [
+      "pnpm test:e2e tests/e2e/importar.spec.ts tests/e2e/cargar-lista.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47e",
+    "files": [
+      "src/components/importar/revision.tsx",
+      "src/components/importar/importar-factura.tsx",
+      "src/components/importar/resumen-factura.tsx",
+      "src/components/importar/filtros-factura.tsx",
+      "src/components/importar/fila-factura.tsx",
+      "src/components/importar/barra-guardar.tsx"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E47-T6",
+    "title": "E2E con la factura real y documentación",
+    "epic": "47-importar-larga",
+    "dependencies": [
+      "E47-T5"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se importa la factura real con sesión THE SYSTEM SHALL crear los productos con su ícono y grupo y registrar todos los gastos, y el segundo import del mismo archivo SHALL bloquearse.",
+      "WHEN una línea queda como solo gasto THE SYSTEM SHALL no crear su producto.",
+      "THE SYSTEM SHALL pasar axe en la revisión sin violaciones serias ni críticas y sin desplazamiento horizontal en 390 px.",
+      "THE SYSTEM SHALL documentar en `CLAUDE.md` el tope de 200, la decisión por fila y que la sugerencia nunca se aplica sola."
+    ],
+    "verify": [
+      "pnpm exec supabase test db",
+      "pnpm test:e2e tests/e2e/importar-larga.spec.ts tests/e2e/importar.spec.ts tests/e2e/cargar-lista.spec.ts tests/e2e/presupuesto-claro.spec.ts tests/e2e/publico.spec.ts",
+      "pnpm typecheck && pnpm lint && pnpm test"
+    ],
+    "checkpoint": "paso-47f",
+    "files": [
+      "tests/e2e/importar-larga.spec.ts",
+      "CLAUDE.md"
+    ],
+    "status": "pending"
   }
 ]

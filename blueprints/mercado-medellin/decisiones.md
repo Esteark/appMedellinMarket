@@ -269,3 +269,7 @@ Dos pedidos del usuario: cargar lo que se compra sin digitar producto por produc
 - **Sigue pendiente (requiere elegir páginas de D1):** los 12 de solo término, la mazorca y los 13 sin fuente; y `crema_leche`, cuyo catálogo es ml y la página anuncia g.
   - **Se reabre si:** un producto «por unidad» queda con una página de otra presentación (se vería como un salto de precio marcado «revisar», umbral del 35 %).
 
+## Cambio del 2-nov-2026 (paso 47)
+
+- **Importar facturas largas (paso 47).** Una factura real de 59 líneas (52 productos distintos, ninguno emparejado) chocó con el tope de 50 productos nuevos por día y falló entera. Se sube el tope a **200** (decisión del usuario) y se rehace la revisión: resumen con cupo, una decisión por fila (ya existe, crear, solo gasto), ícono, grupo y unidad propuestos por las palabras del nombre, sugerencias de producto existente que se confirman a mano, líneas repetidas juntas y «crear hasta el cupo y el resto solo gasto». El emparejamiento sigue siendo exacto y sin IA.
+  - **Se reabre si:** 200 también se queda corto o se abusa del catálogo compartido, o si la sugerencia por palabras propone demasiados productos equivocados.
