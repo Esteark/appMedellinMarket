@@ -11,6 +11,9 @@ export type FilaCsv = {
   duda: string;
 };
 
+/** Qué se hace con una línea de la factura: usar un producto que ya existe, crearlo, o solo registrar el gasto. */
+export type ModoFila = "existente" | "crear" | "solo_gasto";
+
 /** La fila en la pantalla de revisión: lo que la persona puede corregir antes de guardar. */
 export type FilaRevision = FilaCsv & {
   rubro: string;
