@@ -1461,7 +1461,7 @@
       "supabase/tests/presupuesto_historial.test.sql",
       "src/lib/supabase/tipos.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E48-T2",

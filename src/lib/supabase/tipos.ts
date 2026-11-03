@@ -409,6 +409,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"presupuestos_historial": {
+                  Row: {
+                    "creado": string,"id": number,"mes": string,"monto_anterior": number | null,"monto_nuevo": number | null,"rubro": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "creado"?: string,"id"?: number,"mes": string,"monto_anterior"?: number | null,"monto_nuevo"?: number | null,"rubro": string,"user_id": string
+                  }
+                  Update: {
+                    "creado"?: string,"id"?: number,"mes"?: string,"monto_anterior"?: number | null,"monto_nuevo"?: number | null,"rubro"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"presupuestos_mensuales": {
                   Row: {
                     "created_at": string,"id": string,"mes": string,"monto": number,"orden": number,"rubro": string,"updated_at": string,"user_id": string
@@ -621,6 +635,9 @@ isOneToOne: true
                            },
 "fusionar_productos":
 { Args: { "p_destino": string,"p_origen": string }; Returns: Json
+                           },
+"guardar_presupuesto_mes":
+{ Args: { "p_mes": string,"p_rubros": Json }; Returns: undefined
                            },
 "importar_compra":
 { Args: { "p_archivo": string,"p_fecha": string,"p_filas": Json,"p_hash": string,"p_publicar": boolean }; Returns: Json
