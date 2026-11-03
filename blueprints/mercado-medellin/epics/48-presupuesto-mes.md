@@ -23,7 +23,7 @@ Tabla `presupuestos_historial` con RLS, disparador sobre `presupuestos_mensuales
 `guardarPresupuestoMensual` sobre la función, `obtenerPresupuestosHasta`, `listarHistorialPresupuesto` y el aviso `presupuesto_no_guardado`; integración.
 
 ### E48-T4 — Pantalla: hook por mes, historial y sincronizador · `paso-48d`
-`usar-presupuesto-mes.ts`, `historial-presupuesto.tsx`, la nota de montos heredados y `presupuesto-cliente.tsx` sin crecer.
+`use-presupuesto-mes.ts`, `historial-presupuesto.tsx`, la nota de montos heredados y `presupuesto-cliente.tsx` sin crecer.
 
 ### E48-T5 — E2E y documentación · `paso-48e`
 `tests/e2e/presupuesto-mes.spec.ts` y `CLAUDE.md`.

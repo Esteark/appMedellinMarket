@@ -7,9 +7,13 @@ import {
 } from "@/app/presupuesto/acciones";
 import { avisar } from "@/lib/avisos";
 import {
+  guardarPresupuestoMes,
   leerPresupuestoDieta,
   leerPresupuestoHogar,
+  leerPresupuestoMes,
+  leerPresupuestosAnteriores,
 } from "@/lib/presupuesto/almacenamiento";
+import { presupuestoDelMes } from "@/lib/presupuesto/por-mes";
 
 function mesActual(): string {
   const d = new Date();
@@ -25,13 +29,22 @@ export function SincronizarPresupuesto() {
     if (hecho.current) return;
     hecho.current = true;
     const mes = mesActual();
-    const rubros = leerPresupuestoHogar() ?? leerPresupuestoDieta();
-    if (!rubros || rubros.length === 0) return;
+    // Lo que ya hay en este dispositivo para el mes (o, la primera vez, lo de antes de tener un presupuesto por mes).
+    // Lo heredado de otro mes no se sube: se guarda cuando la persona lo edita.
+    const x = presupuestoDelMes({
+      mes,
+      delMes: leerPresupuestoMes(mes),
+      anteriores: leerPresupuestosAnteriores(mes),
+      inicial: leerPresupuestoHogar() ?? leerPresupuestoDieta() ?? [],
+    });
+    if (x.origen === "heredado" || x.rubros.length === 0) return;
     void obtenerPresupuestoMensual(mes).then((r) => {
       if (!r.ok) return;
       if (Array.isArray(r.rubros) && r.rubros.length > 0) return;
-      void guardarPresupuestoMensual(mes, rubros).then((res) => {
-        if (res.ok) avisar("presupuesto_fusionado");
+      void guardarPresupuestoMensual(mes, x.rubros).then((res) => {
+        if (!res.ok) return;
+        guardarPresupuestoMes(mes, x.rubros);
+        avisar("presupuesto_fusionado");
       });
     });
   }, []);

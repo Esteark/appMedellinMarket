@@ -18,11 +18,8 @@ import {
   agregarCierreLocal,
   fusionarGastos,
   guardarGastosLocal as guardarGastosMes,
-  guardarPresupuestoDieta,
-  guardarPresupuestoHogar,
   leerCierresLocal,
   leerGastosLocal as leerGastosMes,
-  rubrosIniciales,
 } from "@/lib/presupuesto/almacenamiento";
 import { generarAprendizajes } from "@/lib/presupuesto/aprendizajes";
 import { compararPresupuestadoVsGastado } from "@/lib/presupuesto/calculos";
@@ -33,13 +30,14 @@ import { grupoARubro } from "@/lib/presupuesto/rubros";
 import type {
   GastoReal,
   PresupuestoCierreSnapshot,
-  PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
 import {
   CANTIDADES_GASTO,
   UNIDADES_GASTO,
 } from "@/lib/presupuesto/unidades-gasto";
 import type { CambiosGasto } from "./fila-gasto";
+import { HistorialPresupuesto } from "./historial-presupuesto";
+import { NotaHeredado } from "./nota-heredado";
 import {
   avisoDeCreacion,
   crearProductoDeGasto,
@@ -49,6 +47,7 @@ import {
 import { SugerenciasProducto } from "./sugerencias-producto";
 import { TablaGastos } from "./tabla-gastos";
 import { TarjetaProyeccion } from "./tarjeta-proyeccion";
+import { usePresupuestoMes } from "./use-presupuesto-mes";
 
 type Tab =
   | "resumen"
@@ -78,7 +77,11 @@ export function PresupuestoCliente({
   const [version, setVersion] = useState(0);
   const [mes, setMes] = useState("");
   const [hoy, setHoy] = useState("");
-  const [rubros, setRubros] = useState<PresupuestoRubro[]>([]);
+  const {
+    rubros,
+    origen,
+    guardar: guardarRubros,
+  } = usePresupuestoMes(mes, version);
   const [gastos, setGastos] = useState<GastoReal[]>([]);
   const [cierres, setCierres] = useState<PresupuestoCierreSnapshot[]>([]);
   const [form, setForm] = useState({
@@ -118,7 +121,6 @@ export function PresupuestoCliente({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `version` solo fuerza la recarga
   useEffect(() => {
-    setRubros(rubrosIniciales());
     setCierres(leerCierresLocal());
     if (!mes) return;
     try {
@@ -339,12 +341,6 @@ export function PresupuestoCliente({
     return null;
   };
 
-  const guardarRubros = (nuevos: PresupuestoRubro[]) => {
-    setRubros(nuevos);
-    guardarPresupuestoHogar(nuevos);
-    guardarPresupuestoDieta(nuevos);
-  };
-
   const guardarCierre = () => {
     if (!mes) return;
     const snap = generarSnapshotCierre(mes, rubros, gastos);
@@ -380,7 +376,7 @@ export function PresupuestoCliente({
           onClick={() => guardarRubros(rubros)}
           className="rounded-[10px] border px-3 py-1.5 text-sm"
         >
-          Guardar presupuesto en dispositivo
+          Guardar presupuesto
         </button>
         <button
           type="button"
@@ -651,6 +647,9 @@ export function PresupuestoCliente({
       {tab === "seguimiento" && (
         <section className="flex flex-col gap-3 rounded-[14px] border bg-card p-3.5">
           <h2 className="text-lg font-bold">Seguimiento por rubro</h2>
+          {origen.origen === "heredado" && (
+            <NotaHeredado desde={origen.desde} />
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -898,6 +897,7 @@ export function PresupuestoCliente({
               })}
             </div>
           )}
+          <HistorialPresupuesto mes={mes} conSesion={conSesion} />
         </section>
       )}
     </div>

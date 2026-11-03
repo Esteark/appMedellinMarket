@@ -1534,12 +1534,13 @@
     ],
     "checkpoint": "paso-48d",
     "files": [
-      "src/components/presupuesto/usar-presupuesto-mes.ts",
+      "src/components/presupuesto/use-presupuesto-mes.ts",
       "src/components/presupuesto/historial-presupuesto.tsx",
+      "src/components/presupuesto/nota-heredado.tsx",
       "src/components/presupuesto/sincronizar-presupuesto.tsx",
       "src/components/presupuesto/presupuesto-cliente.tsx"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E48-T5",
