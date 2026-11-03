@@ -1327,6 +1327,7 @@
       "WHEN una persona crea el producto 201 del día THE SYSTEM SHALL rechazarlo con `limite_productos`, y el 200 SHALL crearse.",
       "WHEN `importar_compra` crea un producto y la fila trae `emoji`, `grupo`, `unidad` y `cantidad_base` THE SYSTEM SHALL crearlo con esos valores.",
       "WHEN la fila no trae esos campos THE SYSTEM SHALL comportarse como antes de esta migración.",
+      "WHEN la fila trae un `producto_id` existente THE SYSTEM SHALL usar ese producto, ligar el gasto a él y guardar el alias y el código para que la siguiente factura coincida sola.",
       "WHEN el producto ya existe THE SYSTEM SHALL no cambiar su ficha.",
       "THE SYSTEM SHALL decir cuántos productos creó hoy la persona (día de Bogotá) con `cupoDeProductos()`."
     ],
@@ -1341,9 +1342,11 @@
       "supabase/tests/importar_factura_larga.test.sql",
       "src/app/presupuesto/acciones.ts",
       "src/lib/avisos.ts",
-      "src/lib/supabase/tipos.ts"
+      "src/lib/supabase/tipos.ts",
+      "src/lib/importar/limites.ts",
+      "tests/integracion/cupo-productos.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E47-T4",

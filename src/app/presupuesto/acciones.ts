@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { usuario } from "@/lib/datos";
+import { hoyBogota, restarDias } from "@/lib/fecha";
+import { LIMITE_PRODUCTOS_DIA } from "@/lib/importar/limites";
 import type {
   ResultadoDeshacer,
   ResultadoImportacion,
@@ -487,4 +489,25 @@ export async function editarGasto(gasto: unknown): Promise<Resultado> {
   // Sin filas: el gasto no existe o es de otra persona.
   if (!data?.length) return { ok: false, error: "ajeno" };
   return { ok: true };
+}
+
+/**
+ * Cuántos productos nuevos creó hoy la persona (día de Bogotá, UTC-5 sin horario de verano) y cuántos puede crear
+ * en total: sirve para decirlo en la revisión de una factura antes de guardar. Quien lo hace cumplir es la base.
+ */
+export async function cupoDeProductos(): Promise<
+  { ok: true; usados: number; limite: number } | { ok: false; error: string }
+> {
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const hoy = hoyBogota();
+  const db = await clienteServidor();
+  const { count, error } = await db
+    .from("productos")
+    .select("*", { count: "exact", head: true })
+    .eq("creado_por", u.id)
+    .gte("creado", `${hoy}T05:00:00Z`)
+    .lt("creado", `${restarDias(hoy, -1)}T05:00:00Z`);
+  if (error) return { ok: false, error: "cupo_no_disponible" };
+  return { ok: true, usados: count ?? 0, limite: LIMITE_PRODUCTOS_DIA };
 }

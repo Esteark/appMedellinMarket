@@ -419,7 +419,7 @@ export const AVISOS = {
   limite_productos: {
     tipo: "aviso",
     emoji: "🆕",
-    texto: "Hoy ya creaste 50 productos. Intenta mañana o usa uno existente.",
+    texto: "Hoy ya creaste 200 productos. Intenta mañana o usa uno existente.",
   },
   nombre_invalido: {
     tipo: "aviso",
