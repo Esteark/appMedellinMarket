@@ -81,6 +81,11 @@ const esquemaFilaCompra = z.object({
   unidad: z.string().max(10).optional(),
   publicar_precio: z.boolean().optional(),
   promocion: z.boolean().optional(),
+  // Ficha del producto nuevo y producto elegido a mano (paso 47): sin estos campos zod los descarta.
+  emoji: z.string().max(16).optional(),
+  grupo: z.string().max(60).optional(),
+  cantidad_base: z.number().positive().max(100_000).optional(),
+  producto_id: z.string().max(80).optional(),
 });
 
 const esquemaFilasCompra = z.array(esquemaFilaCompra).min(1).max(500);

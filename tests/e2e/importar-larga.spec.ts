@@ -56,7 +56,8 @@ async function guardar(page: Page) {
 test("la factura larga crea los productos nuevos, deja uno como solo gasto y no se repite", async ({
   page,
 }) => {
-  const { texto, productos, codigos } = facturaUnica(Date.now());
+  const ts = Date.now();
+  const { texto, productos, codigos } = facturaUnica(ts);
   await crearCuenta(page);
   await abrirImportar(page);
   await revisar(page, texto);
@@ -103,8 +104,17 @@ test("la factura larga crea los productos nuevos, deja uno como solo gasto y no 
   const esperados = grupos.length - 2;
   await expect(salida).toContainText(`${esperados} productos nuevos`);
 
+  // El producto nace con el ícono y el grupo inferidos del nombre (no solo con el nombre).
+  await page.goto("/anotados");
+  await page.getByLabel("Buscar producto", { exact: true }).fill(`e2e${ts}`);
+  const leche = page
+    .getByRole("row")
+    .filter({ hasText: `Leche Colanta 1000ml Entera B e2e${ts}` })
+    .first();
+  await expect(leche).toContainText("🥛");
+
   // El mismo archivo con la misma fecha se bloquea.
-  await page.getByRole("button", { name: "Importar otra factura" }).click();
+  await abrirImportar(page);
   await revisar(page, texto);
   await guardar(page);
   await expect(
