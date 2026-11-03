@@ -68,6 +68,7 @@ export function FilaFactura(p: Props) {
           <label className="flex items-center gap-2 text-xs sm:col-span-6">
             <input
               type="checkbox"
+              className="size-6"
               checked={p.seleccionada}
               onChange={(e) => p.onSeleccion(e.target.checked)}
             />
