@@ -47,7 +47,8 @@ export type ResumenMes = {
   gastado: number;
   restante: number;
   porcentajeUsado: number;
-  proyeccionFinMes: number;
+  /** `null` hasta que pasen 7 días del mes. */
+  proyeccionFinMes: number | null;
   diasTranscurridos: number;
   diasDelMes: number;
 };
@@ -59,7 +60,8 @@ export type FilaDesfase = {
   presupuestado: number;
   gastado: number;
   esperadoHastaHoy: number;
-  proyeccion: number;
+  /** `null` hasta que pasen 7 días del mes. */
+  proyeccion: number | null;
   porcentajeUsado: number;
   desfasePct: number;
   estado: EstadoDesfase;

@@ -17,18 +17,16 @@ export function generarAprendizajes(
       descripcion: `Llevas el ${resumen.porcentajeUsado}% del presupuesto con ${resumen.diasTranscurridos} días transcurridos.`,
     });
   }
-  if (resumen.proyeccionFinMes > resumen.presupuestado) {
-    const dif = resumen.proyeccionFinMes - resumen.presupuestado;
+  const proyeccion = resumen.proyeccionFinMes;
+  if (proyeccion !== null && proyeccion > resumen.presupuestado) {
+    const dif = proyeccion - resumen.presupuestado;
     aprendizajes.push({
       tipo: "situacion",
       titulo: "Proyección por encima del presupuesto",
       descripcion: `Si mantienes el ritmo actual, terminarías el mes ~$${dif.toLocaleString("es-CO")} por encima.`,
     });
-  } else if (
-    resumen.proyeccionFinMes < resumen.presupuestado &&
-    resumen.diasTranscurridos > 5
-  ) {
-    const dif = resumen.presupuestado - resumen.proyeccionFinMes;
+  } else if (proyeccion !== null && proyeccion < resumen.presupuestado) {
+    const dif = resumen.presupuestado - proyeccion;
     aprendizajes.push({
       tipo: "logro",
       titulo: "Proyección por debajo del presupuesto",

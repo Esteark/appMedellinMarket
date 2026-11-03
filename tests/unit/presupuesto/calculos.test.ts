@@ -36,7 +36,13 @@ describe("presupuesto/calculos", () => {
 
   it("proyección a fin de mes", () => {
     expect(proyeccionFinMes(100000, 10, 31)).toBe(310000);
-    expect(proyeccionFinMes(50000, 0, 31)).toBe(0);
+    expect(proyeccionFinMes(50000, 0, 31)).toBeNull();
+  });
+
+  it("no proyecta con menos de 7 días: una compra grande del día 1 no se multiplica por 30", () => {
+    expect(proyeccionFinMes(775114, 2, 30)).toBeNull();
+    expect(proyeccionFinMes(775114, 6, 30)).toBeNull();
+    expect(proyeccionFinMes(700000, 7, 30)).toBe(3000000);
   });
 
   it("resumen completo", () => {

@@ -48,6 +48,7 @@ import {
 } from "./producto-nuevo";
 import { SugerenciasProducto } from "./sugerencias-producto";
 import { TablaGastos } from "./tabla-gastos";
+import { TarjetaProyeccion } from "./tarjeta-proyeccion";
 
 type Tab =
   | "resumen"
@@ -177,7 +178,7 @@ export function PresupuestoCliente({
             presupuestado: r.monto,
             gastado: 0,
             esperadoHastaHoy: 0,
-            proyeccion: 0,
+            proyeccion: null,
             porcentajeUsado: 0,
             desfasePct: 0,
             estado: "al_dia" as const,
@@ -434,18 +435,7 @@ export function PresupuestoCliente({
                 {pesos(resumen.restante)}
               </p>
             </div>
-            <div className="rounded-[12px] border p-2.5">
-              <p className="text-xs text-muted-foreground">
-                Proyección fin de mes
-              </p>
-              <p className="text-lg font-bold tabular-nums">
-                {pesos(resumen.proyeccionFinMes)}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Gastado ÷ {resumen.diasTranscurridos} días ×{" "}
-                {resumen.diasDelMes} del mes (ritmo actual)
-              </p>
-            </div>
+            <TarjetaProyeccion resumen={resumen} />
           </div>
           <p className="text-sm text-muted-foreground">
             Usado: {resumen.porcentajeUsado}% · Días:{" "}
@@ -701,7 +691,9 @@ export function PresupuestoCliente({
                     <td className="px-2 text-right">
                       {pesos(f.esperadoHastaHoy)}
                     </td>
-                    <td className="px-2 text-right">{pesos(f.proyeccion)}</td>
+                    <td className="px-2 text-right">
+                      {f.proyeccion === null ? "—" : pesos(f.proyeccion)}
+                    </td>
                     <td className="px-2 text-right">{f.porcentajeUsado}%</td>
                     <td className="pl-2 text-xs">
                       {f.estado === "desfasado"

@@ -38,12 +38,16 @@ export function esperadoHastaHoy(
   return Math.round((presupuestado / dMes) * dHoy);
 }
 
+/** Con menos días de datos el promedio diario no dice nada (una compra grande del día 1 se multiplicaría por 30). */
+export const DIAS_MIN_PROYECCION = 7;
+
+/** Gasto proyectado a fin de mes, o `null` si aún no pasaron `DIAS_MIN_PROYECCION` días. */
 export function proyeccionFinMes(
   gastado: number,
   diasTranscurridosCount: number,
   diasMes: number,
-): number {
-  if (diasTranscurridosCount <= 0) return 0;
+): number | null {
+  if (diasTranscurridosCount < DIAS_MIN_PROYECCION) return null;
   return Math.round((gastado / diasTranscurridosCount) * diasMes);
 }
 

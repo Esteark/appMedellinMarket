@@ -8,7 +8,10 @@ test("el presupuestado sale de los montos por rubro y la unidad admite texto lib
   await page.getByLabel("Presupuesto de Carnes").fill("200000");
   await page.getByRole("button", { name: "Resumen", exact: true }).click();
   await expect(page.getByText("200.000").first()).toBeVisible();
-  await expect(page.getByText(/Gastado ÷ \d+ días × \d+/)).toBeVisible();
+  // La proyección sale desde el día 7; antes dice cuándo se calcula. El test no depende de la fecha de hoy.
+  await expect(
+    page.getByText(/Gastado ÷ \d+ días × \d+|Se calcula desde el día 7/),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "Agregar gasto" }).first().click();
   await page.getByLabel(/^Unidad/).fill("racimo");

@@ -49,7 +49,11 @@ export function calcularDesfases(
 
 export function mensajeDesfase(fila: FilaDesfase): string {
   if (fila.estado === "desfasado") {
-    if (fila.proyeccion > fila.presupuestado && fila.presupuestado > 0) {
+    if (
+      fila.proyeccion !== null &&
+      fila.proyeccion > fila.presupuestado &&
+      fila.presupuestado > 0
+    ) {
       const dif = fila.proyeccion - fila.presupuestado;
       return `Vas por encima del ritmo. Proyección: +$${dif.toLocaleString("es-CO")} al fin de mes.`;
     }
