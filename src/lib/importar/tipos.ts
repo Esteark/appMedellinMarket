@@ -23,6 +23,16 @@ export type FilaRevision = FilaCsv & {
   tiendaId: string | null;
   productoId: string | null;
   nuevo: boolean;
+  /** Qué se hace con la línea: usar un producto que existe, crearlo o solo registrar el gasto. */
+  modo: ModoFila;
+  /** `true` si la persona lo eligió a mano: la vista previa del servidor ya no lo cambia. */
+  modoManual: boolean;
+  /** Ícono propuesto para un producto nuevo; `null` si no se reconoció ninguna palabra. */
+  emoji: string | null;
+  /** Grupo del catálogo propuesto para un producto nuevo. */
+  grupo: string;
+  /** Tamaño del producto nuevo en su unidad (2500 para «g» de un arroz de 2500 g). */
+  cantidadBase: number;
 };
 
 export type ResultadoImportacion = {

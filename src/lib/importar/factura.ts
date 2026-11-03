@@ -7,7 +7,8 @@ import {
 import { grupoARubro } from "@/lib/presupuesto/rubros";
 import type { GastoReal } from "@/lib/presupuesto/tipos";
 import { emparejarProducto } from "./emparejar";
-import type { FilaCsv, FilaRevision } from "./tipos";
+import { inferirProducto } from "./inferir";
+import type { FilaCsv, FilaRevision, ModoFila } from "./tipos";
 
 export const UNIDADES = ["u", "kg", "g", "l", "ml"];
 
@@ -16,22 +17,36 @@ const PROMOCION = /\b(descuento|oferta|promo|2x1|rebaja)\b/i;
 /** Primer emparejamiento en el cliente; con sesión, `previsualizar_compra` lo corrige. */
 export function aRevision(
   f: FilaCsv,
-  productos: ProductoCatalogo[],
+  productos: Pick<ProductoCatalogo, "id" | "nombre" | "grupo" | "unidad">[],
 ): FilaRevision {
   const id = emparejarProducto(
     { producto: f.producto, tiendaId: null, codigo: f.codigo },
     { productos, aliasProducto: [], codigos: {} },
   );
   const p = productos.find((x) => x.id === id);
+  // Lo que no coincide se propone como producto nuevo con su ficha inferida del nombre; lo que no es un producto
+  // (una bolsa, un descuento) como solo gasto. Todo esto lo confirma o corrige la persona.
+  const inf = inferirProducto(f.producto, f.cantidad);
+  const modo: ModoFila = p
+    ? "existente"
+    : inf.noEsProducto
+      ? "solo_gasto"
+      : "crear";
+  const grupo = p ? p.grupo : inf.grupo;
   return {
     ...f,
-    rubro: p ? grupoARubro(p.grupo) : "Otros",
-    unidad: p && UNIDADES.includes(p.unidad) ? p.unidad : "u",
-    publicarPrecio: true,
+    rubro: grupoARubro(grupo),
+    unidad: p ? (UNIDADES.includes(p.unidad) ? p.unidad : "u") : inf.unidad,
+    publicarPrecio: modo !== "solo_gasto",
     promocion: PROMOCION.test(f.producto),
     tiendaId: null,
     productoId: id,
-    nuevo: id === null,
+    nuevo: modo === "crear",
+    modo,
+    modoManual: false,
+    emoji: p ? null : inf.emoji,
+    grupo,
+    cantidadBase: p ? 1 : inf.cantidadBase,
   };
 }
 
@@ -45,8 +60,16 @@ export const aPayload = (filas: FilaRevision[]) =>
     codigo: f.codigo,
     rubro: f.rubro,
     unidad: f.unidad,
-    publicar_precio: f.publicarPrecio,
+    publicar_precio: f.publicarPrecio && f.modo !== "solo_gasto",
     promocion: f.promocion,
+    // La ficha solo importa al crear un producto nuevo; si la persona eligió uno existente, se manda cuál.
+    ...(f.modo === "crear" && {
+      emoji: f.emoji ?? "",
+      grupo: f.grupo,
+      cantidad_base: f.cantidadBase,
+    }),
+    ...(f.modo === "existente" &&
+      f.productoId && { producto_id: f.productoId }),
   }));
 
 export const claveAviso = (error: string) =>

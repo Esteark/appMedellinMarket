@@ -42,13 +42,27 @@ describe("noCuadra", () => {
 });
 
 describe("aRevision y aPayload", () => {
-  it("un producto fuera del catálogo nace nuevo, en Otros y 'u'; las promociones se detectan por el nombre", () => {
+  it("un producto fuera del catálogo nace nuevo con su ficha inferida del nombre; las promociones se detectan por el nombre", () => {
     const r = aRevision(csv(2, "D1", "", "Aceite 900 ml oferta"), []);
     expect(r).toMatchObject({
       nuevo: true,
-      rubro: "Otros",
-      unidad: "u",
+      modo: "crear",
+      rubro: "Despensa",
+      grupo: "Despensa",
+      emoji: "🫒",
+      unidad: "ml",
+      cantidadBase: 900,
       promocion: true,
+    });
+  });
+
+  it("lo que no se reconoce nace nuevo, en Otros, en u y sin ícono", () => {
+    expect(aRevision(csv(2, "D1", "", "Xyzw Qwerty"), [])).toMatchObject({
+      modo: "crear",
+      rubro: "Otros",
+      grupo: "Otros",
+      unidad: "u",
+      emoji: null,
     });
   });
 

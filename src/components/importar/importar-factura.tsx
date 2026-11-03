@@ -10,6 +10,7 @@ import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { hoyBogota } from "@/lib/fecha";
 import { leerCsv } from "@/lib/importar/csv";
+import { conVistaPrevia } from "@/lib/importar/decidir";
 import {
   aPayload,
   aRevision,
@@ -28,7 +29,6 @@ import {
   guardarImportacionesLocal,
   leerImportacionesLocal,
 } from "@/lib/presupuesto/almacenamiento";
-import { grupoARubro } from "@/lib/presupuesto/rubros";
 import { OrigenFactura } from "./origen";
 import { ResultadoImportacionVista } from "./resultado";
 import { RevisionFactura } from "./revision";
@@ -92,14 +92,7 @@ export function ImportarFactura({ productos, onImportado }: Props) {
     setFilas(
       base.map((f) => {
         const v = porLinea.get(f.linea);
-        if (!v) return f;
-        return {
-          ...f,
-          tiendaId: v.tienda_id,
-          productoId: v.producto_id,
-          nuevo: v.producto_nuevo,
-          rubro: v.producto_nuevo ? f.rubro : grupoARubro(v.grupo),
-        };
+        return v ? conVistaPrevia(f, v) : f;
       }),
     );
   };

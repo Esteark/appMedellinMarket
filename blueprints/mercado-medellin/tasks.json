@@ -1373,9 +1373,11 @@
       "src/lib/importar/tipos.ts",
       "src/lib/importar/factura.ts",
       "src/lib/importar/grupos.ts",
-      "tests/unit/importar.test.ts"
+      "tests/unit/importar.test.ts",
+      "src/lib/importar/decidir.ts",
+      "tests/unit/decidir.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E47-T5",
