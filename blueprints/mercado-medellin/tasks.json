@@ -1511,7 +1511,7 @@
       "src/lib/avisos.ts",
       "tests/integracion/presupuesto-mes.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E48-T4",

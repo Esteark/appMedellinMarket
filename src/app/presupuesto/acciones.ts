@@ -8,6 +8,7 @@ import type {
   ResultadoDeshacer,
   ResultadoImportacion,
 } from "@/lib/importar/tipos";
+import { MESES_ATRAS, mesAnterior } from "@/lib/presupuesto/por-mes";
 import { clienteServidor } from "@/lib/supabase/server";
 
 type Resultado = { ok: true } | { ok: false; error: string };
@@ -31,7 +32,7 @@ function claveDeError(mensaje: string): string {
 
 const esquemaRubro = z.object({
   rubro: z.string().min(1).max(60),
-  monto: z.number().int().min(0).max(10_000_000),
+  monto: z.number().int().min(0).max(50_000_000),
   orden: z.number().int().min(0).max(100),
 });
 
@@ -98,35 +99,109 @@ const esquemaImportacion = z.object({
   filas: esquemaFilasCompra,
 });
 
+const esquemaMes = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+/** Errores que lanza `guardar_presupuesto_mes`; nunca se devuelve el mensaje crudo de la base. */
+const ERRORES_PRESUPUESTO = [
+  "sin_sesion",
+  "mes_invalido",
+  "monto_invalido",
+  "rubros_invalidos",
+] as const;
+
+/** Guarda el presupuesto por rubro de un mes: crea o actualiza los rubros y quita los que ya no vienen. */
 export async function guardarPresupuestoMensual(
   mes: string,
   rubros: unknown,
 ): Promise<Resultado> {
   const u = await usuario();
   if (!u) return { ok: false, error: "sin_sesion" };
+  if (!esquemaMes.safeParse(mes).success)
+    return { ok: false, error: "mes_invalido" };
   const parsed = esquemaPresupuesto.safeParse(rubros);
-  if (!parsed.success) return { ok: false, error: "Datos inválidos" };
+  if (!parsed.success) return { ok: false, error: "rubros_invalidos" };
   const db = await clienteServidor();
-  const filas = parsed.data.map((r) => ({
-    user_id: u.id,
-    mes,
-    rubro: r.rubro,
-    monto: r.monto,
-    orden: r.orden,
-  }));
-  const { error } = await (
-    db as unknown as {
-      from: (t: string) => {
-        upsert: (
-          rows: unknown[],
-          opts: { onConflict: string },
-        ) => Promise<{ error: { message: string } | null }>;
-      };
-    }
-  )
+  const { error } = await db.rpc("guardar_presupuesto_mes", {
+    p_mes: mes,
+    p_rubros: parsed.data.map((r) => ({
+      rubro: r.rubro,
+      monto: r.monto,
+      orden: r.orden,
+    })),
+  });
+  if (!error) return { ok: true };
+  return {
+    ok: false,
+    error:
+      ERRORES_PRESUPUESTO.find((c) => error.message.includes(c)) ??
+      "presupuesto_error",
+  };
+}
+
+type RubroGuardado = { rubro: string; monto: number; orden: number };
+
+/** El presupuesto del mes y el de los 12 anteriores, por mes: de ahí sale lo que un mes nuevo hereda. */
+export async function obtenerPresupuestosHasta(
+  mes: string,
+): Promise<
+  | { ok: true; meses: Record<string, RubroGuardado[]> }
+  | { ok: false; error: string }
+> {
+  if (!esquemaMes.safeParse(mes).success)
+    return { ok: false, error: "mes_invalido" };
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  let desde = mes;
+  for (let i = 0; i < MESES_ATRAS; i++) desde = mesAnterior(desde);
+  const db = await clienteServidor();
+  // 13 meses × 50 rubros como máximo = 650 filas: cabe en el corte de 1000 de PostgREST.
+  const { data, error } = await db
     .from("presupuestos_mensuales")
-    .upsert(filas, { onConflict: "user_id,mes,rubro" });
-  return error ? { ok: false, error: error.message } : { ok: true };
+    .select("mes, rubro, monto, orden")
+    .eq("user_id", u.id)
+    .gte("mes", desde)
+    .lte("mes", mes)
+    .order("mes")
+    .order("orden")
+    .limit(1000);
+  if (error) return { ok: false, error: "presupuesto_no_disponible" };
+  const meses: Record<string, RubroGuardado[]> = {};
+  for (const f of data ?? []) {
+    const lista = meses[f.mes] ?? [];
+    lista.push({ rubro: f.rubro, monto: f.monto, orden: f.orden });
+    meses[f.mes] = lista;
+  }
+  return { ok: true, meses };
+}
+
+export type CambioHistorial = {
+  rubro: string;
+  monto_anterior: number | null;
+  monto_nuevo: number | null;
+  creado: string;
+};
+
+/** Los últimos 200 cambios de monto del presupuesto de un mes, el más nuevo primero. */
+export async function listarHistorialPresupuesto(
+  mes: string,
+): Promise<
+  { ok: true; cambios: CambioHistorial[] } | { ok: false; error: string }
+> {
+  if (!esquemaMes.safeParse(mes).success)
+    return { ok: false, error: "mes_invalido" };
+  const u = await usuario();
+  if (!u) return { ok: false, error: "sin_sesion" };
+  const db = await clienteServidor();
+  const { data, error } = await db
+    .from("presupuestos_historial")
+    .select("rubro, monto_anterior, monto_nuevo, creado")
+    .eq("user_id", u.id)
+    .eq("mes", mes)
+    .order("creado", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(200);
+  if (error) return { ok: false, error: "historial_no_disponible" };
+  return { ok: true, cambios: data ?? [] };
 }
 
 export async function obtenerPresupuestoMensual(

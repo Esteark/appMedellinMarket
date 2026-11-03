@@ -416,6 +416,12 @@ export const AVISOS = {
     emoji: "🏪",
     texto: "Hoy ya creaste 5 tiendas. Intenta mañana o usa una existente.",
   },
+  presupuesto_no_guardado: {
+    tipo: "aviso",
+    emoji: "💾",
+    texto:
+      "No pudimos guardar el presupuesto en tu cuenta; queda en este dispositivo.",
+  },
   limite_productos: {
     tipo: "aviso",
     emoji: "🆕",
