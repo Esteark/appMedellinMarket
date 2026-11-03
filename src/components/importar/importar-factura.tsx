@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  cupoDeProductos,
   deshacerImportacion,
   importarCompra,
   previsualizarCompra,
@@ -10,7 +11,7 @@ import { avisar } from "@/lib/avisos";
 import type { ProductoCatalogo } from "@/lib/datos";
 import { hoyBogota } from "@/lib/fecha";
 import { leerCsv } from "@/lib/importar/csv";
-import { conVistaPrevia } from "@/lib/importar/decidir";
+import { conVistaPrevia, estaCompleta } from "@/lib/importar/decidir";
 import {
   aPayload,
   aRevision,
@@ -35,13 +36,6 @@ import { RevisionFactura } from "./revision";
 
 type Props = { productos: ProductoCatalogo[]; onImportado: () => void };
 
-/** Una fila sin producto, tienda, cantidad o precio no se puede guardar todavía. */
-const estaCompleta = (f: FilaRevision) =>
-  Boolean(f.producto.trim()) &&
-  Boolean(f.tienda.trim()) &&
-  f.cantidad >= 0.001 &&
-  f.precioTotal >= 1;
-
 export function ImportarFactura({ productos, onImportado }: Props) {
   const [paso, setPaso] = useState<"origen" | "revision" | "resultado">(
     "origen",
@@ -55,6 +49,9 @@ export function ImportarFactura({ productos, onImportado }: Props) {
   const [notas, setNotas] = useState<string[]>([]);
   const [totales, setTotales] = useState<Record<string, string>>({});
   const [conSesion, setConSesion] = useState(false);
+  const [cupo, setCupo] = useState<{ usados: number; limite: number } | null>(
+    null,
+  );
   const [publicar, setPublicar] = useState(true);
   const [confirma, setConfirma] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -84,6 +81,10 @@ export function ImportarFactura({ productos, onImportado }: Props) {
     const r = await previsualizarCompra(aPayload(completas));
     setConSesion(r.ok || r.error !== "sin_sesion");
     if (!r.ok) return setFilas(base);
+    // Sin esperarlo: la revisión no debe tardar más por el cupo.
+    void cupoDeProductos().then((c) =>
+      setCupo(c.ok ? { usados: c.usados, limite: c.limite } : null),
+    );
     // El RPC numera las filas recibidas (1..N), no las líneas del CSV: se
     // emparejan por posición con las filas completas que se enviaron.
     const porLinea = new Map(
@@ -206,6 +207,8 @@ export function ImportarFactura({ productos, onImportado }: Props) {
     return (
       <RevisionFactura
         filas={filas}
+        productos={productos}
+        cupo={cupo}
         fechaLote={fechaLote}
         conSesion={conSesion}
         publicar={publicar}
@@ -213,11 +216,7 @@ export function ImportarFactura({ productos, onImportado }: Props) {
         notas={notas}
         confirmaNuevos={confirma}
         guardando={guardando}
-        incompletas={filas.filter((f) => !estaCompleta(f)).length}
-        onFila={(i, p) =>
-          setFilas((fs) => fs.map((f, k) => (k === i ? { ...f, ...p } : f)))
-        }
-        onQuitar={(i) => setFilas((fs) => fs.filter((_, k) => k !== i))}
+        onFilas={setFilas}
         onGrupo={cambiarGrupo}
         onPublicar={setPublicar}
         onTotal={(c, v) => setTotales((t) => ({ ...t, [c]: v }))}

@@ -4,7 +4,11 @@ import { leerCsv } from "@/lib/importar/csv";
 import {
   aplicarModo,
   conVistaPrevia,
+  cumpleFiltro,
   decidir,
+  estaCompleta,
+  faltantesDe,
+  jefasDe,
   lineasJuntas,
 } from "@/lib/importar/decidir";
 import { aPayload, aRevision } from "@/lib/importar/factura";
@@ -242,5 +246,31 @@ describe("conVistaPrevia", () => {
       ...antes,
       tiendaId: "t1",
     });
+  });
+});
+
+describe("filtros y repetidas", () => {
+  it("cada filtro cuenta lo que dice", () => {
+    const n = (x: Parameters<typeof cumpleFiltro>[1]) =>
+      filas.filter((f) => cumpleFiltro(f, x)).length;
+    expect(n("todas")).toBe(59);
+    expect(n("existente")).toBe(1);
+    expect(n("solo_gasto")).toBe(1);
+    expect(n("crear")).toBe(57);
+  });
+
+  it("por revisar incluye las incompletas y las que traen duda", () => {
+    const sinPrecio = { ...filas[0], precioTotal: 0 };
+    expect(estaCompleta(sinPrecio)).toBe(false);
+    expect(faltantesDe(sinPrecio)).toEqual(["precio"]);
+    expect(cumpleFiltro(sinPrecio, "revisar")).toBe(true);
+    expect(cumpleFiltro({ ...filas[0], duda: "¿?" }, "revisar")).toBe(true);
+    expect(cumpleFiltro(filas[0], "revisar")).toBe(false);
+  });
+
+  it("jefasDe apunta cada repetida a su primera línea", () => {
+    const j = jefasDe(filas);
+    expect(j.size).toBe(7);
+    for (const [i, primera] of j) expect(primera).toBeLessThan(i);
   });
 });

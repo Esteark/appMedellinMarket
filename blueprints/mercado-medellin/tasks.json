@@ -1406,9 +1406,11 @@
       "src/components/importar/resumen-factura.tsx",
       "src/components/importar/filtros-factura.tsx",
       "src/components/importar/fila-factura.tsx",
-      "src/components/importar/barra-guardar.tsx"
+      "src/components/importar/barra-guardar.tsx",
+      "src/components/importar/decision-fila.tsx",
+      "src/components/importar/encabezado-grupo.tsx"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E47-T6",

@@ -1,15 +1,32 @@
 "use client";
 
-import { pesos } from "@/lib/formato";
-import { UNIDADES } from "@/lib/importar/factura";
-import { agrupar, type Grupo, noCuadra } from "@/lib/importar/grupos";
-import type { FilaRevision } from "@/lib/importar/tipos";
-import { RUBROS_SUGERIDOS } from "@/lib/presupuesto/defaults";
-
-const campo = "w-full rounded-[10px] border bg-card px-2 py-1.5 text-sm";
+import { useMemo, useState } from "react";
+import type { ProductoCatalogo } from "@/lib/datos";
+import {
+  aplicarModo,
+  contarFiltros,
+  cumpleFiltro,
+  decidir,
+  estaCompleta,
+  type Filtro,
+  jefasDe,
+  type ProductoElegido,
+} from "@/lib/importar/decidir";
+import { agrupar, type Grupo } from "@/lib/importar/grupos";
+import { LIMITE_PRODUCTOS_DIA } from "@/lib/importar/limites";
+import { repartirCupo, resumirFactura } from "@/lib/importar/resumen";
+import type { FilaRevision, ModoFila } from "@/lib/importar/tipos";
+import { BarraGuardar } from "./barra-guardar";
+import { EncabezadoGrupo } from "./encabezado-grupo";
+import { FilaFactura } from "./fila-factura";
+import { FiltrosFactura } from "./filtros-factura";
+import { ResumenDeFactura } from "./resumen-factura";
 
 type Props = {
   filas: FilaRevision[];
+  productos: ProductoCatalogo[];
+  /** Cuántos productos nuevos creó ya la persona hoy; `null` sin sesión o si no se pudo leer. */
+  cupo: { usados: number; limite: number } | null;
   fechaLote: string;
   conSesion: boolean;
   publicar: boolean;
@@ -17,10 +34,8 @@ type Props = {
   notas: string[];
   confirmaNuevos: boolean;
   guardando: boolean;
-  incompletas: number;
-  onFila: (i: number, parche: Partial<FilaRevision>) => void;
+  onFilas: (cambio: (fs: FilaRevision[]) => FilaRevision[]) => void;
   onGrupo: (g: Grupo, parche: { tienda?: string; fecha?: string }) => void;
-  onQuitar: (i: number) => void;
   onPublicar: (v: boolean) => void;
   onTotal: (clave: string, v: string) => void;
   onConfirma: (v: boolean) => void;
@@ -30,11 +45,61 @@ type Props = {
 };
 
 export function RevisionFactura(p: Props) {
+  const [filtro, setFiltro] = useState<Filtro>("todas");
+  const [elegidas, setElegidas] = useState<Set<number>>(new Set());
   const grupos = agrupar(p.filas, p.fechaLote);
+  const repiten = useMemo(() => jefasDe(p.filas), [p.filas]);
+  const cupo = p.cupo ?? { usados: 0, limite: LIMITE_PRODUCTOS_DIA };
+  const resumen = resumirFactura(p.filas, cupo);
+  const conCupo = p.conSesion && p.cupo !== null;
+  const incompletas = p.filas.filter((f) => !estaCompleta(f));
   const nuevos =
     p.conSesion &&
     p.publicar &&
     p.filas.some((f) => f.nuevo || f.tiendaId === null);
+
+  const conteos = contarFiltros(p.filas);
+
+  const cambiarFila = (linea: number, parche: Partial<FilaRevision>) =>
+    p.onFilas((fs) =>
+      fs.map((f) => (f.linea === linea ? { ...f, ...parche } : f)),
+    );
+  const decidirFila = (
+    linea: number,
+    modo: ModoFila,
+    producto?: ProductoElegido,
+  ) =>
+    p.onFilas((fs) =>
+      decidir(
+        fs,
+        fs.findIndex((f) => f.linea === linea),
+        modo,
+        producto,
+      ),
+    );
+  const decidirElegidas = (modo: ModoFila) => {
+    p.onFilas((fs) =>
+      fs.map((f) => (elegidas.has(f.linea) ? aplicarModo(f, modo) : f)),
+    );
+    setElegidas(new Set());
+  };
+  const repartir = () =>
+    p.onFilas((fs) => {
+      const r = repartirCupo(fs, resumen.cupo.queda);
+      return fs.map((f, i) =>
+        r[i].modo === f.modo ? f : aplicarModo(f, "solo_gasto"),
+      );
+    });
+
+  const bloqueo = (() => {
+    if (p.filas.length === 0) return "No hay líneas para guardar.";
+    if (incompletas.length > 0)
+      return `Faltan ${incompletas.length} por completar.`;
+    if (conCupo && !resumen.cupo.alcanza && p.publicar)
+      return "Hoy no caben todos los productos nuevos.";
+    if (nuevos && !p.confirmaNuevos) return "Confirma lo que se va a crear.";
+    return "";
+  })();
 
   return (
     <section data-testid="importar-revision" className="flex flex-col gap-3">
@@ -48,6 +113,11 @@ export function RevisionFactura(p: Props) {
           ))}
         </ul>
       )}
+      <ResumenDeFactura
+        resumen={resumen}
+        conCupo={conCupo}
+        onRepartir={repartir}
+      />
       {p.conSesion ? (
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -63,176 +133,81 @@ export function RevisionFactura(p: Props) {
           sesión para actualizar el catálogo.
         </p>
       )}
+      {p.conSesion && (
+        <FiltrosFactura
+          filtro={filtro}
+          conteos={conteos}
+          seleccionadas={elegidas.size}
+          onFiltro={setFiltro}
+          onSeleccionarVisibles={() =>
+            setElegidas(
+              new Set(
+                p.filas
+                  .filter(
+                    (f) =>
+                      cumpleFiltro(f, filtro) &&
+                      !repiten.has(p.filas.indexOf(f)),
+                  )
+                  .map((f) => f.linea),
+              ),
+            )
+          }
+          onLimpiar={() => setElegidas(new Set())}
+          onDecidirSeleccion={decidirElegidas}
+        />
+      )}
       {grupos.map((g) => {
         const suma = g.indices.reduce((s, i) => s + p.filas[i].precioTotal, 0);
-        const impreso = Number(p.totales[g.clave]);
+        const visibles = g.indices.filter((i) =>
+          cumpleFiltro(p.filas[i], filtro),
+        );
         return (
           <div
             key={p.filas[g.indices[0]].linea}
             data-testid="grupo-importacion"
             className="flex flex-col gap-2 rounded-[14px] border bg-card p-3.5"
           >
-            <div className="grid gap-2 sm:grid-cols-3">
-              <label className="text-xs text-muted-foreground">
-                Tienda
-                <input
-                  className={campo}
-                  value={g.tienda}
-                  onChange={(e) => p.onGrupo(g, { tienda: e.target.value })}
-                />
-              </label>
-              <label className="text-xs text-muted-foreground">
-                Fecha
-                <input
-                  type="date"
-                  className={campo}
-                  value={g.fecha}
-                  onChange={(e) => p.onGrupo(g, { fecha: e.target.value })}
-                />
-              </label>
-              <label className="text-xs text-muted-foreground">
-                Total impreso (opcional)
-                <input
-                  inputMode="numeric"
-                  className={campo}
-                  value={p.totales[g.clave] ?? ""}
-                  onChange={(e) =>
-                    p.onTotal(g.clave, e.target.value.replace(/\D/g, ""))
+            <EncabezadoGrupo
+              g={g}
+              suma={suma}
+              total={p.totales[g.clave] ?? ""}
+              onGrupo={(parche) => p.onGrupo(g, parche)}
+              onTotal={(v) => p.onTotal(g.clave, v)}
+            />
+            {visibles.map((i) => {
+              const f = p.filas[i];
+              const jefa = repiten.get(i);
+              return (
+                <FilaFactura
+                  key={f.linea}
+                  f={f}
+                  repiteDe={
+                    jefa === undefined ? undefined : p.filas[jefa].linea
+                  }
+                  conSesion={p.conSesion}
+                  productos={p.productos}
+                  seleccionada={elegidas.has(f.linea)}
+                  onSeleccion={(v) =>
+                    setElegidas((s) => {
+                      const n = new Set(s);
+                      if (v) n.add(f.linea);
+                      else n.delete(f.linea);
+                      return n;
+                    })
+                  }
+                  onFila={(parche) => cambiarFila(f.linea, parche)}
+                  onDecidir={(modo, prod) => decidirFila(f.linea, modo, prod)}
+                  onQuitar={() =>
+                    p.onFilas((fs) => fs.filter((x) => x.linea !== f.linea))
                   }
                 />
-              </label>
-            </div>
-            <p className="text-sm tabular-nums">
-              Suma de líneas: <strong>{pesos(suma)}</strong>
-              {impreso > 0 && noCuadra(suma, impreso) && (
-                <span role="alert" className="ml-2 text-warn-ink">
-                  No cuadra con el total impreso ({pesos(impreso)}).
-                </span>
-              )}
-            </p>
-            {g.indices.map((i) => {
-              const f = p.filas[i];
-              const faltantes = [
-                !f.producto.trim() && "producto",
-                !f.tienda.trim() && "tienda",
-                f.cantidad < 0.001 && "cantidad",
-                f.precioTotal < 1 && "precio",
-              ].filter(Boolean) as string[];
-              return (
-                <fieldset
-                  key={f.linea}
-                  className="grid gap-2 rounded-[12px] border p-2.5 sm:grid-cols-6"
-                >
-                  <legend className="px-1 text-xs text-muted-foreground">
-                    Línea {f.linea}
-                    {p.conSesion && f.nuevo && " · producto nuevo"}
-                    {f.duda && " · con duda"}
-                    {!f.duda && faltantes.length > 0 && " · por completar"}
-                  </legend>
-                  {(f.duda || faltantes.length > 0) && (
-                    <p
-                      role="status"
-                      className="text-xs text-warn-ink sm:col-span-6"
-                    >
-                      {f.duda && (
-                        <>
-                          <strong>Pregunta:</strong> {f.duda}{" "}
-                        </>
-                      )}
-                      {faltantes.length > 0 && (
-                        <>
-                          Falta {faltantes.join(", ")}: corrígelo o quita la
-                          fila.
-                        </>
-                      )}
-                    </p>
-                  )}
-                  <input
-                    aria-label="Producto"
-                    className={`${campo} sm:col-span-3`}
-                    value={f.producto}
-                    onChange={(e) => p.onFila(i, { producto: e.target.value })}
-                  />
-                  <input
-                    aria-label="Cantidad"
-                    inputMode="decimal"
-                    className={campo}
-                    value={f.cantidad}
-                    onChange={(e) =>
-                      p.onFila(i, {
-                        cantidad: Number(e.target.value.replace(",", ".")) || 0,
-                      })
-                    }
-                  />
-                  <input
-                    aria-label="Precio total"
-                    inputMode="numeric"
-                    className={campo}
-                    value={f.precioTotal}
-                    onChange={(e) =>
-                      p.onFila(i, {
-                        precioTotal:
-                          Number(e.target.value.replace(/\D/g, "")) || 0,
-                      })
-                    }
-                  />
-                  <p className="self-center text-xs text-muted-foreground tabular-nums">
-                    {f.cantidad > 0
-                      ? `${pesos(f.precioTotal / f.cantidad)} c/u`
-                      : "—"}
-                  </p>
-                  <select
-                    aria-label="Rubro"
-                    className={`${campo} sm:col-span-2`}
-                    value={f.rubro}
-                    onChange={(e) => p.onFila(i, { rubro: e.target.value })}
-                  >
-                    {RUBROS_SUGERIDOS.map((r) => (
-                      <option key={r}>{r}</option>
-                    ))}
-                  </select>
-                  <select
-                    aria-label="Unidad"
-                    className={campo}
-                    value={f.unidad}
-                    onChange={(e) => p.onFila(i, { unidad: e.target.value })}
-                  >
-                    {UNIDADES.map((u) => (
-                      <option key={u}>{u}</option>
-                    ))}
-                  </select>
-                  <label className="flex items-center gap-1.5 text-xs sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      checked={f.promocion}
-                      onChange={(e) =>
-                        p.onFila(i, { promocion: e.target.checked })
-                      }
-                    />
-                    Promoción
-                  </label>
-                  {p.conSesion && (
-                    <label className="flex items-center gap-1.5 text-xs">
-                      <input
-                        type="checkbox"
-                        checked={f.publicarPrecio}
-                        onChange={(e) =>
-                          p.onFila(i, { publicarPrecio: e.target.checked })
-                        }
-                      />
-                      Publicar precio
-                    </label>
-                  )}
-                  <button
-                    type="button"
-                    className="rounded-[10px] border px-2 py-1 text-xs sm:col-span-2"
-                    onClick={() => p.onQuitar(i)}
-                  >
-                    Quitar fila
-                  </button>
-                </fieldset>
               );
             })}
+            {visibles.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Ninguna línea de esta tienda coincide con el filtro.
+              </p>
+            )}
           </div>
         );
       })}
@@ -247,43 +222,29 @@ export function RevisionFactura(p: Props) {
           creen (se verán para todos).
         </label>
       )}
-      {p.incompletas > 0 && (
-        <p role="status" className="text-sm text-warn-ink">
-          Completa o quita {p.incompletas}{" "}
-          {p.incompletas === 1 ? "fila" : "filas"} antes de guardar.
-        </p>
+      {incompletas.length > 0 && (
+        <div role="status" className="text-sm text-warn-ink">
+          Completa o quita {incompletas.length}{" "}
+          {incompletas.length === 1 ? "fila" : "filas"} antes de guardar:{" "}
+          {incompletas.map((f, k) => (
+            <span key={f.linea}>
+              {k > 0 && ", "}
+              <a className="underline" href={`#fila-${f.linea}`}>
+                línea {f.linea}
+              </a>
+            </span>
+          ))}
+          .
+        </div>
       )}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={p.onVolver}
-          className="rounded-[10px] border px-3 py-1.5 text-sm"
-        >
-          Volver
-        </button>
-        {p.conSesion && (
-          <button
-            type="button"
-            onClick={p.onActualizar}
-            className="rounded-[10px] border px-3 py-1.5 text-sm"
-          >
-            Actualizar revisión
-          </button>
-        )}
-        <button
-          type="button"
-          disabled={
-            p.guardando ||
-            p.filas.length === 0 ||
-            p.incompletas > 0 ||
-            (nuevos && !p.confirmaNuevos)
-          }
-          onClick={p.onGuardar}
-          className="rounded-[10px] bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-60"
-        >
-          {p.guardando ? "Guardando…" : "Guardar importación"}
-        </button>
-      </div>
+      <BarraGuardar
+        conSesion={p.conSesion}
+        guardando={p.guardando}
+        bloqueo={bloqueo}
+        onVolver={p.onVolver}
+        onActualizar={p.onActualizar}
+        onGuardar={p.onGuardar}
+      />
     </section>
   );
 }

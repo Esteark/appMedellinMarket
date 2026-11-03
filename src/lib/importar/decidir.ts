@@ -112,3 +112,40 @@ export function conVistaPrevia(f: FilaRevision, v: VistaPrevia): FilaRevision {
   }
   return base;
 }
+
+/** Lo que le falta a una línea para poder guardarse. */
+export const faltantesDe = (f: FilaRevision): string[] =>
+  [
+    !f.producto.trim() && "producto",
+    !f.tienda.trim() && "tienda",
+    f.cantidad < 0.001 && "cantidad",
+    f.precioTotal < 1 && "precio",
+  ].filter(Boolean) as string[];
+
+/** Una fila sin producto, tienda, cantidad o precio no se puede guardar todavía. */
+export const estaCompleta = (f: FilaRevision) => faltantesDe(f).length === 0;
+
+export type Filtro = "todas" | ModoFila | "revisar";
+
+/** «Por revisar» = con duda o incompleta; el resto filtra por lo que se hará con la línea. */
+export const cumpleFiltro = (f: FilaRevision, filtro: Filtro) =>
+  filtro === "todas" ||
+  (filtro === "revisar"
+    ? Boolean(f.duda) || !estaCompleta(f)
+    : f.modo === filtro);
+
+/** Líneas que repiten a otra anterior (mismo producto, tienda y fecha): índice → índice de la primera. */
+export function jefasDe(filas: FilaRevision[]): Map<number, number> {
+  const m = new Map<number, number>();
+  for (const g of lineasJuntas(filas))
+    for (const i of g.slice(1)) m.set(i, g[0]);
+  return m;
+}
+
+/** Cuántas líneas cumple cada filtro, para los números de los chips. */
+export const contarFiltros = (filas: FilaRevision[]) =>
+  Object.fromEntries(
+    (["todas", "crear", "existente", "solo_gasto", "revisar"] as Filtro[]).map(
+      (x) => [x, filas.filter((f) => cumpleFiltro(f, x)).length],
+    ),
+  ) as Record<Filtro, number>;
