@@ -1287,7 +1287,7 @@
       "tests/importar/factura-larga.csv",
       "tests/unit/inferir.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E47-T2",

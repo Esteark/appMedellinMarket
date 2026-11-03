@@ -1,0 +1,61 @@
+# Entrada sintética de prueba, escrita a mano a partir de un recibo real (59 líneas, 3 tiendas): no es una respuesta capturada de un sitio.
+producto,cantidad,precio_total,tienda,fecha,codigo
+Leche El Zarzal 900ml6und,1,18990,Dinastia,2026-10-30,059290
+Coco,1,2394,Dinastia,2026-10-30,005074
+Cebolla de huevo,0.370,777,Dinastia,2026-10-30,007469
+Harina Pan 1000g Blanca,1,2690,Dinastia,2026-10-30,007360
+Harina Pan 1000g Blanca,1,2690,Dinastia,2026-10-30,007360
+Buñuelos La Comarca 1000g,1,5790,Dinastia,2026-10-30,023840
+Natilla La Comarca 900g,1,6490,Dinastia,2026-10-30,064184
+Panela El Trece 960g18und,1,7400,Dinastia,2026-10-30,024075
+Panela El Trece 960g18und,1,7400,Dinastia,2026-10-30,024075
+Pasta Comarico 250g Tornillo,1,1800,Dinastia,2026-10-30,023379
+Pasta Comarico 250g Tornillo,1,1800,Dinastia,2026-10-30,023379
+Caldo Maggi Desm 90g P10LL12,1,4700,Dinastia,2026-10-30,064657
+Canela La Grancocina 20g,1,3500,Dinastia,2026-10-30,023765
+Arroz Federal 2500g Alto Rend,1,15990,Dinastia,2026-10-30,023959
+Galleta Dux 250g9paq Regula,1,3990,Dinastia,2026-10-30,014436
+Galleta Dux 250g9paq Regula,1,3990,Dinastia,2026-10-30,014436
+Leche Colanta 1000ml Entera B,1,3950,Dinastia,2026-10-30,009487
+Leche Colanta 1000ml Entera B,1,3950,Dinastia,2026-10-30,009487
+Det Fab 1000g Ultra,1,16250,Dinastia,2026-10-30,064182
+Lavaloza Loza Crem 450g2und,1,9500,Dinastia,2026-10-30,066424
+Aceite de Gir,1,16990,D1,2026-10-30,7700304557868
+Protectores D,1,1200,D1,2026-10-30,7700304839766
+Yogurt Griego,1,17450,D1,2026-10-30,7700304280650
+Aceite Vegeta,1,6750,D1,2026-10-30,7700304587230
+Pan Tajado Ma,2,7700,D1,2026-10-30,7700304890767
+Leche Equilib,3,10050,D1,2026-10-30,7700304497669
+Aromatica Sur,1,1990,D1,2026-10-30,7700304568673
+Cafe Sello Ro,1,15450,D1,2026-10-30,7702032109227
+Mortadela Jam,1,5990,D1,2026-10-30,7700304611164
+Pastillas De,1,7550,D1,2026-10-30,7700304599639
+Aromatica Sur,2,3980,D1,2026-10-30,7700304861736
+Bizcochitos A,1,4800,D1,2026-10-30,7700304636808
+Lenteja El Es,3,4770,D1,2026-10-30,7700304437801
+Garbanzo El E,2,5380,D1,2026-10-30,7700304146307
+Sal Refisal 1,1,2900,D1,2026-10-30,7703812101202
+Azucar Blanca,1,3390,D1,2026-10-30,7707007200459
+Mayonesa Con,1,3550,D1,2026-10-30,7700304573615
+Azucar Morena,2,6780,D1,2026-10-30,7707007200411
+Ajo Granulado,2,3980,D1,2026-10-30,7700304617135
+Huevo Avinal 30und*1800g AA/R,1,14990,Dinastia,2026-10-31,030445
+C/Cerdo Pierna Trasera,4.140,53737,Dinastia,2026-10-31,035164
+C/Res Huevo Solomo,1.190,39246,Dinastia,2026-10-31,026507
+C/Cerdo Espinazo,1.170,5827,Dinastia,2026-10-31,009251
+C/Cerdo Cabeza Canon,2.525,32775,Dinastia,2026-10-31,031670
+C/Cerdo Tocino Papada,1.140,19357,Dinastia,2026-10-31,033652
+Pernil Campesino,0.955,7621,Dinastia,2026-10-31,000877
+Pechuga Campesina Refrig,1.520,24290,Dinastia,2026-10-31,000862
+Leche Miramonte 900g Polvo,1,19990,Dinastia,2026-10-31,065553
+Galleta Saltin 640g 8 Tacos,1,8500,Dinastia,2026-10-31,064338
+Galleta Ducales 500g 5 Tacos,1,9900,Dinastia,2026-10-31,060868
+Queso Costeño,3,38400,Prados del Campo,2026-10-30,
+Gustazo 220,4,20800,Prados del Campo,2026-10-30,
+Bolsa Recicla,1,200,D1,2026-10-30,7700304406890
+Quesito Cuadr,4,8600,D1,2026-10-30,7700304350742
+Pan Tajado,1,3850,D1,2026-10-30,7700304890767
+Leche Equilib,2,6600,D1,2026-10-30,7700304497669
+Tostada Clasi,1,3350,D1,2026-10-30,7702025146673
+Galleta Salti,1,6600,D1,2026-10-30,7700304850334
+Huevo Tipo AA,1,7490,D1,2026-10-30,7700304650422
