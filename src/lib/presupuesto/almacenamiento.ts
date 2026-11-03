@@ -4,6 +4,7 @@ import type {
   PresupuestoRubro,
 } from "@/lib/presupuesto/tipos";
 import { RUBROS_SUGERIDOS } from "./defaults";
+import { MESES_ATRAS, mesAnterior } from "./por-mes";
 
 const CLAVE_HOGAR = "mercado-medellin:presupuesto:hogar";
 const CLAVE_DIETA = "mercado-medellin:presupuesto:dieta";
@@ -43,6 +44,31 @@ export function leerPresupuestoHogar(): PresupuestoRubro[] | null {
 
 export function guardarPresupuestoHogar(rubros: PresupuestoRubro[]) {
   guardar(CLAVE_HOGAR, rubros);
+}
+
+/** Presupuesto por rubro de un mes en este dispositivo (`AAAA-MM`); no toca el de los demás meses. */
+const claveMes = (mes: string) => `mercado-medellin:presupuesto:${mes}`;
+
+export function leerPresupuestoMes(mes: string): PresupuestoRubro[] | null {
+  return leer(claveMes(mes));
+}
+
+export function guardarPresupuestoMes(mes: string, rubros: PresupuestoRubro[]) {
+  guardar(claveMes(mes), rubros);
+}
+
+/** Lo guardado en este dispositivo para los `n` meses anteriores a `mes`, por mes. */
+export function leerPresupuestosAnteriores(
+  mes: string,
+  n = MESES_ATRAS,
+): Record<string, PresupuestoRubro[] | null> {
+  const salida: Record<string, PresupuestoRubro[] | null> = {};
+  let m = mes;
+  for (let i = 0; i < n; i++) {
+    m = mesAnterior(m);
+    salida[m] = leerPresupuestoMes(m);
+  }
+  return salida;
 }
 
 export function leerPresupuestoDieta(): PresupuestoRubro[] | null {

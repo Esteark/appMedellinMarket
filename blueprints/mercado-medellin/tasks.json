@@ -1485,7 +1485,7 @@
       "src/lib/presupuesto/almacenamiento.ts",
       "tests/unit/por-mes.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E48-T3",
